@@ -31,17 +31,19 @@ for (const [w, h] of SIZES) {
   // 1. Scroll halfway and remember the position.
   const y0 = await p.evaluate(() => { const y = Math.round(document.body.scrollHeight * 0.45); scrollTo({ top: y, behavior: 'instant' }); return y; });
   await p.waitForTimeout(500);
-  const before = await p.evaluate(() => scrollY);
+  let before = await p.evaluate(() => scrollY);
   if (!near(before, y0, 4)) fail(`${tag}: could not scroll to ${y0} (at ${before})`);
 
-  // 2. Open chat from the launcher.
+  // 2. Open chat from the launcher (it steps aside when over a control; nudge until shown).
+  for (let i = 0; i < 20 && !(await p.isVisible('.ask__launch')); i++) { await p.evaluate(() => scrollBy({ top: 37, behavior: 'instant' })); await p.waitForTimeout(120); }
+  before = await p.evaluate(() => scrollY);
   await p.tap('.ask__launch');
   await p.waitForTimeout(650);
   const s1 = await p.evaluate(() => {
     const d = document.querySelector('.ask__panel');
     const r = d.getBoundingClientRect();
-    const hdr = document.querySelector('.hdr__bar').getBoundingClientRect();
-    const hit = document.elementFromPoint(hdr.left + 20, hdr.top + hdr.height / 2);
+    // The top band of the screen (where the floating header lives) must belong to the dialog.
+    const hit = document.elementFromPoint(40, 36);
     const launch = document.querySelector('.ask__launch');
     return {
       open: d.open, modal: d.matches(':modal'), top: r.top, height: r.height, vh: innerHeight, width: r.width, vw: innerWidth,
@@ -132,7 +134,9 @@ for (const [w, h] of SIZES) {
 
   // 8. Rotate while open. Pixel offsets change with width, so check that the
   // same content is back at the top of the viewport.
-  const probe = await p.evaluate(() => { const el = document.elementFromPoint(innerWidth / 2, Math.min(160, innerHeight / 3)); el.setAttribute('data-probe', ''); return el.getBoundingClientRect().top; });
+  // Tag the element at the top and its ancestors: a mobile-only element may be
+  // hidden in landscape, then the nearest rendered ancestor must hold its place.
+  const probes = await p.evaluate(() => { const out = []; for (let el = document.elementFromPoint(innerWidth / 2, Math.min(160, innerHeight / 3)), i = 0; el && el !== document.body; el = el.parentElement, i++) { el.setAttribute('data-probe', String(i)); out.push(el.getBoundingClientRect().top); } return out; });
   await p.tap('.ask__launch');
   await p.waitForTimeout(300);
   await p.setViewportSize({ width: h, height: w });
@@ -147,7 +151,8 @@ for (const [w, h] of SIZES) {
   // Close in the rotated orientation: the lock restores by content anchor.
   await p.keyboard.press('Escape');
   await p.waitForTimeout(300);
-  const probeTop = await p.evaluate(() => document.querySelector('[data-probe]').getBoundingClientRect().top);
+  const [probeIdx, probeTop] = await p.evaluate(() => { const el = [...document.querySelectorAll('[data-probe]')].sort((a, b) => a.dataset.probe - b.dataset.probe).find((e) => e.getClientRects().length > 0); return [Number(el.dataset.probe), el.getBoundingClientRect().top]; });
+  const probe = probes[probeIdx];
   // Only the locked (modal) case is ours to restore; the floating panel never
   // locks the page, so tablet reflow on rotation is the browser's own anchoring.
   if (!rot.modal) ok(`${tag}: floating panel never locks the page; rotation reflow left to the browser`);

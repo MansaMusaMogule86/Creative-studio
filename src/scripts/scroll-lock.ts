@@ -9,8 +9,10 @@ let savedWidth = 0;
 // Content anchor: if the viewport width changes while locked (rotation),
 // the old pixel offset no longer points at the same content, so we restore
 // relative to the element that was at the top of the viewport instead.
-let anchor: Element | null = null;
-let anchorOffset = 0;
+// The anchor's ancestors are recorded too: if the anchor itself is hidden in
+// the new layout (a mobile-only element after rotating to landscape), the
+// nearest still-rendered ancestor is used instead.
+let anchors: { el: Element; top: number }[] = [];
 
 export const isScrollLocked = () => count > 0;
 
@@ -20,8 +22,10 @@ export function lockScroll() {
   savedY = window.scrollY;
   savedStyle = body.getAttribute('style');
   savedWidth = window.innerWidth;
-  anchor = document.elementFromPoint(window.innerWidth / 2, Math.min(160, window.innerHeight / 3));
-  anchorOffset = anchor ? anchor.getBoundingClientRect().top : 0;
+  anchors = [];
+  for (let el = document.elementFromPoint(window.innerWidth / 2, Math.min(160, window.innerHeight / 3)); el && el !== document.body; el = el.parentElement) {
+    anchors.push({ el, top: el.getBoundingClientRect().top });
+  }
   const scrollbar = window.innerWidth - document.documentElement.clientWidth;
   body.style.position = 'fixed';
   body.style.top = `-${savedY}px`;
@@ -42,9 +46,10 @@ export function unlockScroll() {
   // 'instant' overrides the site's `scroll-behavior: smooth`, so the page
   // reappears exactly where the visitor left it, with no animated jump.
   let top = savedY;
-  if (window.innerWidth !== savedWidth && anchor?.isConnected) {
-    top = anchor.getBoundingClientRect().top + window.scrollY - anchorOffset;
+  if (window.innerWidth !== savedWidth) {
+    const a = anchors.find(({ el }) => el.isConnected && el.getClientRects().length > 0);
+    if (a) top = a.el.getBoundingClientRect().top + window.scrollY - a.top;
   }
   window.scrollTo({ top, left: 0, behavior: 'instant' });
-  anchor = null;
+  anchors = [];
 }

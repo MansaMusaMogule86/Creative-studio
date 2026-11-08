@@ -181,8 +181,12 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
       const kb = Math.round(first.reduce((a, r) => a + r.b, 0) / 1024);
       if (path === '/' && first.some((r) => /^(work-|bg-contact)/.test(r.n))) fail(`${path} ${label}: below-the-fold renders loaded eagerly: ${first.map((r) => r.n).join(', ')}`);
       if (kb > 250) fail(`${path} ${label}: ${kb} KB of images on first load (budget 250 KB)`);
-      const wrongVariant = first.filter((r) => (label === 'mobile' ? /hero-card-\d|division-\w+-\d{3,4}\.webp$/.test(r.n) && !/wide|mobile/.test(r.n) : /wide|mobile/.test(r.n)));
+      const wrongVariant = first.filter((r) => (label === 'mobile' ? /^(hero-card|div3d-[a-z]+)-\d/.test(r.n) : /wide|mobile/.test(r.n)));
       if (wrongVariant.length) fail(`${path} ${label}: wrong art direction served: ${wrongVariant.map((r) => r.n).join(', ')}`);
+      if (path === '/') {
+        const eagerPanels = await p.$$eval('.panel .dstage img', (imgs) => imgs.filter((i) => i.loading !== 'lazy').length);
+        if (eagerPanels) fail(`${path} ${label}: ${eagerPanels} division panel still(s) not lazy`);
+      }
       await scrollThrough(p);
       await p.waitForLoadState('networkidle');
       const broken = await p.$$eval('img', (imgs) => imgs.filter((i) => i.getClientRects().length && i.checkVisibility() && (!i.complete || i.naturalWidth === 0)).map((i) => i.currentSrc || i.src));
@@ -281,6 +285,42 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
   if (!/Sitemap: /.test(robots) || /Disallow: \/\s*$/m.test(robots)) fail('production robots.txt blocks crawling or lacks the sitemap');
   ok(`search: ${smPaths.length} sitemap URLs = indexable pages; unique titles and descriptions; canonical, social, JSON-LD, 404 recovery verified`);
   await p.close();
+}
+
+// 10. Real-time 3D actually animates (forced on, since this machine has no GPU).
+{
+  const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
+  const p = await ctx.newPage();
+  const frameDiff = async (sel) => {
+    const a = await p.locator(sel).screenshot({ timeout: 60000 });
+    await p.waitForTimeout(1500);
+    const b = await p.locator(sel).screenshot({ timeout: 60000 });
+    return Buffer.compare(a, b) !== 0;
+  };
+  await p.goto(BASE + '/?force-webgl', { waitUntil: 'networkidle' });
+  await p.waitForFunction(() => document.querySelector('[data-sculpture]')?.classList.contains('is-ready'), null, { timeout: 60000 });
+  await p.waitForTimeout(1500);
+  if (!(await frameDiff('[data-sculpture]'))) fail('hero sculpture canvas did not change between frames');
+  else ok('hero sculpture animates in real time');
+  for (const slug of ['digital', 'strategy']) {
+    await p.goto(BASE + `/universe/${slug}?force-webgl`, { waitUntil: 'networkidle' });
+    await p.waitForFunction(() => document.querySelector('.dstage.is-live canvas'), null, { timeout: 90000 }).catch(() => {});
+    const live = await p.$('.dstage.is-live canvas');
+    if (!live) { fail(`/universe/${slug}: division 3D stage did not go live`); continue; }
+    await p.waitForTimeout(1200);
+    if (!(await frameDiff('.dstage.is-live'))) fail(`/universe/${slug}: division 3D did not animate`);
+    else ok(`/universe/${slug}: division 3D artwork is live and animating`);
+  }
+  // Homepage: exactly one live division canvas, following the active panel.
+  await p.goto(BASE + '/?force-webgl', { waitUntil: 'networkidle' });
+  await p.evaluate(() => document.getElementById('universe').scrollIntoView({ behavior: 'instant' }));
+  await p.waitForTimeout(2500);
+  await p.hover('[data-panel]:nth-child(4)');
+  await p.waitForTimeout(2500);
+  const st = await p.evaluate(() => ({ canvases: document.querySelectorAll('.dstage canvas').length, live: [...document.querySelectorAll('.dstage.is-live')].map((e) => e.dataset.stage) }));
+  if (st.canvases !== 1 || st.live.length !== 1 || st.live[0] !== 'creative') fail(`homepage stages: ${JSON.stringify(st)}`);
+  else ok('homepage: one shared division canvas, moved to the active panel (creative)');
+  await ctx.close();
 }
 
 await browser.close();

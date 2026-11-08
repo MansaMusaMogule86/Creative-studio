@@ -83,21 +83,9 @@ const facts = [
 
 <script>
   const canvas = document.querySelector<HTMLCanvasElement>('[data-sculpture]');
-  // Real-time 3D only on hardware GPUs. Software rasterisers (SwiftShader,
-  // llvmpipe…) render the glass on the CPU and block the main thread, so those
-  // devices keep the pre-rendered still instead.
-  const supportsGL = (() => {
-    try {
-      const gl = document.createElement('canvas').getContext('webgl2');
-      if (!gl) return false;
-      const info = gl.getExtension('WEBGL_debug_renderer_info');
-      const renderer = String(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
-      gl.getExtension('WEBGL_lose_context')?.loseContext();
-      // ?force-webgl lets QA and design review see the live scene on GPU-less machines.
-      if (new URLSearchParams(location.search).has('force-webgl')) return true;
-      return !/swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
-    } catch { return false; }
-  })();
+  import { liveWebGL } from '../scripts/gpu';
+  // Real-time 3D on hardware GPUs (shared check in src/scripts/gpu.ts).
+  const supportsGL = liveWebGL();
   document.documentElement.dataset.webgl = String(supportsGL);
   if (canvas && supportsGL) {
     const boot = async () => {
@@ -173,6 +161,10 @@ const facts = [
   /* A locally rendered still of the same sculpture: shown before WebGL boots and when it can't. */
   .stage__fallback { position: absolute; inset: 0; background: #f1eeff; }
   .stage__fallback img { width: 100%; height: 100%; object-fit: cover; object-position: 75% 50%; }
+  /* Without live WebGL the real render floats gently (static under reduced motion). */
+  :global(html[data-webgl='false']) .stage__fallback img { animation: hero-float 8s var(--ease-in-out) infinite alternate; transform-origin: 70% 55%; }
+  @keyframes hero-float { from { transform: scale(1.02) translate3d(0, 0, 0) rotate(0deg); } to { transform: scale(1.06) translate3d(-1%, -2%, 0) rotate(-1deg); } }
+  @media (prefers-reduced-motion: reduce) { :global(html[data-webgl='false']) .stage__fallback img { animation: none; } }
   /* Champagne ambient light behind the sculpture (static; no loop). */
   .tile--stage::before { content: ''; position: absolute; inset: 8% 6% 14% 30%; z-index: 0; border-radius: 50%; background: radial-gradient(closest-side, rgb(245 229 186 / 0.55), rgb(216 184 117 / 0.18) 55%, transparent); filter: blur(24px); pointer-events: none; }
   .stage__fallback, .stage__canvas { z-index: 0; }

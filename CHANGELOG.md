@@ -3,6 +3,36 @@
 All notable changes to the Mansas Moguls website. Newest first. Branch: `claude/affectionate-sagan-nrj1c8`.
 
 ## Unreleased
+- **3D division artworks:** the flat division illustrations are replaced by five procedurally modelled glass scenes in three.js. There are no new dependencies.
+  - Digital: laptop, dotted globe, UI cards, orbits.
+  - AI: glass bust with a neural core, pulsing pathways and an AI chip.
+  - Growth: rising glass columns and an ascending arrow.
+  - Creative: sculptural glass M (an artwork, not the emblem) with ribbons and swatches.
+  - Strategy: crystal king with gold crown, a pawn and an orbit.
+- **One shared WebGL renderer per page:**
+  - The single canvas moves to the active, visible stage; three.js loads lazily.
+  - Scenes are cached (max 2 on phones).
+  - The loop pauses off-screen and in hidden tabs.
+  - Adaptive pixel ratio, then 30 fps, on slow frames; half-resolution refraction on phones.
+  - Full GPU disposal on pagehide, with a rebuild from the back/forward cache.
+- **Stills and motion fallbacks:**
+  - Every stage first shows a pre-rendered still of the same scene (`div3d-*`, square and wide crops).
+  - Software GPUs and no-WebGL get the still with a gentle float.
+  - Reduced motion gets one still frame.
+- **Hero sculpture:** without a mouse (phones and tablets) it now moves on its own; desktop still follows the pointer.
+- **Mobile fixes:**
+  - The header tucks away on scroll down (below 1024 px) and returns on scroll up, so it no longer covers headings.
+  - The Universe accordion is compact: closed bodies are inert, open/close animates, and the opened panel scrolls clear of the header.
+  - Tighter section spacing.
+  - The Ask Moguls launcher steps aside when it would cover a control.
+  - Ask Moguls is also available from the mobile menu.
+- **Scroll lock:** after a rotation it restores to the nearest still-rendered element, so a mobile-only element hidden in landscape no longer sends the page to the top.
+- **QA:**
+  - live 3D animation and single-canvas checks (`?force-webgl`);
+  - lazy panel stills;
+  - mobile launcher and rotation checks updated.
+
+## f093b44 — Launch readiness: indexing, metadata, error boundaries, ops docs
 - **Launch readiness:**
   - Staging builds (`SITE_ENV≠production`) are noindex, blocked in robots.txt and have no sitemap.
   - The sitemap lists only canonical indexable pages.

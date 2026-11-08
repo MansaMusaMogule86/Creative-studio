@@ -40,9 +40,22 @@ const { s } = Astro.props as { s: Still };
   )}
   <script>
     import { mountSculpture } from '../../scripts/sculpture';
+    import { createStage } from '../../scripts/division-stage';
     const c = document.querySelector<HTMLCanvasElement>('canvas')!;
     const s = JSON.parse(c.dataset.still!);
-    mountSculpture(c, { reduceMotion: true, mobile: false, palette: s.palette, still: s });
+    if (s.scene) {
+      // Division artwork: render the same scene the live site uses, at time t.
+      const box = document.createElement('div');
+      box.style.cssText = 'position:fixed;inset:0';
+      document.body.appendChild(box);
+      c.remove();
+      const stage = createStage({ mobile: false, reduceMotion: true, preserveDrawingBuffer: true });
+      stage.show(box, s.scene);
+      stage.canvas.style.cssText = 'position:absolute;inset:0;width:100%;height:100%';
+      stage.renderAt(s.t);
+    } else {
+      mountSculpture(c, { reduceMotion: true, mobile: false, palette: s.palette, still: s });
+    }
     document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(() => ((window as unknown as { __ready: boolean }).__ready = true))));
   </script>
 </body></html>

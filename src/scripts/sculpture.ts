@@ -200,8 +200,10 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   // ── Interaction ──
   const target = { x: 0, y: 0 };
   const cur = { x: 0, y: 0 };
+  let hasMouse = false;
   const onPointer = (e: PointerEvent) => {
     if (e.pointerType !== 'mouse') return;
+    hasMouse = true;
     const r = canvas.getBoundingClientRect();
     target.x = Math.max(-1.5, Math.min(1.5, ((e.clientX - r.left) / r.width - 0.5) * 2));
     target.y = Math.max(-1.5, Math.min(1.5, ((e.clientY - r.top) / r.height - 0.5) * 2));
@@ -217,12 +219,15 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     intro.v = Math.min(1, intro.v + dt / 2.2);
     const e = 1 - Math.pow(1 - intro.v, 4);
     build(time);
+    // Touch devices have no hover: drift as if a pointer were gently circling.
+    if (!hasMouse) { target.x = Math.sin(time * 0.33) * 0.75; target.y = Math.cos(time * 0.27) * 0.35; }
     cur.x += (target.x - cur.x) * 0.04;
     cur.y += (target.y - cur.y) * 0.04;
-    group.rotation.y = -0.22 + Math.sin(time * 0.25) * 0.35 + cur.x * 0.35 + (1 - e) * 1.2;
+    // Continuous, clearly visible motion: a slow sway plus pointer response.
+    group.rotation.y = -0.22 + Math.sin(time * 0.31) * 0.55 + cur.x * 0.4 + (1 - e) * 1.2;
     group.rotation.x = 0.12 + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
     group.rotation.z = -0.05 + Math.sin(time * 0.17) * 0.05;
-    ribbon.position.y = Math.sin(time * 0.7) * 0.08 - (1 - e) * 0.6;
+    ribbon.position.y = Math.sin(time * 0.7) * 0.14 - (1 - e) * 0.6;
     ribbon.scale.setScalar(0.86 + 0.14 * e);
     (shadow.material as MeshBasicMaterial).opacity = 0.32 * e - Math.sin(time * 0.7) * 0.04;
     backdropMat.uniforms.uTime.value = time;

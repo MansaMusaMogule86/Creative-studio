@@ -1,6 +1,6 @@
 # Launch checklist (A–Z)
 
-Saved on 2026-11-08 at the owner's request. **First full check: 2026-11-08** (lint, build, `pnpm qa`, `pnpm qa:mobile`, Lighthouse, `pnpm audit`, search/indexing audit).
+Saved on 2026-11-08 at the owner's request. **First full check: 2026-11-08** (lint, build, `pnpm qa`, `pnpm qa:mobile`, Lighthouse, `pnpm audit`, search/indexing audit). **Re-checked 2026-11-08 after the 3D division redesign:** lint ✅, build ✅, `pnpm qa` 30/30 ✅, `pnpm qa:mobile` 43/43 ✅, overflow/tap-target audit at 320/375/390/430/768 on all 9 pages ✅, Lighthouse home 97/100 mobile and 100 desktop, CLS 0.
 
 Legend: ✅ done and verified · ⚠ partial · ❌ missing, doable once unblocked · ⏳ needs owner, host, domain or legal input · n/a not applicable. Ticked boxes are ✅ or n/a.
 
@@ -110,7 +110,7 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] Image compression and dimension attributes — ✅ All imgs have width/height (audit); 11–33 KB first load.
 - [x] Optimized fonts and font loading — ✅ Self-hosted, preloaded, CLS 0.
 - [x] Video compression and poster images — n/a No video.
-- [x] 3D fallback images — ✅ Rendered stills; software-GPU + no-WebGL fallback (qa).
+- [x] 3D fallback images — ✅ Each division stage shows a pre-rendered still of its own 3D scene (square + wide crops); software-GPU and no-WebGL keep the still (qa).
 - [x] Asset licensing and attribution register — ✅ docs/creative-3d/LICENSING-REGISTER.md (emblem rights ⏳ owner).
 - [x] Media accessibility and mobile performance — ✅ Decorative alt; mobile art direction verified (qa).
 
@@ -118,12 +118,12 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] TypeScript or equivalent type checks — ✅ pnpm lint (strict tsc) passes.
 - [ ] Linting and code formatting — ⚠ tsc only; ESLint/Prettier not configured (would add dev deps).
 - [x] Avoid unnecessary client-side JavaScript — ✅ Static pages; islands only for chat/form; 3D lazy.
-- [x] Code splitting and lazy loading — ✅ three.js lazy chunk; client:visible/idle islands.
+- [x] Code splitting and lazy loading — ✅ three.js (142 KB gz) and the division stage (22 KB) load only when a stage is visible on a capable GPU; client:visible/idle islands.
 - [x] Error boundaries where relevant — ✅ IslandBoundary on InquiryForm and AskMoguls.
 - [x] No browser console errors — ✅ qa checks every page at 6 widths.
 - [x] Hydration and rendering correctness — ✅ Islands hydrate; qa flows pass.
 - [ ] Cross-browser testing — ⚠ Chromium only in this environment; Safari/Firefox ⏳ real devices.
-- [ ] Memory leak and event cleanup checks — ⚠ Listeners cleaned in islands; repeat open/close/rotate verified (qa:mobile); long-session profiling ⏳.
+- [ ] Memory leak and event cleanup checks — ⚠ Listeners cleaned in islands; one shared WebGL context, scene cache (2 on phones) with disposal and forceContextLoss on pagehide; repeat open/close/rotate verified (qa:mobile); long-session GPU profiling on real devices ⏳.
 - [x] Dependency version and compatibility review — ✅ pnpm audit: no vulnerabilities; only TypeScript 7 pending (held for astro tooling).
 
 ## K. Keywords & Search Intent
@@ -154,12 +154,12 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] Responsive layouts across screen sizes — ✅ qa + qa:mobile.
 - [x] No horizontal overflow — ✅ qa 320–1440.
 - [x] Mobile menu and navigation behavior — ✅ Scroll lock, inert background, anchors land below header (qa:mobile).
-- [x] Sticky header and safe-area handling — ✅ Chat dialog safe-area aware; header z-order fixed.
+- [x] Sticky header and safe-area handling — ✅ Header uses the top safe area and tucks on scroll down below 1024 px; chat dialog safe-area aware (qa:mobile).
 - [x] Touch-friendly forms and controls — ✅ 44px targets, 16px chat input.
 - [x] Readable typography without zoom — ✅ No zoom needed; 16px inputs.
 - [x] Mobile image and video optimization — ✅ Wide mobile crops, small files.
 - [ ] Real-device performance testing — ⏳ Needs real iPhone/Android.
-- [x] Mobile 3D and animation fallback — ✅ Software-GPU skip, still fallback, reduced motion.
+- [x] Mobile 3D and animation fallback — ✅ Only one canvas per page (qa), adaptive DPR/30 fps, half-res refraction on phones; software-GPU skip, still fallback, reduced motion.
 - [x] Portrait and landscape checks — ✅ qa:mobile rotation checks.
 
 ## N. Navigation & Internal Links
@@ -187,11 +187,11 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] No misleading or unsupported rich-result markup — ✅ No reviews/ratings markup.
 
 ## P. Performance & Core Web Vitals
-- [x] LCP target at or below 2.5 seconds — ✅ Lighthouse: 2.2 s mobile / 0.5 s desktop (home).
+- [x] LCP target at or below 2.5 seconds — ✅ Lighthouse after the 3D redesign: home 2.5 s mobile / 0.5 s desktop; /universe/ai 1.8 s / 0.4 s (lab, headless; the live 3D loads after LCP).
 - [ ] INP target at or below 200 milliseconds — ⚠ TBT 0–10 ms in lab; real INP needs field data.
 - [x] CLS target at or below 0.1 — ✅ CLS 0 (Lighthouse).
 - [ ] Real-user field data monitoring — ⏳ Needs analytics/RUM decision (D-07).
-- [x] PageSpeed Insights and Lighthouse review — ✅ Lighthouse 98–100 perf, 100 a11y/BP/SEO.
+- [x] PageSpeed Insights and Lighthouse review — ✅ Lighthouse 97–100 perf, 100 a11y/BP/SEO (home + division, re-run after the 3D redesign).
 - [x] Bundle size and third-party script budgets — ✅ Budgets in docs/creative-3d/PERFORMANCE-BUDGET.md; no third-party scripts.
 - [x] Critical CSS and resource priorities — ✅ Inlined CSS where small, font/emblem preload, hero fetchpriority.
 - [ ] Caching and CDN effectiveness — ⏳ Host.
@@ -201,7 +201,7 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 ## Q. Quality Assurance & Testing
 - [ ] Unit tests for critical logic — ❌ No unit runner; vitest planned with backend (needs approval).
 - [ ] Integration tests — ❌ Planned with /api/leads (mocked HighLevel).
-- [x] End-to-end browser tests — ✅ pnpm qa (26 checks) + qa:mobile (43).
+- [x] End-to-end browser tests — ✅ pnpm qa (30 checks, including live 3D animating via ?force-webgl) + qa:mobile (43).
 - [ ] Responsive visual regression tests — ⚠ Screenshot review per phase; no pixel-diff baseline.
 - [ ] Accessibility automated and manual tests — ⚠ axe automated; manual ⏳.
 - [ ] Cross-browser compatibility — ⚠ Chromium only here.

@@ -85,6 +85,7 @@ ul { margin: 0; padding: 0; list-style: none; }
 /* ───────── Layout helpers ───────── */
 .wrap { width: min(100% - 2 * var(--gutter), var(--max)); margin-inline: auto; }
 .section { padding-block: clamp(5rem, 3rem + 8vw, 10rem); position: relative; }
+@media (max-width: 767px) { .section { padding-block: clamp(3.25rem, 2rem + 5vw, 4.5rem); } }
 .eyebrow {
   display: inline-flex; align-items: center; gap: 0.6rem;
   font-size: var(--step--1); letter-spacing: 0.18em; text-transform: uppercase; font-weight: 500;

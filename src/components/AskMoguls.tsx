@@ -32,6 +32,7 @@ function AskMoguls() {
   const [msgs, setMsgs] = useState<Msg[]>([]);
   const [shown, setShown] = useState(false);
   const [nearForm, setNearForm] = useState(false);
+  const [overControl, setOverControl] = useState(false);
   const panelId = useId();
   const titleId = `${panelId}-title`;
   const dialogRef = useRef<HTMLDialogElement>(null);
@@ -41,6 +42,9 @@ function AskMoguls() {
   const openerRef = useRef<HTMLElement | null>(null);
   const activeRef = useRef<null | 'modal' | 'panel'>(null);
   const stickRef = useRef(true);
+  // While focus is (being) returned to the launcher it must stay visible,
+  // even if it floats over another control; released on blur.
+  const keepLauncherRef = useRef(false);
   const vvCleanupRef = useRef<(() => void) | null>(null);
 
   // ── Keep the modal sized to the *visible* viewport (above the keyboard). ──
@@ -84,6 +88,7 @@ function AskMoguls() {
       // only after React re-renders, so retry for a few frames.
       const opener = openerRef.current;
       const target = opener?.isConnected ? opener : launcherRef.current;
+      if (target === launcherRef.current) { keepLauncherRef.current = true; setOverControl(false); }
       let tries = 0;
       const attempt = () => {
         if (!target || document.activeElement === target || tries++ > 10) return;
@@ -166,12 +171,28 @@ function AskMoguls() {
   // Launcher visibility: stay out of the hero, and out of the inquiry form's
   // way on small screens (it would otherwise cover fields above the keyboard).
   useEffect(() => {
-    const on = () => { if (!isScrollLocked()) setShown(scrollY > innerHeight * 0.6); };
-    on(); addEventListener('scroll', on, { passive: true });
+    // Fade out whenever the launcher would sit on top of a tappable control.
+    let raf = 0;
+    const CONTROL = 'a, button, summary, input, textarea, select, label, [role="tab"]';
+    const checkOverlap = () => {
+      raf = 0;
+      const l = launcherRef.current;
+      if (!l || activeRef.current) return;
+      if (keepLauncherRef.current) { setOverControl(false); return; }
+      const r = l.getBoundingClientRect();
+      const pts: [number, number][] = [[r.left + r.width / 2, r.top + r.height / 2], [r.left + 4, r.top + 4], [r.right - 4, r.top + 4], [r.left + 4, r.bottom - 4], [r.right - 4, r.bottom - 4]];
+      setOverControl(pts.some(([x, y]) => document.elementsFromPoint(x, y).some((el) => !l.contains(el) && !el.closest('.ask') && el.matches(CONTROL))));
+    };
+    const on = () => {
+      if (isScrollLocked()) return;
+      setShown(scrollY > innerHeight * 0.6);
+      if (!raf) raf = requestAnimationFrame(checkOverlap);
+    };
+    on(); addEventListener('scroll', on, { passive: true }); addEventListener('resize', on);
     const contact = document.getElementById('contact');
     const io = contact ? new IntersectionObserver(([e]) => setNearForm(e.isIntersecting && matchMedia('(max-width: 767px)').matches), { rootMargin: '0px 0px -30% 0px' }) : null;
     if (contact && io) io.observe(contact);
-    return () => { removeEventListener('scroll', on); io?.disconnect(); };
+    return () => { removeEventListener('scroll', on); removeEventListener('resize', on); io?.disconnect(); cancelAnimationFrame(raf); };
   }, []);
 
   // Auto-scroll only the conversation, and only if the visitor is at the
@@ -215,11 +236,12 @@ function AskMoguls() {
   };
 
   return (
-    <div className="ask" data-open={open} data-shown={(shown && !nearForm) || open} data-fullscreen={fullscreen}>
+    <div className="ask" data-open={open} data-shown={(shown && !nearForm && !overControl) || open} data-fullscreen={fullscreen}>
       <button
         ref={launcherRef} type="button" className="ask__launch"
         aria-haspopup="dialog" aria-expanded={open} aria-controls={panelId}
         onClick={(e) => (activeRef.current ? closeChat() : openChat(e.currentTarget))}
+        onBlur={() => { keepLauncherRef.current = false; }}
       >
         <span className="ask__dot" aria-hidden="true" />
         <span className="ask__label">{open ? 'Close Ask Moguls' : 'Ask Moguls'}</span>

@@ -34,6 +34,7 @@ const links = [
     </nav>
     <div class="mnav__foot">
       <a href="/#contact" class="btn btn--gold mnav__cta" data-menu-link>{d.cta.create} <span class="arrow" aria-hidden="true">→</span></a>
+      <button type="button" class="btn btn--ghost mnav__ask" data-menu-ask>Ask Moguls · service finder</button>
       <div class="mnav__brand"><Logo size={56} tagline /></div>
     </div>
   </div>
@@ -59,6 +60,12 @@ const links = [
   };
   btn.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
   menu.querySelectorAll('[data-menu-link]').forEach((a) => a.addEventListener('click', () => set(false)));
+  // The assistant is always reachable from the menu, even when its floating
+  // launcher steps aside so it doesn't cover page controls.
+  menu.querySelector('[data-menu-ask]')?.addEventListener('click', () => {
+    set(false);
+    requestAnimationFrame(() => dispatchEvent(new CustomEvent('moguls:ask-open', { detail: { opener: btn } })));
+  });
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !menu.hidden) { set(false); btn.focus(); }
   });
@@ -82,7 +89,9 @@ const links = [
 </script>
 
 <style>
-  .hdr { position: fixed; inset-inline: 0; top: 0; z-index: 50; padding: 14px var(--gutter); pointer-events: none; }
+  .hdr { position: fixed; inset-inline: 0; top: 0; z-index: 50; padding: max(14px, env(safe-area-inset-top)) var(--gutter) 14px; pointer-events: none; transition: transform 0.45s var(--ease-out); }
+  .hdr:global(.is-tucked) { transform: translateY(-110%); }
+  @media (prefers-reduced-motion: reduce) { .hdr { transition: none; } }
   .hdr__bar {
     pointer-events: auto; margin-inline: auto; max-width: var(--max);
     display: flex; align-items: center; gap: 1.5rem; padding: 10px 10px 10px 20px;
@@ -132,7 +141,7 @@ const links = [
   }
   .mnav li a span { font-family: var(--font-sans); font-size: 0.75rem; color: var(--ink-3); letter-spacing: 0.1em; }
   .mnav__foot { display: grid; gap: 1.6rem; margin-top: 2rem; }
-  .mnav__cta { width: 100%; }
+  .mnav__cta, .mnav__ask { width: 100%; }
   .mnav__brand { display: flex; justify-content: center; padding-top: 1.4rem; border-top: 1px solid transparent; border-image: var(--gold-line) 1; }
   @keyframes mnav-in { from { opacity: 0; transform: translateY(16px); } }
 

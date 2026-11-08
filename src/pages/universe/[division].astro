@@ -3,6 +3,7 @@ import Base from '../../layouts/Base.astro';
 import { divisions, type Division } from '../../data/divisions';
 import { brand } from '../../config/brand';
 import Logo from '../../components/Logo.astro';
+import DivisionArt from '../../components/divisions/DivisionArt.astro';
 
 export function getStaticPaths() {
   return divisions.map((d) => ({ params: { division: d.slug }, props: { d } }));
@@ -43,12 +44,8 @@ const metaDescription = d.intro.length <= 158 ? d.intro : `${d.intro.slice(0, 15
           </div>
         </div>
         <figure class="dv__art">
-          <picture>
-            <source media="(max-width: 900px)" srcset={`/renders/division-${d.slug}-wide-600.webp 600w, /renders/division-${d.slug}-wide-1200.webp 1200w`} sizes="100vw" width="1200" height="760" />
-            <img src={`/renders/division-${d.slug}-520.webp`} srcset={`/renders/division-${d.slug}-520.webp 520w, /renders/division-${d.slug}-1040.webp 1040w`}
-              sizes="(max-width: 1440px) 40vw, 560px" width="1040" height="1040" alt="" decoding="async" fetchpriority="high" />
-          </picture>
-          <figcaption><Logo size={22} wordmark={false} /><span>{d.index}</span> Liquid glass study · {d.short} palette</figcaption>
+          <DivisionArt division={d} variant="hero" eager />
+          <figcaption><Logo size={22} wordmark={false} /><span>{d.index}</span> {d.name} · 3D artwork</figcaption>
         </figure>
       </div>
     </header>
@@ -87,9 +84,8 @@ const metaDescription = d.intro.length <= 158 ? d.intro : `${d.intro.slice(0, 15
   .dv .eyebrow { color: var(--ink-d); }
   .dv__ctas { display: flex; flex-wrap: wrap; gap: 0.8rem; }
   .dv__art { position: relative; justify-self: end; width: min(100%, 560px); margin: 0; border-radius: 34px; overflow: hidden; border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 0 0 1px rgb(216 184 117 / 0.45), 0 50px 90px -50px color-mix(in srgb, var(--ink-d) 55%, transparent); background: color-mix(in srgb, var(--a) 30%, white); }
-  .dv__art img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; animation: dv-float 9s var(--ease-in-out) infinite alternate; }
-  @keyframes dv-float { from { transform: scale(1.02) translateY(0); } to { transform: scale(1.05) translateY(-1.5%); } }
-  .dv__art figcaption { position: absolute; inset-inline-start: 16px; bottom: 16px; display: inline-flex; gap: 0.6rem; align-items: center; min-height: 34px; padding: 0 0.9rem; border-radius: 999px; font-size: 0.78rem; background: rgb(255 255 255 / 0.86); backdrop-filter: blur(10px); }
+  .dv__art :global(.dstage) { border-radius: 0; }
+  .dv__art figcaption { z-index: 2; position: absolute; inset-inline-start: 16px; bottom: 16px; display: inline-flex; gap: 0.6rem; align-items: center; min-height: 34px; padding: 0 0.9rem; border-radius: 999px; font-size: 0.78rem; background: rgb(255 255 255 / 0.86); backdrop-filter: blur(10px); }
   .dv__art figcaption span { color: var(--ink-d); font-weight: 600; letter-spacing: 0.1em; }
   .dv__list ol { list-style: none; padding: 0; margin: 2.5rem 0 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 clamp(1.5rem, 4vw, 4rem); }
   .dv__svc { display: grid; grid-template-columns: 3rem 1fr; column-gap: 1rem; row-gap: 0.4rem; padding-block: 1.8rem; border-top: 1px solid var(--line); scroll-margin-top: 110px; }
@@ -102,5 +98,5 @@ const metaDescription = d.intro.length <= 158 ? d.intro : `${d.intro.slice(0, 15
   .dv__next a { display: grid; gap: 0.6rem; padding-block: clamp(3rem, 6vw, 5rem); text-decoration: none; }
   .dv__nextName { font-family: var(--font-display); font-size: var(--step-4); line-height: 1; transition: color 0.4s; }
   .dv__next a:hover .dv__nextName { color: var(--ink-d); }
-  @media (max-width: 900px) { .dv__heroGrid { grid-template-columns: 1fr; } .dv__art { order: -1; justify-self: stretch; width: 100%; border-radius: 26px; } .dv__art img { aspect-ratio: 1200 / 760; } .dv__list ol { grid-template-columns: 1fr; } .dv__hero { padding-top: 110px; } }
+  @media (max-width: 1023px) { .dv__heroGrid { grid-template-columns: 1fr; } .dv__art { order: -1; justify-self: stretch; width: 100%; border-radius: 26px; } .dv__list ol { grid-template-columns: 1fr; } .dv__hero { padding-top: 110px; } }
 </style>

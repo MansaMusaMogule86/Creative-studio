@@ -1,147 +1,34 @@
 ---
-// One artwork per division, each with its own motion language.
-// Pure CSS/SVG so five of them cost almost nothing next to the hero's WebGL.
-// The parent toggles `.is-active` (hover, focus or tap) to energise the piece.
+// A division's 3D artwork. Every stage first shows a pre-rendered still of the
+// same scene (scripts/render-stills.mjs); the stage manager then brings the
+// single shared WebGL canvas to the active, visible stage on capable devices.
 import type { Division } from '../../data/divisions';
-interface Props { division: Division; size?: 'sm' | 'lg' }
-const { division: d, size = 'sm' } = Astro.props;
-const [a, b, c] = d.palette;
-
-// Deterministic particle field for the AI organism.
-const particles = Array.from({ length: 46 }, (_, i) => {
-  const phi = Math.acos(1 - (2 * (i + 0.5)) / 46);
-  const theta = Math.PI * (1 + Math.sqrt(5)) * i;
-  return {
-    x: 50 + 30 * Math.sin(phi) * Math.cos(theta),
-    y: 50 + 30 * Math.cos(phi),
-    r: 1 + ((i * 7) % 5) * 0.35,
-    delay: ((i * 37) % 23) / 10,
-  };
-});
-const nodes = [[20, 70], [50, 54], [80, 70], [35, 30], [65, 30], [50, 12], [20, 40], [80, 40]];
-const edges = [[0, 1], [1, 2], [0, 6], [2, 7], [6, 3], [7, 4], [3, 5], [4, 5], [3, 1], [4, 1], [6, 1], [7, 1]];
+interface Props { division: Division; variant?: 'panel' | 'hero'; eager?: boolean }
+const { division: d, variant = 'panel', eager = false } = Astro.props;
+const sq = (w: number) => `/renders/div3d-${d.slug}-${w}.webp`;
+const wide = (w: number) => `/renders/div3d-${d.slug}-wide-${w}.webp`;
 ---
-<div class={`art art--${d.slug} art--${size}`} style={`--a:${a};--b:${b};--c:${c}`} aria-hidden="true">
-  {d.slug === 'digital' && (
-    <div class="room">
-      <span class="room__floor"></span>
-      <div class="screens">
-        {['s', 'w', 'g', 'v'].map((k, i) => (
-          <span class={`scr scr--${k}`} style={`--i:${i}`}>
-            <b class="scr__bar"><i></i><i></i></b>
-            {k === 'w' && <b class="scr__avatar"></b>}
-            <b class="scr__line"></b><b class="scr__line s"></b><b class="scr__line"></b>
-            {k !== 'w' && <b class="scr__line s"></b>}
-            {k === 's' && <b class="scr__cta"></b>}
-          </span>
-        ))}
-      </div>
-    </div>
-  )}
-  {d.slug === 'ai' && (
-    <svg viewBox="0 0 100 100" class="organism">
-      <defs>
-        <radialGradient id={`core-${size}`}><stop offset="0" stop-color="#fff" /><stop offset=".4" stop-color={a} stop-opacity=".9" /><stop offset="1" stop-color={a} stop-opacity="0" /></radialGradient>
-      </defs>
-      <circle class="core" cx="50" cy="50" r="22" fill={`url(#core-${size})`} />
-      <g class="swarm">
-        {particles.map((p) => <circle cx={p.x} cy={p.y} r={p.r} style={`--dl:${p.delay}s`} />)}
-      </g>
-    </svg>
-  )}
-  {d.slug === 'growth' && (
-    <div class="bloom">
-      {[0, 1, 2, 3, 4, 5].map((i) => <span style={`--i:${i}`}></span>)}
-      <b></b>
-    </div>
-  )}
-  {d.slug === 'creative' && (
-    <div class="morph"><span></span><span></span></div>
-  )}
-  {d.slug === 'strategy' && (
-    <svg viewBox="0 0 100 84" class="lattice">
-      {edges.map(([p, q]) => <line x1={nodes[p][0]} y1={nodes[p][1]} x2={nodes[q][0]} y2={nodes[q][1]} pathLength="1" />)}
-      {nodes.map(([x, y], i) => <circle cx={x} cy={y} r="2.6" style={`--i:${i}`} />)}
-    </svg>
-  )}
+<div class={`dstage dstage--${variant}`} data-stage={d.slug} style={`--a:${d.palette[0]};--b:${d.palette[1]}`}>
+  <picture class="dstage__still" aria-hidden="true">
+    <source media="(max-width: 1023px)" srcset={`${wide(600)} 600w, ${wide(1200)} 1200w`} sizes="100vw" width="1200" height="760" />
+    <img src={sq(500)} srcset={`${sq(500)} 500w, ${sq(1000)} 1000w`} sizes={variant === 'hero' ? '(max-width: 1440px) 40vw, 560px' : '(max-width: 1440px) 30vw, 420px'}
+      width="1000" height="1000" alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} />
+  </picture>
 </div>
 
+<script>
+  import '../../scripts/stage-manager';
+</script>
+
 <style>
-  .art { position: relative; width: 100%; aspect-ratio: 1; display: grid; place-items: center; transition: transform 1s var(--ease-out); }
-  .art--lg { max-width: 520px; }
-  :global(.is-active) > .art, :global(.is-active) .art { transform: scale(1.06); }
-
-  /* 01 Digital: floating spatial interfaces in a soft room */
-  .room { position: relative; width: 100%; aspect-ratio: 1; perspective: 900px; }
-  .room__floor { position: absolute; inset: 62% -6% 4%; border-radius: 22px; background: linear-gradient(180deg, color-mix(in srgb, var(--c) 18%, white), color-mix(in srgb, var(--c) 32%, white)); transform: rotateX(62deg); box-shadow: 0 -1px 0 rgb(255 255 255 / 0.9) inset; }
-  .screens { position: absolute; inset: 14% 4% 22%; transform-style: preserve-3d; transform: rotateY(-24deg) rotateX(4deg); }
-  .scr {
-    position: absolute; top: calc(8% + var(--i) * 3%); left: calc(var(--i) * 21%); width: 30%; height: 62%;
-    display: flex; flex-direction: column; gap: 6%; padding: 5% 4%; border-radius: 12%/8%;
-    background: rgb(255 255 255 / 0.9); border: 1px solid rgb(255 255 255 / 0.95);
-    box-shadow: 0 24px 40px -22px color-mix(in srgb, var(--c) 80%, transparent), 0 0 0 1px color-mix(in srgb, var(--c) 30%, transparent);
-    transform: translateZ(calc(var(--i) * -18px)); transition: transform 1.1s var(--ease-out), left 1.1s var(--ease-out);
-    animation: hover-scr 7s var(--ease-in-out) infinite; animation-delay: calc(var(--i) * -1.6s);
-  }
-  .scr--s { width: 22%; height: 34%; top: 36%; left: -2%; }
-  .scr--g { background: linear-gradient(170deg, var(--a), #7ee0a8 95%); height: 70%; }
-  .scr--v { background: linear-gradient(170deg, var(--a), var(--c) 55%, #8c5cf0); height: 70%; }
-  .scr b { display: block; border-radius: 99px; background: rgb(37 36 60 / 0.14); }
-  .scr--g b, .scr--v b { background: rgb(255 255 255 / 0.6); }
-  .scr__bar { display: flex !important; gap: 8%; background: none !important; height: 6%; }
-  .scr__bar i { width: 14%; aspect-ratio: 1; border-radius: 50%; background: currentColor; opacity: 0.25; }
-  .scr__avatar { width: 38% !important; aspect-ratio: 1; margin: 4% auto 2%; border-radius: 50% !important; background: radial-gradient(circle at 35% 35%, #fff, var(--a) 60%, var(--c)) !important; }
-  .scr__line { height: 5%; } .scr__line.s { width: 62%; }
-  .scr__cta { height: 12%; width: 40%; margin-top: auto; margin-inline-start: auto; background: var(--a) !important; }
-  :global(.is-active) .scr { transform: translateZ(calc(var(--i) * 26px)); left: calc(var(--i) * 24% - 4%); }
-  :global(.is-active) .scr--s { left: -8%; }
-  @keyframes hover-scr { 50% { translate: 0 -5%; } }
-
-  /* 02 AI: luminous particle organism */
-  .organism { width: 86%; overflow: visible; }
-  .core { transform-origin: 50px 50px; animation: breathe 5s var(--ease-in-out) infinite; }
-  .swarm { transform-origin: 50px 50px; animation: spin 40s linear infinite; transition: transform 1s var(--ease-out); }
-  .swarm circle { fill: var(--b); opacity: 0.75; transform-origin: 50px 50px; animation: pulse 3.2s var(--ease-in-out) infinite; animation-delay: var(--dl); }
-  :global(.is-active) .swarm { transform: scale(1.18); }
-  :global(.is-active) .swarm circle { fill: var(--b); opacity: 1; }
-  @keyframes spin { to { rotate: 360deg; } }
-  @keyframes breathe { 50% { transform: scale(1.18); } }
-  @keyframes pulse { 50% { opacity: 0.25; transform: scale(0.94); } }
-
-  /* 03 Growth: organic expanding structures */
-  .bloom { position: relative; width: 70%; aspect-ratio: 1; }
-  .bloom span {
-    position: absolute; inset: 18% 34%; border-radius: 50% 50% 46% 46%;
-    background: linear-gradient(180deg, color-mix(in srgb, var(--a) 85%, white), color-mix(in srgb, var(--b) 70%, transparent));
-    transform-origin: 50% 100%; translate: 0 -18%; rotate: calc(var(--i) * 60deg); opacity: 0.55;
-    mix-blend-mode: multiply; animation: grow 5.5s var(--ease-in-out) infinite; animation-delay: calc(var(--i) * -0.6s);
-    transition: inset 1s var(--ease-out);
-  }
-  .bloom b { position: absolute; inset: 42%; border-radius: 50%; background: var(--c); box-shadow: 0 0 30px var(--a); }
-  :global(.is-active) .bloom span { inset: 6% 32%; opacity: 0.7; }
-  @keyframes grow { 50% { scale: 1.12 1.2; } }
-
-  /* 04 Creative: a sculpture that changes shape and material */
-  .morph { position: relative; width: 62%; aspect-ratio: 1; }
-  .morph span {
-    position: absolute; inset: 0; border-radius: 42% 58% 63% 37% / 45% 38% 62% 55%;
-    background: conic-gradient(from 90deg, var(--a), var(--b), var(--c), var(--a));
-    animation: blob 9s var(--ease-in-out) infinite, hue 12s linear infinite;
-    box-shadow: inset -14px -18px 40px rgb(255 255 255 / 0.7), inset 10px 14px 30px rgb(138 46 115 / 0.15);
-    transition: filter 0.8s;
-  }
-  .morph span + span { inset: 18%; mix-blend-mode: soft-light; background: radial-gradient(circle at 30% 30%, #fff, transparent 60%); animation-direction: reverse; }
-  :global(.is-active) .morph span:first-child { filter: saturate(1.5) contrast(1.05); animation-duration: 4.5s, 6s; }
-  @keyframes blob {
-    33% { border-radius: 63% 37% 41% 59% / 58% 64% 36% 42%; rotate: 60deg; }
-    66% { border-radius: 36% 64% 52% 48% / 33% 45% 55% 67%; rotate: -30deg; }
-  }
-  @keyframes hue { to { filter: hue-rotate(40deg); } }
-
-  /* 05 Strategy: interconnected architecture */
-  .lattice { width: 82%; overflow: visible; }
-  .lattice line { stroke: var(--c); stroke-width: 0.6; stroke-dasharray: 1; stroke-dashoffset: 0.55; opacity: 0.55; transition: stroke-dashoffset 1.4s var(--ease-out), opacity 0.6s; }
-  .lattice circle { fill: var(--a); stroke: var(--c); stroke-width: 0.6; transform-box: fill-box; transform-origin: center; animation: node 4s var(--ease-in-out) infinite; animation-delay: calc(var(--i) * -0.5s); }
-  :global(.is-active) .lattice line { stroke-dashoffset: 0; opacity: 0.9; }
-  @keyframes node { 50% { transform: scale(1.35); } }
+  .dstage { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: inherit; background: color-mix(in srgb, var(--a) 24%, #f8f7ff); isolation: isolate; }
+  .dstage__still, .dstage__still img { display: block; width: 100%; height: 100%; }
+  .dstage__still img { object-fit: cover; }
+  .dstage :global(.dstage__canvas) { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s var(--ease-out); }
+  .dstage:global(.is-live) :global(.dstage__canvas) { opacity: 1; }
+  /* No live WebGL (software GPU, no WebGL): the real render, gently floating. */
+  :global(.stage-still) .dstage__still img { animation: dstage-float 9s var(--ease-in-out) infinite alternate; transform-origin: 50% 60%; }
+  @keyframes dstage-float { from { transform: scale(1.02) translateY(0) rotate(0deg); } to { transform: scale(1.05) translateY(-1.5%) rotate(-0.6deg); } }
+  @media (max-width: 1023px) { .dstage { aspect-ratio: 1200 / 760; } }
+  @media (prefers-reduced-motion: reduce) { :global(.stage-still) .dstage__still img { animation: none; } }
 </style>

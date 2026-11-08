@@ -10,6 +10,8 @@ export type Still = {
   palette?: Palette;
   /** Render the Open Graph layout (headline over the sculpture) instead of a bare frame. */
   og?: boolean;
+  /** Render a division 3D scene instead of the hero sculpture. */
+  scene?: Division['slug'];
   /** Output widths; defaults to full and half. */
   widths?: number[];
 };
@@ -23,7 +25,7 @@ export const PALETTES: Record<Division['slug'], Palette> = {
   strategy: { lights: ['#e9cf98', '#fbf1dc', '#6d6b7a'], tint: '#efdcb4', fields: ['#f3e4c6', '#fbf6ec', '#e3e0e8'] },
 };
 
-// One signature angle per division; desktop is square, wide is for tablet/phone.
+// Signature sculpture angles reused by the Selected Work concept renders.
 const DIV_ANGLES: Record<Division['slug'], Pick<Still, 't' | 'rx' | 'ry' | 'rz'>> = {
   digital: { t: 1.6, rx: 0.2, ry: 0.55, rz: 0.08 },
   ai: { t: 3.1, rx: 0.42, ry: -1.05, rz: -0.12 },
@@ -32,9 +34,13 @@ const DIV_ANGLES: Record<Division['slug'], Pick<Still, 't' | 'rx' | 'ry' | 'rz'>
   strategy: { t: 5.6, rx: 0.3, ry: 0.15, rz: 0.04 },
 };
 
-const divisionStills: Still[] = (Object.keys(DIV_ANGLES) as Division['slug'][]).flatMap((slug) => [
-  { id: `division-${slug}`, width: 1040, height: 1040, fit: 1.05, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1040, 520] },
-  { id: `division-${slug}-wide`, width: 1200, height: 760, fit: 1.0, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1200, 600] },
+// Division 3D artworks (src/scripts/division-scenes.ts) rendered to stills:
+// shown before WebGL boots, for collapsed panels, and where live WebGL is off.
+const SLUGS: Division['slug'][] = ['digital', 'ai', 'growth', 'creative', 'strategy'];
+const DIV_T: Record<Division['slug'], number> = { digital: 3.0, ai: 4.2, growth: 3.4, creative: 2.6, strategy: 2.2 };
+const divisionStills: Still[] = SLUGS.flatMap((slug) => [
+  { id: `div3d-${slug}`, width: 1000, height: 1000, t: DIV_T[slug], rx: 0, ry: 0, scene: slug, widths: [1000, 500] },
+  { id: `div3d-${slug}-wide`, width: 1200, height: 760, t: DIV_T[slug], rx: 0, ry: 0, scene: slug, widths: [1200, 600] },
 ]);
 
 export const stills: Still[] = [
