@@ -9,7 +9,8 @@
     "preview": "astro preview",
     "check": "tsc -p tsconfig.check.json",
     "qa": "node scripts/qa.mjs",
-    "render:stills": "node scripts/render-stills.mjs"
+    "render:stills": "node scripts/render-stills.mjs",
+    "lint": "tsc -p tsconfig.check.json"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.4",

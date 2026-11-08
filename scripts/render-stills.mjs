@@ -12,9 +12,6 @@ const PORT = 4400;
 const OUT = 'public/renders';
 mkdirSync(OUT, { recursive: true });
 
-// Read the still list straight from the source of truth.
-const src = await (await import('node:fs/promises')).readFile('src/data/stills.ts', 'utf8');
-const ids = [...src.matchAll(/id: '([^']+)', width: (\d+), height: (\d+)/g)].map((m) => ({ id: m[1], w: +m[2], h: +m[3] }));
 
 const dev = spawn('npx', ['astro', 'dev', '--port', String(PORT)], { env: { ...process.env, RENDER_STILLS: '1', ASTRO_TELEMETRY_DISABLED: '1' }, stdio: 'pipe' });
 const ready = new Promise((res, rej) => {
@@ -23,15 +20,24 @@ const ready = new Promise((res, rej) => {
 });
 try {
   await ready;
+  // The dev server exposes the still list as JSON (see src/pages/render/stills.json.ts).
+  const list = await (await fetch(`http://localhost:${PORT}/render/stills.json`)).json();
+  const only = process.argv[2] ? new RegExp(process.argv[2]) : null;
   const browser = await chromium.launch();
-  for (const { id, w, h } of ids) {
+  for (const { id, width: w, height: h, widths, og } of list) {
+    if (only && !only.test(id)) continue;
     const page = await browser.newPage({ viewport: { width: w, height: h } });
     await page.goto(`http://localhost:${PORT}/render/${id}`);
     await page.waitForFunction(() => window.__ready === true, null, { timeout: 120000 });
     await page.waitForTimeout(500);
     const png = await page.screenshot({ timeout: 120000 });
-    for (const width of [w, Math.round(w / 2)]) {
-      await sharp(png).resize({ width }).webp({ quality: 82, effort: 6 }).toFile(`${OUT}/${id}-${width}.webp`);
+    if (og) {
+      // Social crawlers expect PNG/JPEG; keep it lean with palette quantisation.
+      await sharp(png).png({ compressionLevel: 9, palette: true, quality: 90 }).toFile('public/og.png');
+    } else {
+      for (const width of widths ?? [w, Math.round(w / 2)]) {
+        await sharp(png).resize({ width }).webp({ quality: 80, effort: 6, smartSubsample: true }).toFile(`${OUT}/${id}-${width}.webp`);
+      }
     }
     console.log('✓', id);
     await page.close();

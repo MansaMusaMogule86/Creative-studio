@@ -20,7 +20,7 @@ type Options = {
   mobile: boolean;
   palette?: Palette;
   /** Render one deterministic frame (used by scripts/render-stills.mjs). */
-  still?: { t: number; rx: number; ry: number; rz?: number; fit?: number };
+  still?: { t: number; rx: number; ry: number; rz?: number; fit?: number; x?: number; y?: number };
 };
 
 export const DEFAULT_PALETTE: Palette = {
@@ -181,7 +181,10 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     const visH = 2 * camera.position.z * Math.tan((camera.fov * Math.PI) / 360);
     const s = Math.min((visH * (w / h)) / 6.0, visH / 5.8) * (opts.still?.fit ?? 1);
     group.scale.setScalar(s);
-    group.position.set(0, 0.25 * s, 0);
+    // Optional offsets (fractions of the visible frame) let still renders
+    // place the sculpture beside text instead of centring it.
+    const visW = visH * (w / h);
+    group.position.set((opts.still?.x ?? 0) * visW, 0.25 * s + (opts.still?.y ?? 0) * visH, 0);
     shadow.position.set(group.position.x, group.position.y - 2.6 * s, -1);
     shadow.scale.setScalar(s);
   };

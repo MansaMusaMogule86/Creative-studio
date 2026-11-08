@@ -3,6 +3,7 @@
 **We architect what's next.** This is a homepage prototype for the proposed new light, holographic identity. It is **not deployed** and does not replace any approved brand asset.
 
 - Creative directions and the recommendation: [`docs/creative-directions.md`](docs/creative-directions.md)
+- Full-site audit and proposed build order: [`docs/full-site-audit.md`](docs/full-site-audit.md)
 - Proposed identity sheet: `/brand` (excluded from the sitemap and set to noindex)
 - Round 2 references: bento hero composition (facts row, pill navigation, division pills over the sculpture card) and spatial floating interfaces (Moguls Digital artwork). Only true facts appear in the hero: Dubai, 5 divisions, 52 services.
 
@@ -17,7 +18,7 @@ Tailwind was left out on purpose: the design runs on roughly 40 tokens in `src/s
 ```bash
 pnpm install
 pnpm dev                     # http://localhost:4321
-pnpm check                   # TypeScript (tsc) over .ts/.tsx
+pnpm lint                    # strict TypeScript (tsc) over .ts/.tsx (alias: pnpm check)
 pnpm build && pnpm preview   # production build
 pnpm qa                      # with preview running: responsive, axe, links, flows, reduced motion
 pnpm render:stills           # re-render sculpture stills to public/renders (local, free)

@@ -1,7 +1,8 @@
 // Local QA: run against `pnpm preview` (default http://localhost:4321).
 //   pnpm build && pnpm preview &   then   pnpm qa
 // Checks: console errors, horizontal overflow at 320–1440 px, axe (WCAG 2.1 AA),
-// internal links, the inquiry form, Ask Moguls, the division explorer and reduced motion.
+// internal links, the inquiry form, Ask Moguls, the division explorer, reduced motion,
+// sculpture overlap, image loading/weight/art direction and the no-WebGL fallback.
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 const require = createRequire(import.meta.url);
@@ -134,6 +135,81 @@ for (const w of WIDTHS) {
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
   const hidden = await p.$$eval('[data-reveal]', (els) => els.filter((e) => getComputedStyle(e).opacity === '0').length);
   if (hidden) fail(`reduced motion: ${hidden} reveal element(s) still hidden`); else ok('reduced motion: all content visible without animation');
+  await ctx.close();
+}
+
+// 5. Visual integrity: the sculpture never overlaps navigation, headings or buttons.
+const GUARDED = {
+  '/': { art: ['.tile--stage', '.stage__pills', '.stage__label'], keep: ['.hdr__bar', '#hero-title', '.hero__ctas', '.hero__facts', '.hero__copy'] },
+  '/universe/digital': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.dv__crumb', '.lede'] },
+  '/universe/ai': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+  '/universe/growth': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+  '/universe/creative': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+  '/universe/strategy': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+};
+for (const w of WIDTHS) {
+  const p = await browser.newPage({ viewport: { width: w, height: w < 768 ? 800 : 900 } });
+  for (const [path, g] of Object.entries(GUARDED)) {
+    await p.goto(BASE + path, { waitUntil: 'networkidle' });
+    await p.waitForTimeout(1600); // let entrance animations settle
+    const hits = await p.evaluate(({ art, keep }) => {
+      const box = (sel) => [...document.querySelectorAll(sel)].filter((e) => e.getClientRects().length).map((e) => ({ sel, r: e.getBoundingClientRect() }));
+      const hit = (a, b) => a.left < b.right - 1 && b.left < a.right - 1 && a.top < b.bottom - 1 && b.top < a.bottom - 1;
+      const out = [];
+      for (const a of art.flatMap(box)) for (const k of keep.flatMap(box)) if (hit(a.r, k.r)) out.push(`${a.sel} × ${k.sel}`);
+      return out;
+    }, g);
+    if (hits.length) fail(`${path} @${w}: sculpture overlaps ${hits.join(', ')}`);
+    // Composition: on desktop the division artwork must sit fully above the fold.
+    if (path.startsWith('/universe/') && w >= 1024) {
+      const bottom = await p.$eval('.dv__art', (e) => e.getBoundingClientRect().bottom - innerHeight);
+      if (bottom > 0) fail(`${path} @${w}: division artwork runs ${Math.round(bottom)}px below the fold`);
+    }
+  }
+  await p.close();
+}
+ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 widths)');
+
+// 6. Assets: every image decodes, lazy images stay lazy, first-load weight is bounded.
+{
+  for (const [w, label] of [[1440, 'desktop'], [390, 'mobile']]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: w < 768 ? 800 : 900 }, deviceScaleFactor: w < 768 ? 2 : 1 });
+    for (const path of ['/', '/universe/digital', '/universe/strategy']) {
+      const p = await ctx.newPage();
+      await p.goto(BASE + path, { waitUntil: 'networkidle' });
+      const first = await p.evaluate(() => performance.getEntriesByType('resource').filter((r) => /\.(webp|png|jpe?g|avif)$/.test(r.name)).map((r) => ({ n: r.name.split('/').pop(), b: r.transferSize || r.encodedBodySize })));
+      const kb = Math.round(first.reduce((a, r) => a + r.b, 0) / 1024);
+      if (path === '/' && first.some((r) => /^(work-|bg-contact)/.test(r.n))) fail(`${path} ${label}: below-the-fold renders loaded eagerly: ${first.map((r) => r.n).join(', ')}`);
+      if (kb > 250) fail(`${path} ${label}: ${kb} KB of images on first load (budget 250 KB)`);
+      const wrongVariant = first.filter((r) => (label === 'mobile' ? /hero-card-\d|division-\w+-\d{3,4}\.webp$/.test(r.n) && !/wide|mobile/.test(r.n) : /wide|mobile/.test(r.n)));
+      if (wrongVariant.length) fail(`${path} ${label}: wrong art direction served: ${wrongVariant.map((r) => r.n).join(', ')}`);
+      await scrollThrough(p);
+      await p.waitForLoadState('networkidle');
+      const broken = await p.$$eval('img', (imgs) => imgs.filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.currentSrc || i.src));
+      if (broken.length) fail(`${path} ${label}: images failed to decode: ${broken.join(', ')}`);
+      ok(`${path} ${label}: ${first.length} image(s), ${kb} KB on first load; all images decode`);
+      await p.close();
+    }
+    await ctx.close();
+  }
+}
+
+// 7. WebGL fallback: with WebGL unavailable the hero shows the rendered still.
+{
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
+  await ctx.addInitScript(() => {
+    const o = HTMLCanvasElement.prototype.getContext;
+    HTMLCanvasElement.prototype.getContext = function (t, ...a) { return /webgl/.test(t) ? null : o.call(this, t, ...a); };
+  });
+  const p = await ctx.newPage();
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  await p.waitForTimeout(1500);
+  const state = await p.evaluate(() => {
+    const img = document.querySelector('.stage__fallback img');
+    const c = document.querySelector('[data-sculpture]');
+    return { img: !!img && img.complete && img.naturalWidth > 0, canvasHidden: getComputedStyle(c).opacity === '0' };
+  });
+  if (!state.img || !state.canvasHidden) fail(`no-WebGL fallback: ${JSON.stringify(state)}`); else ok('no-WebGL: hero shows the rendered still, canvas stays hidden');
   await ctx.close();
 }
 
