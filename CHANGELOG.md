@@ -3,6 +3,29 @@
 All notable changes to the Mansas Moguls website. Newest first. Branch: `claude/affectionate-sagan-nrj1c8`.
 
 ## Unreleased
+- **Showcase replaces the placeholder "Selected work":**
+  - The four "Placeholder · concept render" cards, all made from the same white ribbon, are gone.
+  - In their place: five live 3D sculptures, each with its own geometry and materials, built in three.js with transmission glass, iridescence and PMREM reflections:
+    - Digital: cyan laptop and globe;
+    - AI: violet neural bust and chip;
+    - Growth: coral columns and arrow;
+    - Creative: pink glass M with ribbons;
+    - Strategy: champagne crystal king.
+  - Division tabs switch the sculpture, with an Explore link for each division.
+  - One shared canvas, lazy-loaded near the viewport, paused off-screen and disposed on pagehide; adaptive DPR.
+  - Stills of the same scenes are the first paint and the fallback without WebGL; reduced motion gets one still frame.
+  - Labelled honestly as studio artworks, not client projects. The nav item is renamed "Showcase" (still `/#work`).
+- **Services:**
+  - The decorative gradient orbs are removed.
+  - Each service has a meaningful Lucide icon in a tile in its division's accent colour.
+  - The two underlined links become clear buttons: "Start a project" (keeps `data-inquire` and the form prefill) and "Service details".
+  - Tighter mobile rows.
+  - Fixed the open-row minus bar, which rendered at 0 px.
+- **One Team:**
+  - Four distinct materials: iridescent pearl, crystal grid, neural points, rose-gold metal.
+  - Each discipline's role is revealed on hover, focus or tap.
+- **Dependencies:** added `@lucide/astro` (ISC). `src/astro-modules.d.ts` lets plain `tsc` type-check its `.astro` import.
+- **Removed:** the `work-*` ribbon renders and unused square `div3d` stills.
 - **"One team" diagram redesigned:** four translucent glass orbs (Creativity, Engineering, Intelligence, Commerce), each with:
   - an iridescent rim that slowly rotates;
   - specular highlights;

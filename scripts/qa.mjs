@@ -302,6 +302,24 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
   await p.waitForTimeout(1500);
   if (!(await frameDiff('[data-sculpture]'))) fail('hero sculpture canvas did not change between frames');
   else ok('hero sculpture animates in real time');
+  // Showcase: live 3D sculpture animates, one shared canvas across all five.
+  {
+    await p.goto(BASE + '/?force-webgl', { waitUntil: 'networkidle' });
+    await p.evaluate(() => document.getElementById('work').scrollIntoView({ behavior: 'instant' }));
+    await p.waitForFunction(() => document.querySelector('[data-show-stage].is-live canvas'), null, { timeout: 90000 }).catch(() => {});
+    if (!(await p.$('[data-show-stage].is-live canvas'))) fail('showcase: 3D stage did not go live');
+    else {
+      await p.waitForTimeout(1200);
+      if (!(await frameDiff('[data-show-stage]'))) fail('showcase: 3D sculpture did not animate');
+      else ok('showcase: live 3D sculpture animates');
+      for (const slug of ['ai', 'growth', 'creative', 'strategy']) { await p.click('#show-tab-' + slug); await p.waitForTimeout(1500); }
+      const st = await p.evaluate(() => ({ canvases: document.querySelectorAll('canvas.dstage__canvas').length, sel: document.querySelector('.show__tabs [aria-selected=true]').dataset.slug, info: [...document.querySelectorAll('[data-info]')].filter((e) => !e.hidden).map((e) => e.dataset.info) }));
+      if (st.canvases !== 1 || st.sel !== 'strategy' || st.info.join() !== 'strategy') fail(`showcase: ${JSON.stringify(st)}`);
+      else ok('showcase: five sculptures share one canvas; tabs switch scene and caption');
+    }
+    const labels = await p.evaluate(() => /placeholder|concept render/i.test(document.querySelector('main').innerText));
+    if (labels) fail('homepage still shows PLACEHOLDER / CONCEPT RENDER labels'); else ok('no placeholder or concept-render labels on the homepage');
+  }
   // Division artworks are the owner's images, shown whole and unaltered.
   for (const slug of ['digital', 'ai', 'growth', 'creative', 'strategy']) {
     await p.goto(BASE + `/universe/${slug}`, { waitUntil: 'networkidle' });

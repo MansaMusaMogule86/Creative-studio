@@ -12,6 +12,8 @@ export type Still = {
   og?: boolean;
   /** Output widths; defaults to full and half. */
   widths?: number[];
+  /** Render a showcase division scene instead of the hero sculpture. */
+  scene?: Division['slug'];
 };
 
 // The five division palettes, matching src/data/divisions.ts accents.
@@ -23,27 +25,22 @@ export const PALETTES: Record<Division['slug'], Palette> = {
   strategy: { lights: ['#e9cf98', '#fbf1dc', '#6d6b7a'], tint: '#efdcb4', fields: ['#f3e4c6', '#fbf6ec', '#e3e0e8'] },
 };
 
-// Signature sculpture angles reused by the Selected Work concept renders.
-const DIV_ANGLES: Record<Division['slug'], Pick<Still, 't' | 'rx' | 'ry' | 'rz'>> = {
-  digital: { t: 1.6, rx: 0.2, ry: 0.55, rz: 0.08 },
-  ai: { t: 3.1, rx: 0.42, ry: -1.05, rz: -0.12 },
-  growth: { t: 2.4, rx: -0.1, ry: -0.15, rz: -0.25 },
-  creative: { t: 4.4, rx: -0.18, ry: 1.35, rz: 0.2 },
-  strategy: { t: 5.6, rx: 0.3, ry: 0.15, rz: 0.04 },
-};
 
+// Showcase sculptures (src/scripts/division-scenes.ts) rendered to stills:
+// first paint, and the fallback without live WebGL.
+const SLUGS: Division['slug'][] = ['digital', 'ai', 'growth', 'creative', 'strategy'];
+const DIV_T: Record<Division['slug'], number> = { digital: 3.0, ai: 4.2, growth: 3.4, creative: 2.6, strategy: 2.2 };
+const divisionStills: Still[] = SLUGS.map((slug) => (
+  { id: `div3d-${slug}-wide`, width: 1200, height: 760, t: DIV_T[slug], rx: 0, ry: 0, scene: slug, widths: [1200, 600] }
+));
 
 export const stills: Still[] = [
   // Hero card: desktop + phone framings of the default (all-division) palette.
   { id: 'hero-card', width: 1320, height: 760, t: 0.8, rx: 0.12, ry: -0.45 },
   { id: 'hero-card-mobile', width: 700, height: 805, t: 0.8, rx: 0.12, ry: -0.45 },
-  // Selected-work placeholders (concept renders, labelled as such in the UI).
-  { id: 'work-digital', width: 1400, height: 1050, fit: 0.95, ...DIV_ANGLES.digital, palette: PALETTES.digital },
-  { id: 'work-ai', width: 1200, height: 1080, fit: 0.9, ...DIV_ANGLES.ai, palette: PALETTES.ai },
-  { id: 'work-creative', width: 1200, height: 1080, fit: 0.9, ...DIV_ANGLES.creative, palette: PALETTES.creative },
-  { id: 'work-growth', width: 1400, height: 1050, fit: 0.95, ...DIV_ANGLES.growth, palette: PALETTES.growth },
   // Section background: sculpture parked to the right, behind the contact form.
   { id: 'bg-contact', width: 1800, height: 1100, t: 6.2, rx: 0.28, ry: 0.9, rz: 0.1, fit: 0.72, x: 0.2, y: 0.02, widths: [1800, 900] },
   // Open Graph sharing image (PNG, see render script).
+  ...divisionStills,
   { id: 'og', width: 1200, height: 630, t: 0.8, rx: 0.12, ry: -0.45, fit: 0.86, x: 0.24, og: true },
 ];
