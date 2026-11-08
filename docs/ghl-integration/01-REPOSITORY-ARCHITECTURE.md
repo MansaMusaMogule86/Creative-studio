@@ -10,10 +10,10 @@ All facts are **VERIFIED** from source, `package.json` and `node_modules` at com
 | 3D and motion | three 0.187.0 (lazy), GSAP 3.15.1 + ScrollTrigger | `src/scripts/sculpture.ts`, `src/components/Philosophy.astro`, `src/components/Method.astro` |
 | Language | TypeScript (strict). `pnpm lint` = `pnpm check` = `tsc -p tsconfig.check.json` (`.ts` and `.tsx` only) | `package.json` scripts, `tsconfig.check.json` |
 | Package manager | **pnpm** (`pnpm-lock.yaml`) | repo root |
-| Integrations | `@astrojs/sitemap` (excludes `/brand`) | `astro.config.mjs:12` |
+| Integrations | `@astrojs/sitemap`, production builds only; lists canonical pages only (excludes `/brand`, `/legal/*`, `/404`). `SITE_ENV`≠production → noindex everywhere, robots `Disallow: /`, no sitemap | `astro.config.mjs:18`, `src/config/site.ts`, `src/pages/robots.txt.ts` |
 | i18n | `en` (published), `fr`/`ar`/`zh` configured, no routes; RTL helper | `astro.config.mjs:13-19`, `src/i18n/index.ts` |
 | Server routes | `src/pages/robots.txt.ts` (static at build). `src/pages/render/[list].json.ts` and `render/[id].astro` are **dev-only** (emitted only with `RENDER_STILLS=1`) | files listed |
-| Environment | `SITE_URL` (build-time), `PUBLIC_INQUIRY_ENDPOINT` (browser-exposed) | `.env.example`, `astro.config.mjs:8`, `src/components/InquiryForm.tsx:12` |
+| Environment | `SITE_URL` (build-time), `PUBLIC_INQUIRY_ENDPOINT` (browser-exposed) | `.env.example`, `astro.config.mjs:8`, `src/components/InquiryForm.tsx:13` |
 | Deployment config | **None** (no Vercel, Netlify, Cloudflare, Docker or CI). `ci/` doesn't exist in this repo | `ls` of repo root |
 | Auth | None | — |
 | Analytics, consent, logging, monitoring | None | grep of `src/` (see `02`) |

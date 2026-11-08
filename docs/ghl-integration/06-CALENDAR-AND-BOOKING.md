@@ -1,7 +1,7 @@
 # 06 · Calendar and booking
 
 ## Current state (VERIFIED)
-There are **no booking CTAs, calendars or booking embeds** on the site. Grep of `src/` for `booking` and `calendly` returns nothing. The form only records a *preferred* contact method, which includes "Video call" (`src/components/InquiryForm.tsx:164`).
+There are **no booking CTAs, calendars or booking embeds** on the site. Grep of `src/` for `booking` and `calendly` returns nothing. The form only records a *preferred* contact method, which includes "Video call" (`src/components/InquiryForm.tsx:165`).
 
 ## Recommendation (PROPOSED)
 - **Launch:** after a successful inquiry, show **"Book a discovery call"**. It links to (or embeds on a separate page) a **GHL calendar booking page**, set in `PUBLIC_DISCOVERY_BOOKING_URL`. HighLevel then handles time zones, availability, confirmations, reminders and rescheduling natively. The contact matches on email, so the booking joins the same contact.

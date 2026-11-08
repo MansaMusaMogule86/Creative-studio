@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useId, useRef, useState } from 'react';
 import { match, type Match } from '../lib/intent';
 import { isScrollLocked, lockScroll, unlockScroll } from '../scripts/scroll-lock';
+import { withBoundary } from './IslandBoundary';
 
 type Msg = { role: 'you' | 'moguls'; text: string; result?: Match };
 
@@ -24,7 +25,7 @@ export const prefill = (slugs: string[]) => {
   document.getElementById('contact')?.scrollIntoView({ behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
 };
 
-export default function AskMoguls() {
+function AskMoguls() {
   const [open, setOpen] = useState(false);
   const [fullscreen, setFullscreen] = useState(false);
   const [input, setInput] = useState('');
@@ -289,3 +290,6 @@ export default function AskMoguls() {
     </div>
   );
 }
+
+// The service finder is optional: if it fails, render nothing rather than a broken widget.
+export default withBoundary(AskMoguls, 'ask-moguls', null);

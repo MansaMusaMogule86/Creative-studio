@@ -4,6 +4,7 @@
 
 - Creative directions and the recommendation: [`docs/creative-directions.md`](docs/creative-directions.md)
 - Full-site audit and proposed build order: [`docs/full-site-audit.md`](docs/full-site-audit.md)
+- Launch checklist with evidence: [`docs/LAUNCH-CHECKLIST.md`](docs/LAUNCH-CHECKLIST.md) · Operations (environments, release, rollback, headers, maintenance): [`docs/OPERATIONS.md`](docs/OPERATIONS.md) · [`CHANGELOG.md`](CHANGELOG.md)
 - Identity sheet: `/brand` (noindex). Brand assets are generated from `brand-source/crowned-m-master.png` by `pnpm brand:assets`
 - Round 2 references: bento hero composition (facts row, pill navigation, division pills over the sculpture card) and spatial floating interfaces (Moguls Digital artwork). Only true facts appear in the hero: Dubai, 5 divisions, 52 services.
 
@@ -26,7 +27,7 @@ pnpm render:stills           # re-render sculpture stills to public/renders (loc
 pnpm brand:assets            # regenerate emblem, favicons, app icons from the master
 ```
 
-Set `SITE_URL` before a real build; canonical, Open Graph and sitemap URLs come from it. See `.env.example`.
+Set `SITE_URL` (and `SITE_ENV=staging` for any non-production build) before a real build; canonical, Open Graph and sitemap URLs come from it. See `.env.example`.
 
 ## What's real and what's a placeholder
 

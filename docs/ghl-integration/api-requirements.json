@@ -1,7 +1,7 @@
 {
   "$comment": "HighLevel API v2 requirements. Sources are official doc pages as quoted in web search results (the docs host marketplace.gohighlevel.com was blocked by this environment's network policy, so pages were not opened directly). Everything marked NEEDS CONFIRMATION must be checked on the live docs before implementation.",
   "generatedAt": "2026-11-08",
-  "baseUrl": { "value": "https://services.leadconnectorhq.com", "status": "VERIFIED (official doc snippets)" },
+  "baseUrl": { "value": "https://services.leadconnectorhq.com", "status": "VERIFIED via official doc snippets in search results" },
   "headers": {
     "Authorization": { "value": "Bearer {PRIVATE_INTEGRATION_TOKEN}", "status": "VERIFIED (official PIT docs snippet)" },
     "Version": { "value": "2021-07-28", "status": "NEEDS CONFIRMATION — required on every call; most examples use 2021-07-28, while the custom-fields example shows 'v3'" },
@@ -38,11 +38,11 @@
     { "scope": "calendars/events.write", "for": "create appointment (only if building custom booking)", "status": "VERIFIED (official scopes page snippet)", "launch": false }
   ],
   "endpoints": [
-    { "id": "contacts.upsert", "method": "POST", "path": "/contacts/upsert", "status": "VERIFIED (official doc page)", "notes": "Follows the location's 'Allow Duplicate Contact' setting; when two contacts match, updates the one matching the first field in the configured sequence. Body field names NEEDS CONFIRMATION.", "docs": "https://marketplace.gohighlevel.com/docs/ghl/contacts/upsert-contact.md" },
-    { "id": "opportunities.create", "method": "POST", "path": "/opportunities/", "status": "VERIFIED (official doc page)", "requiredBody": ["pipelineId", "locationId", "name", "status"], "notes": "pipelineStageId required status NEEDS CONFIRMATION", "docs": "https://marketplace.gohighlevel.com/docs/ghl/opportunities/create-opportunity.md" },
+    { "id": "contacts.upsert", "method": "POST", "path": "/contacts/upsert", "status": "VERIFIED via official doc page as quoted in search results (page not opened directly)", "notes": "Follows the location's 'Allow Duplicate Contact' setting; when two contacts match, updates the one matching the first field in the configured sequence. Body field names NEEDS CONFIRMATION.", "docs": "https://marketplace.gohighlevel.com/docs/ghl/contacts/upsert-contact.md" },
+    { "id": "opportunities.create", "method": "POST", "path": "/opportunities/", "status": "VERIFIED via official doc page as quoted in search results (page not opened directly)", "requiredBody": ["pipelineId", "locationId", "name", "status"], "notes": "pipelineStageId required status NEEDS CONFIRMATION", "docs": "https://marketplace.gohighlevel.com/docs/ghl/opportunities/create-opportunity.md" },
     { "id": "opportunities.upsert", "method": "NEEDS CONFIRMATION", "path": "NEEDS CONFIRMATION", "status": "Doc page exists: Upsert Opportunity", "docs": "https://marketplace.gohighlevel.com/docs/ghl/opportunities/upsert-opportunity.md" },
     { "id": "opportunities.pipelines", "method": "GET", "path": "NEEDS CONFIRMATION", "status": "Doc page exists: pipelines", "docs": "https://marketplace.gohighlevel.com/docs/2021-04-15/ghl/opportunities/pipelines" },
-    { "id": "locations.customFields", "method": "GET", "path": "/locations/{locationId}/customFields", "status": "VERIFIED (official doc page)", "notes": "2023-02-21 version documents a model filter (e.g. opportunity)", "docs": "https://marketplace.gohighlevel.com/docs/ghl/locations/get-custom-fields.md" },
+    { "id": "locations.customFields", "method": "GET", "path": "/locations/{locationId}/customFields", "status": "VERIFIED via official doc page as quoted in search results (page not opened directly)", "notes": "2023-02-21 version documents a model filter (e.g. opportunity)", "docs": "https://marketplace.gohighlevel.com/docs/ghl/locations/get-custom-fields.md" },
     { "id": "contacts.addToWorkflow", "method": "POST", "path": "/contacts/{contactId}/workflow/{workflowId}", "status": "VERIFIED path; scope NEEDS CONFIRMATION", "launch": false, "notes": "Not needed if workflows trigger on opportunity creation or tags.", "docs": "https://marketplace.gohighlevel.com/docs/ghl/contacts/add-contact-to-workflow.md" },
     { "id": "contacts.notes.create", "method": "NEEDS CONFIRMATION", "path": "NEEDS CONFIRMATION", "status": "NEEDS CONFIRMATION" },
     { "id": "contacts.tags.add", "method": "NEEDS CONFIRMATION", "path": "NEEDS CONFIRMATION", "status": "NEEDS CONFIRMATION", "notes": "Tags may also be sent in the upsert body (NEEDS CONFIRMATION)." },

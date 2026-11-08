@@ -6,7 +6,7 @@ Each step is a small PR that must pass `pnpm lint`, `pnpm build` and `pnpm qa`. 
 |---|---|---|---|
 | 0 | Decisions D-01 to D-08 (`13`) | Founder | Answers recorded |
 | 1 | Add the Astro adapter for the chosen host. `src/pages/api/leads.ts` with `prerender = false` returns a **stub 202**. All pages stay prerendered | D-01 | Build output contains static pages + one function; qa green |
-| 2 | `src/lib/leads/schema.ts` (server validation mirroring `InquiryForm.tsx:16-24`), `spam.ts` (honeypot, timing, rate limit), origin check. A unit test runner (vitest, needs approval as a dev dependency) | 1 | Tests for valid, invalid, spam and oversize payloads |
+| 2 | `src/lib/leads/schema.ts` (server validation mirroring `InquiryForm.tsx:17-25`), `spam.ts` (honeypot, timing, rate limit), origin check. A unit test runner (vitest, needs approval as a dev dependency) | 1 | Tests for valid, invalid, spam and oversize payloads |
 | 3 | Form v2 fields (name split, website, country, language, timeline, consent, hidden attribution, submissionId), keeping the approved design. Submit to `/api/leads`. Remove the `PUBLIC_INQUIRY_ENDPOINT` path | 2, D-05 copy | qa form flow updated; axe passes |
 | 4 | `src/lib/integrations/highlevel/*`: config, client (headers, Version, timeouts, retries), errors, fields resolver. **Verify every endpoint and scope on the live docs first** | Docs access, D-03 | Unit tests with a mocked fetch |
 | 5 | `service.ts` intake chain: upsert contact → idempotency → opportunity create or note append → tags. Fallback queue | 4, D-01 (queue) | Tests cover partial failure and retry |

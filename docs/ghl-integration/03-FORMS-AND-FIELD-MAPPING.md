@@ -17,8 +17,8 @@ Booking is the exception: a GHL calendar widget or link (see `06`).
 | Page | `/#contact` (pre-fill from `?service=`, Ask Moguls, Inquire links) |
 | Purpose | New-business enquiry for any division |
 | Fields (v2) | firstName*, lastName, email*, company, website, country, preferredLanguage, services[]*, description*, budget, timeline, preferredChannel* (email/phone/video), phone (required if channel = phone), marketingConsent (unticked checkbox), honeypot (hidden), submissionId (hidden UUID), attribution (hidden: utm_*, landing path, referrer origin, lead_source_detail) |
-| Conditional logic | phone is shown and required only for the phone channel (existing, `InquiryForm.tsx:170-174`); timeline is optional |
-| Client validation | Existing rules (`InquiryForm.tsx:16-24`) plus name split, URL and country checks |
+| Conditional logic | phone is shown and required only for the phone channel (existing, `InquiryForm.tsx:171-175`); timeline is optional |
+| Client validation | Existing rules (`InquiryForm.tsx:17-25`) plus name split, URL and country checks |
 | Server validation | Same rules re-checked server-side (schema validation); `services` must be known slugs from `src/data/divisions.ts`; lengths capped; strings trimmed and normalised; reject unknown keys |
 | Consent language | Privacy notice link under the button (required). A separate, optional, **unticked** marketing opt-in: "Send me occasional updates from Mansas Moguls. You can unsubscribe at any time." **Wording needs legal approval** |
 | Contact behaviour | Upsert by email (location duplicate rules). Never overwrite non-empty CRM fields with empty values |

@@ -19,7 +19,7 @@ Classification used throughout:
 ## 2. Relevant source files
 | Purpose | Path |
 |---|---|
-| Inquiry form (only data capture) | `src/components/InquiryForm.tsx` (validation 16-24, prefill 37-52, payload 68, submit 69-75, prototype notice 93) |
+| Inquiry form (only data capture) | `src/components/InquiryForm.tsx` (validation 17-25, prefill 38-53, payload 69, submit 70-76, prototype notice 94) |
 | Where it's mounted | `src/components/Contact.astro:21` (`client:visible`) |
 | Ask Moguls (no data sent) | `src/components/AskMoguls.tsx`, `src/lib/intent.ts` |
 | Services and slugs (CRM values) | `src/data/divisions.ts` |

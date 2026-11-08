@@ -1,5 +1,5 @@
 {
-  "$comment": "Mansas Moguls conversion inventory. status: VERIFIED (from code), PROPOSED, NEEDS CONFIRMATION, BLOCKED. Line numbers refer to commit b3060af on branch claude/affectionate-sagan-nrj1c8.",
+  "$comment": "Mansas Moguls conversion inventory. status: VERIFIED (from code), PROPOSED, NEEDS CONFIRMATION, BLOCKED. Line numbers re-verified against branch claude/affectionate-sagan-nrj1c8 on 2026-11-08 (after commit 6c40065).",
   "generatedAt": "2026-11-08",
   "repositoryCommit": "b3060af",
   "existing": [
@@ -12,22 +12,22 @@
       "anchor": "#contact",
       "component": "InquiryForm (React island, client:visible)",
       "files": [
-        { "path": "src/components/InquiryForm.tsx", "lines": "1-185" },
+        { "path": "src/components/InquiryForm.tsx", "lines": "1-193" },
         { "path": "src/components/Contact.astro", "lines": "21" }
       ],
       "fields": [
-        { "key": "name", "type": "text", "required": true, "clientValidation": "trimmed length >= 2", "ref": "src/components/InquiryForm.tsx:18,112" },
-        { "key": "email", "type": "email", "required": true, "clientValidation": "regex ^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$", "ref": "src/components/InquiryForm.tsx:11,19,117" },
-        { "key": "company", "type": "text", "required": false, "clientValidation": "none", "ref": "src/components/InquiryForm.tsx:123" },
-        { "key": "services", "type": "multi-select (checkbox chips, 52 service slugs in 5 divisions)", "required": true, "clientValidation": ">= 1 selected; prefill accepts only known slugs", "ref": "src/components/InquiryForm.tsx:20,37-52" },
-        { "key": "description", "type": "textarea", "required": true, "clientValidation": "trimmed length >= 20, maxLength 4000", "ref": "src/components/InquiryForm.tsx:21,149" },
-        { "key": "budget", "type": "select", "required": false, "options": ["Prefer not to say", "Under USD 10k", "USD 10k–25k", "USD 25k–75k", "USD 75k–150k", "Above USD 150k"], "default": "Prefer not to say", "ref": "src/components/InquiryForm.tsx:10,14" },
-        { "key": "contact", "type": "radio", "required": true, "options": ["email", "phone", "video"], "default": "email", "ref": "src/components/InquiryForm.tsx:6,14,164" },
-        { "key": "phone", "type": "tel", "required": "only when contact = phone", "clientValidation": "regex ^\\+?[\\d\\s()-]{7,20}$", "ref": "src/components/InquiryForm.tsx:22,170-174" }
+        { "key": "name", "type": "text", "required": true, "clientValidation": "trimmed length >= 2", "ref": "src/components/InquiryForm.tsx:19,113" },
+        { "key": "email", "type": "email", "required": true, "clientValidation": "regex ^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$", "ref": "src/components/InquiryForm.tsx:12,20,118" },
+        { "key": "company", "type": "text", "required": false, "clientValidation": "none", "ref": "src/components/InquiryForm.tsx:124" },
+        { "key": "services", "type": "multi-select (checkbox chips, 52 service slugs in 5 divisions)", "required": true, "clientValidation": ">= 1 selected; prefill accepts only known slugs", "ref": "src/components/InquiryForm.tsx:21,38-53" },
+        { "key": "description", "type": "textarea", "required": true, "clientValidation": "trimmed length >= 20, maxLength 4000", "ref": "src/components/InquiryForm.tsx:22,150" },
+        { "key": "budget", "type": "select", "required": false, "options": ["Prefer not to say", "Under USD 10k", "USD 10k–25k", "USD 25k–75k", "USD 75k–150k", "Above USD 150k"], "default": "Prefer not to say", "ref": "src/components/InquiryForm.tsx:11,15" },
+        { "key": "contact", "type": "radio", "required": true, "options": ["email", "phone", "video"], "default": "email", "ref": "src/components/InquiryForm.tsx:7,15,165" },
+        { "key": "phone", "type": "tel", "required": "only when contact = phone", "clientValidation": "regex ^\\+?[\\d\\s()-]{7,20}$", "ref": "src/components/InquiryForm.tsx:23,171-175" }
       ],
       "payloadAddedByClient": ["submittedAt (ISO timestamp)", "source: 'website'"],
       "serverValidation": "NONE (no server exists)",
-      "destination": "If PUBLIC_INQUIRY_ENDPOINT is set: browser fetch POST JSON to that URL. Otherwise nothing is sent and the UI says so (src/components/InquiryForm.tsx:68-75,93). .env.example leaves it empty.",
+      "destination": "If PUBLIC_INQUIRY_ENDPOINT is set: browser fetch POST JSON to that URL. Otherwise nothing is sent and the UI says so (src/components/InquiryForm.tsx:69-76,94). .env.example leaves it empty.",
       "successStates": ["sent (2xx from endpoint)", "validated (no endpoint configured; 'nothing was sent')"],
       "failureStates": ["client validation error summary with links", "error (non-2xx or network failure)"],
       "spamProtection": "NONE",
@@ -43,7 +43,7 @@
       "type": "interactive widget (keyword service finder)",
       "page": "/ (floating launcher) and hero tile button",
       "files": [
-        { "path": "src/components/AskMoguls.tsx", "lines": "13-16 (prefill), 53 (match), 73 (honesty notice), 97-103 (CTAs)" },
+        { "path": "src/components/AskMoguls.tsx", "lines": "21-25 (prefill), 201 (match), 237 (honesty notice), 262-267 (CTAs)" },
         { "path": "src/lib/intent.ts", "lines": "1-77" },
         { "path": "src/components/Hero.astro", "lines": "53, 113-115 (opens widget)" }
       ],
@@ -63,7 +63,7 @@
     { "id": "CTA-DIVISION-START", "label": "Start a/an {division} project", "target": "/?service={first service slug}#contact", "ref": "src/pages/universe/[division].astro:31", "status": "VERIFIED", "count": 5 },
     { "id": "CTA-DIVISION-SERVICE-INQUIRE", "label": "Inquire", "target": "/?service={slug}#contact", "ref": "src/pages/universe/[division].astro:55", "status": "VERIFIED", "count": 52 },
     { "id": "CTA-FOOTER-START", "label": "Start a project", "target": "/#contact", "ref": "src/components/Footer.astro:13", "status": "VERIFIED" },
-    { "id": "CTA-ASK-CONTINUE", "label": "Start a project with these / Go to the inquiry form", "target": "scrolls to #contact and pre-fills services", "ref": "src/components/AskMoguls.tsx:97,103", "status": "VERIFIED" }
+    { "id": "CTA-ASK-CONTINUE", "label": "Start a project with these / Go to the inquiry form", "target": "scrolls to #contact and pre-fills services", "ref": "src/components/AskMoguls.tsx:262,267", "status": "VERIFIED" }
   ],
   "absent": {
     "status": "VERIFIED",

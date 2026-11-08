@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { divisions } from '../data/divisions';
+import { withBoundary } from './IslandBoundary';
 
 type Values = {
   name: string; email: string; company: string; services: string[];
@@ -23,7 +24,7 @@ function validate(v: Values): Errors {
   return e;
 }
 
-export default function InquiryForm() {
+function InquiryForm() {
   const [v, setV] = useState<Values>(empty);
   const [errors, setErrors] = useState<Errors>({});
   const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'validated' | 'error'>('idle');
@@ -183,3 +184,10 @@ export default function InquiryForm() {
     </form>
   );
 }
+
+export default withBoundary(InquiryForm, 'inquiry-form', (
+  <div className="f-done" role="alert">
+    <h3>The inquiry form didn’t load.</h3>
+    <p>Please refresh the page and try again.</p>
+  </div>
+));

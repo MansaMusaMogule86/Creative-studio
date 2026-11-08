@@ -1,6 +1,6 @@
 # 02 · Pages and conversion inventory
 
-Machine-readable version: `forms-inventory.json`. Line numbers refer to commit `b3060af`.
+Machine-readable version: `forms-inventory.json`. Line numbers re-verified on 2026-11-08 against the branch after commit `6c40065`.
 
 ## Pages (VERIFIED: `dist/` after build)
 | Route | Purpose | Indexable | Conversion points |
@@ -14,8 +14,8 @@ Machine-readable version: `forms-inventory.json`. Line numbers refer to commit `
 ## Existing conversion points (VERIFIED)
 | ID | Where | Component / file:line | Current behaviour | Fields | Client validation | Server validation | Destination | Analytics | Works? | Needs GHL | Recommended CRM action |
 |---|---|---|---|---|---|---|---|---|---|---|---|
-| **FORM-INQUIRY** | `/#contact` | `InquiryForm.tsx` (1-185), mounted at `Contact.astro:21` | Accessible form with an error summary; pre-fill from `?service=`, Ask Moguls or "Inquire" links (`InquiryForm.tsx:37-52`) | name, email, company, services[], description, budget, contact method, phone (conditional) | Yes (`InquiryForm.tsx:16-24`) | **None** | `PUBLIC_INQUIRY_ENDPOINT` if set, via browser `fetch` (`:69-75`); **unset → nothing is sent** and the UI says "Prototype mode… nothing was sent" (`:93`) | None | UI yes; **delivery no** | **Yes** | `/api/leads` → upsert contact → opportunity "New Lead" → note → tags |
-| **WIDGET-ASK-MOGULS** | `/` floating launcher; hero tile `Hero.astro:53` | `AskMoguls.tsx`, `lib/intent.ts` | Local keyword matching; says it is not AI (`AskMoguls.tsx:73`) | free text (not sent) | n/a | n/a | None; pre-fills services (`:13-16, 97, 103`) | None | Yes | No | PROPOSED: pass `lead_source_detail = ask-moguls` to the form, never the text |
+| **FORM-INQUIRY** | `/#contact` | `InquiryForm.tsx` (1-193), mounted at `Contact.astro:21` | Accessible form with an error summary; pre-fill from `?service=`, Ask Moguls or "Inquire" links (`InquiryForm.tsx:38-53`) | name, email, company, services[], description, budget, contact method, phone (conditional) | Yes (`InquiryForm.tsx:17-25`) | **None** | `PUBLIC_INQUIRY_ENDPOINT` if set, via browser `fetch` (`:70-76`); **unset → nothing is sent** and the UI says "Prototype mode… nothing was sent" (`:94`) | None | UI yes; **delivery no** | **Yes** | `/api/leads` → upsert contact → opportunity "New Lead" → note → tags |
+| **WIDGET-ASK-MOGULS** | `/` floating launcher; hero tile `Hero.astro:53` | `AskMoguls.tsx`, `lib/intent.ts` | Local keyword matching; says it is not AI (`AskMoguls.tsx:237`) | free text (not sent) | n/a | n/a | None; pre-fills services (`:21-25, 262, 267`) | None | Yes | No | PROPOSED: pass `lead_source_detail = ask-moguls` to the form, never the text |
 
 ## CTAs (all lead to FORM-INQUIRY; VERIFIED)
 | ID | Label | file:line | Target |
@@ -29,7 +29,7 @@ Machine-readable version: `forms-inventory.json`. Line numbers refer to commit `
 | CTA-DIVISION-START ×5 | Start a/an {division} project | `universe/[division].astro:31` | `/?service={first}#contact` |
 | CTA-DIVISION-SERVICE-INQUIRE ×52 | Inquire | `universe/[division].astro:55` | `/?service={slug}#contact` |
 | CTA-FOOTER-START | Start a project | `Footer.astro:13` | `/#contact` |
-| CTA-ASK-CONTINUE | Start a project with these | `AskMoguls.tsx:97,103` | Scrolls to the form + pre-fills |
+| CTA-ASK-CONTINUE | Start a project with these | `AskMoguls.tsx:262,267` | Scrolls to the form + pre-fills |
 
 ## Requested conversion types: present or absent (VERIFIED by grep of `src/`)
 | # | Type | Present? | Note |

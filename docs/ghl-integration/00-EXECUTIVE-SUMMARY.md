@@ -1,7 +1,7 @@
 # 00 · Executive summary: GoHighLevel integration audit
 
 **Phase:** audit and handoff only. No integration code was written, no CRM records were created, nothing was deployed or pushed.
-**Repository:** `creative-studio`, branch `claude/affectionate-sagan-nrj1c8`, audited at commit `b3060af` (local, unpushed).
+**Repository:** `creative-studio`, branch `claude/affectionate-sagan-nrj1c8`, audited at commit `b3060af`; pushed to GitHub, and line references re-verified after `6c40065`.
 
 ## What exists today (VERIFIED)
 - **A static Astro 7.4.7 site** with React 19 islands and **no server runtime, adapter or deployment config**.

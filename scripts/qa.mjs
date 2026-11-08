@@ -239,6 +239,50 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
   await p.close();
 }
 
+// 9. Search & metadata: sitemap = canonical indexable pages only; unique metadata; valid JSON-LD.
+{
+  const p = await browser.newPage();
+  const sm = await (await p.request.get(BASE + '/sitemap-0.xml')).text();
+  const smPaths = [...sm.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => new URL(m[1]).pathname);
+  if (!smPaths.length) fail('sitemap has no URLs');
+  const seen = { title: new Map(), desc: new Map() };
+  for (const path of PAGES) {
+    const r = await p.goto(BASE + path, { waitUntil: 'domcontentloaded' });
+    const m = await p.evaluate(() => {
+      const q = (s) => document.querySelector(s);
+      let ld = []; let ldOk = true;
+      try { ld = [...document.querySelectorAll('script[type="application/ld+json"]')].flatMap((s) => JSON.parse(s.textContent)); } catch { ldOk = false; }
+      return {
+        title: document.title, desc: q('meta[name=description]')?.content ?? '', canonical: q('link[rel=canonical]')?.href ?? null,
+        noindex: /noindex/.test(q('meta[name=robots]')?.content ?? ''), h1: document.querySelectorAll('h1').length,
+        tw: ['card', 'title', 'description', 'image'].every((k) => q(`meta[name="twitter:${k}"]`)), og: !!q('meta[property="og:image"]'),
+        ldOk, types: ld.map((x) => x['@type']),
+      };
+    });
+    const inSm = smPaths.includes(path) || smPaths.includes(path + '/');
+    if (r.status() !== 200) fail(`${path}: status ${r.status()}`);
+    if (m.h1 !== 1) fail(`${path}: ${m.h1} h1 elements`);
+    if (!m.tw || !m.og) fail(`${path}: social metadata incomplete`);
+    if (!m.ldOk) fail(`${path}: JSON-LD does not parse`);
+    if (m.desc.length < 50 || m.desc.length > 165) fail(`${path}: meta description length ${m.desc.length}`);
+    if (m.noindex && inSm) fail(`${path}: noindex page is in the sitemap`);
+    if (!m.noindex && !inSm) fail(`${path}: indexable page missing from the sitemap`);
+    if (!m.noindex && (!m.canonical || new URL(m.canonical).pathname.replace(/\/$/, '') !== path.replace(/\/$/, ''))) fail(`${path}: canonical ${m.canonical}`);
+    if (m.noindex && m.canonical) fail(`${path}: noindex page should not declare a canonical`);
+    if (path.startsWith('/universe/') && !m.types.includes('BreadcrumbList')) fail(`${path}: BreadcrumbList missing`);
+    if (path === '/' && !m.types.includes('WebSite')) fail('/: WebSite structured data missing');
+    for (const k of ['title', 'desc']) { const v = k === 'title' ? m.title : m.desc; if (seen[k].has(v)) fail(`${path}: duplicate ${k} with ${seen[k].get(v)}`); seen[k].set(v, path); }
+  }
+  const nf = await p.goto(BASE + '/this-page-does-not-exist');
+  if (nf.status() !== 404) fail(`unknown URL returned ${nf.status()}, expected 404`);
+  const recovery = await p.$$eval('main a[href^="/universe/"]', (a) => a.length);
+  if (recovery < 5) fail(`404 page offers ${recovery} division links`);
+  const robots = await (await p.request.get(BASE + '/robots.txt')).text();
+  if (!/Sitemap: /.test(robots) || /Disallow: \/\s*$/m.test(robots)) fail('production robots.txt blocks crawling or lacks the sitemap');
+  ok(`search: ${smPaths.length} sitemap URLs = indexable pages; unique titles and descriptions; canonical, social, JSON-LD, 404 recovery verified`);
+  await p.close();
+}
+
 await browser.close();
 console.log(failures.length ? `\n${failures.length} failure(s)` : '\nAll QA checks passed');
 process.exit(failures.length ? 1 : 0);

@@ -9,8 +9,13 @@ import Method from '../components/Method.astro';
 import Contact from '../components/Contact.astro';
 import AskMoguls from '../components/AskMoguls';
 import '../styles/islands.css';
+import { brand } from '../config/brand';
+const website = {
+  '@context': 'https://schema.org', '@type': 'WebSite', name: brand.name,
+  url: new URL('/', Astro.site).href, inLanguage: 'en',
+};
 ---
-<Base>
+<Base jsonLd={[website]}>
   <Hero />
   <Universe />
   <Services />
