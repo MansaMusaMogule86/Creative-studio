@@ -3,6 +3,17 @@
 All notable changes to the Mansas Moguls website. Newest first. Branch: `claude/affectionate-sagan-nrj1c8`.
 
 ## Unreleased
+- **"One team" diagram redesigned:** four translucent glass orbs (Creativity, Engineering, Intelligence, Commerce), each with:
+  - an iridescent rim that slowly rotates;
+  - specular highlights;
+  - glass icons;
+  - a soft floor reflection.
+  - The official crowned M sits in the dark glass core, with ONE TEAM and a gold rule below.
+  - Entrance: the orbs converge on scroll, the icons and labels rise in, and the core pops in.
+  - Continuous motion: gentle float and rim shimmer, only while on screen, and none with reduced motion.
+  - Hover, focus and tap light up one orb and dim the others; on small diagrams the caption below shows the selected line.
+  - A container query keeps the labels clear of each other and of the core at every width, checked in `qa:mobile`.
+- **Mobile header:** the crowned M, a fine divider and MANSAS MOGULS sit on one fluid line from 320 px up, checked in `qa:mobile`.
 - **Division artworks are now the owner's own five images, used exactly as supplied.** This replaces the procedurally generated 3D scenes, which are removed (`division-scenes.ts`, `division-stage.ts`, `stage-manager.ts`, the `div3d-*` stills).
   - The masters are kept byte-for-byte in `brand-source/division-art/`.
   - The site serves WebP copies of the same framing at 480, 768, 1024 and 1536 px.

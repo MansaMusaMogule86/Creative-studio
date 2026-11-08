@@ -1,11 +1,11 @@
 ---
 import { brand } from '../config/brand';
 const pillars = [
-  { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8C8FF' },
-  { key: 'Engineering', line: 'Built to last and to scale', color: '#8EE7E8' },
-  { key: 'Intelligence', line: 'Systems that learn and assist', color: '#B9A5FF' },
-  { key: 'Commerce', line: 'Every decision tied to value', color: '#FFC6AC' },
-];
+  { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8C8FF', deep: '#B57BEA', icon: 'clapper' },
+  { key: 'Engineering', line: 'Built to last and to scale', color: '#8EE7E8', deep: '#4FB4E8', icon: 'layers' },
+  { key: 'Intelligence', line: 'Systems that learn and assist', color: '#B9A5FF', deep: '#8A72F0', icon: 'brain' },
+  { key: 'Commerce', line: 'Every decision tied to value', color: '#FFC6AC', deep: '#F09A6E', icon: 'cart' },
+] as const;
 const story =
   'Most projects are split between people who never meet: designers, engineers, data specialists and marketers each optimising their own piece. We work the other way round. One team holds the whole picture, so the brand, the product, the intelligence behind it and the plan to grow it are designed as a single system from the first conversation.';
 ---
@@ -19,17 +19,62 @@ const story =
       <p class="phi__story" data-words>{story.split(' ').map((w) => <span>{w} </span>)}</p>
     </div>
 
-    <div class="phi__venn" aria-label="Four disciplines, one team" role="img">
-      {pillars.map((p, i) => (
-        <div class="orb" style={`--c:${p.color};--i:${i}`} data-orb>
-          <span class="orb__k">{p.key}</span>
-          <span class="orb__l">{p.line}</span>
+    <div class="phi__diagram">
+      <div class="phi__venn" role="group" aria-label="Four disciplines, one team">
+        {pillars.map((p, i) => (
+          <button type="button" class="orb" style={`--c:${p.color};--cd:${p.deep};--i:${i}`} data-orb aria-pressed="false" aria-describedby={`phi-l-${i}`}>
+            <span class="orb__glass" aria-hidden="true"></span>
+            <span class="orb__c">
+              <svg class="orb__icon" viewBox="0 0 64 64" aria-hidden="true">
+                <defs>
+                  <linearGradient id={`phi-g${i}`} x1="0" y1="0" x2="1" y2="1">
+                    <stop offset="0" stop-color="#fff" stop-opacity="0.95" />
+                    <stop offset="0.55" stop-color={p.color} stop-opacity="0.9" />
+                    <stop offset="1" stop-color={p.deep} stop-opacity="0.95" />
+                  </linearGradient>
+                </defs>
+                <g fill={`url(#phi-g${i})`} stroke="#fff" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
+                  {p.icon === 'clapper' && (<>
+                    <rect x="9" y="27" width="46" height="28" rx="4" />
+                    <path d="M9 19.5l43.5-8.2 1.6 7.6L10.6 27z" />
+                    <path d="M18 17.8l-2.5 8 M29 15.7l-2.5 8 M40 13.6l-2.5 8" fill="none" stroke-width="3" stroke={p.deep} stroke-opacity="0.75" />
+                    <path d="M28 34.5v13l11-6.5z" fill="#fff" stroke="none" />
+                  </>)}
+                  {p.icon === 'layers' && (<>
+                    <path d="M32 42l22 8-22 8-22-8z" opacity="0.7" />
+                    <path d="M32 32l22 8-22 8-22-8z" opacity="0.85" />
+                    <path d="M32 20l22 8-22 8-22-8z" />
+                    <path d="M32 23.5l12 4.5-12 4.5-12-4.5z" fill="none" stroke={p.deep} stroke-width="1.6" />
+                    <circle cx="32" cy="28" r="1.8" fill="#fff" stroke="none" />
+                  </>)}
+                  {p.icon === 'brain' && (<>
+                    <path d="M31 13c-4-3-11-2-13 3-5 0-8 5-6.5 9.5C8 28 8 35 12 38c-1 5 3 9 8 9 2 4 7 5 11 2z" />
+                    <path d="M33 13c4-3 11-2 13 3 5 0 8 5 6.5 9.5C56 28 56 35 52 38c1 5-3 9-8 9-2 4-7 5-11 2z" />
+                    <path d="M18 22c3 1 5 4 4 7 M14 33c4-1 7 1 8 4 M24 42c0-3 2-5 5-5 M46 22c-3 1-5 4-4 7 M50 33c-4-1-7 1-8 4 M40 42c0-3-2-5-5-5" fill="none" stroke={p.deep} stroke-opacity="0.7" />
+                    <path d="M30 50c0 4 1 6 3 8" fill="none" />
+                  </>)}
+                  {p.icon === 'cart' && (<>
+                    <path d="M6 14h7l6 27h30l5-19H16" fill="none" stroke-width="3" stroke={p.deep} />
+                    <path d="M16.5 22H54l-5 19H19z" />
+                    <path d="M26 22l2 19 M36 22v19 M46 22l-2 19 M18 31.5h33" fill="none" stroke="#fff" stroke-opacity="0.85" />
+                    <circle cx="23" cy="50" r="4" /><circle cx="45" cy="50" r="4" />
+                  </>)}
+                </g>
+              </svg>
+              <span class="orb__k">{p.key}</span>
+              <span class="orb__l" id={`phi-l-${i}`}>{p.line}</span>
+            </span>
+          </button>
+        ))}
+        <div class="phi__core" data-core>
+          <span class="phi__coreGlass" aria-hidden="true"></span>
+          <img src={brand.emblem.dark[160]} srcset={`${brand.emblem.dark[160]} 160w, ${brand.emblem.dark[320]} 320w`} sizes="120px" width="127" height="120" alt="" loading="lazy" decoding="async" />
+          <span class="phi__coreLabel">One team</span>
+          <i class="phi__rule" aria-hidden="true"></i>
         </div>
-      ))}
-      <div class="phi__core" data-core>
-        <img src={brand.emblem.dark[160]} srcset={`${brand.emblem.dark[160]} 160w, ${brand.emblem.dark[320]} 320w`} sizes="120px" width="127" height="120" alt="" loading="lazy" decoding="async" />
-        <span>One team</span>
       </div>
+      <!-- Small diagrams hide the lines inside the circles; the selected one is shown here. -->
+      <p class="phi__cap" aria-hidden="true" data-cap><b>{pillars[0].key}</b> {pillars[0].line}</p>
     </div>
   </div>
 </section>
@@ -39,32 +84,57 @@ const story =
   import { ScrollTrigger } from 'gsap/ScrollTrigger';
   const root = document.querySelector<HTMLElement>('[data-phi]');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (root && !reduce) {
-    gsap.registerPlugin(ScrollTrigger);
-    const words = root.querySelectorAll('[data-words] span');
-    // Colour, not opacity: even the 'unread' state keeps AA contrast.
-    gsap.fromTo(words, { color: '#6a6880' }, {
-      color: '#25243c', stagger: 0.04, ease: 'none',
-      scrollTrigger: { trigger: '[data-words]', start: 'top 80%', end: 'bottom 45%', scrub: 0.6 },
-    });
-    // The four disciplines start apart and converge into one shape.
-    const offsets = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-    root.querySelectorAll<HTMLElement>('[data-orb]').forEach((o, i) => {
-      // Smaller spread on narrow screens so the circles (and their labels) stay on screen.
-      const spread = matchMedia('(max-width: 767px)').matches ? 8 : 38;
-      gsap.fromTo(o, { xPercent: offsets[i][0] * spread, yPercent: offsets[i][1] * spread, scale: 0.86 }, {
-        xPercent: 0, yPercent: 0, scale: 1, ease: 'none',
-        scrollTrigger: { trigger: '.phi__venn', start: 'top 85%', end: 'center 50%', scrub: 0.8 },
+  if (root) {
+    // Tap / click: one discipline at a time is "lit"; the caption mirrors it on phones.
+    const orbs = [...root.querySelectorAll<HTMLButtonElement>('[data-orb]')];
+    const cap = root.querySelector<HTMLElement>('[data-cap]')!;
+    const select = (o: HTMLButtonElement | null) => {
+      orbs.forEach((b) => { const on = b === o; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
+      root.querySelector('.phi__venn')!.classList.toggle('has-active', !!o);
+      const src = o ?? orbs[0];
+      cap.innerHTML = '';
+      const b = document.createElement('b'); b.textContent = src.querySelector('.orb__k')!.textContent;
+      cap.append(b, ' ', src.querySelector('.orb__l')!.textContent ?? '');
+    };
+    orbs.forEach((o) => o.addEventListener('click', () => select(o.classList.contains('is-active') ? null : o)));
+    root.addEventListener('keydown', (e) => { if (e.key === 'Escape') select(null); });
+
+    if (!reduce) {
+      gsap.registerPlugin(ScrollTrigger);
+      const words = root.querySelectorAll('[data-words] span');
+      // Colour, not opacity: even the 'unread' state keeps AA contrast.
+      gsap.fromTo(words, { color: '#6a6880' }, {
+        color: '#25243c', stagger: 0.04, ease: 'none',
+        scrollTrigger: { trigger: '[data-words]', start: 'top 80%', end: 'bottom 45%', scrub: 0.6 },
       });
-    });
-    gsap.fromTo('[data-core]', { scale: 0 }, {
-      scale: 1, ease: 'back.out(2)',
-      scrollTrigger: { trigger: '.phi__venn', start: 'center 62%', end: 'center 45%', scrub: 0.6 },
-    });
+      // The four disciplines start apart and converge into one shape.
+      const offsets = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+      const spread = matchMedia('(max-width: 767px)').matches ? 8 : 34;
+      orbs.forEach((o, i) => {
+        gsap.fromTo(o, { xPercent: offsets[i][0] * spread, yPercent: offsets[i][1] * spread, scale: 0.86 }, {
+          xPercent: 0, yPercent: 0, scale: 1, ease: 'none',
+          scrollTrigger: { trigger: '.phi__venn', start: 'top 85%', end: 'center 50%', scrub: 0.8 },
+        });
+      });
+      // Icons and labels rise in once the shape forms.
+      gsap.from(root.querySelectorAll('.orb__c'), {
+        opacity: 0, y: 14, duration: 0.9, ease: 'power3.out', stagger: 0.1,
+        scrollTrigger: { trigger: '.phi__venn', start: 'top 70%', toggleActions: 'play none none none' },
+      });
+      gsap.fromTo('[data-core]', { scale: 0 }, {
+        scale: 1, ease: 'back.out(2)',
+        scrollTrigger: { trigger: '.phi__venn', start: 'center 62%', end: 'center 45%', scrub: 0.6 },
+      });
+      // Continuous motion runs only while the diagram is on screen.
+      const venn = root.querySelector('.phi__venn')!;
+      new IntersectionObserver(([e]) => venn.classList.toggle('is-moving', e.isIntersecting)).observe(venn);
+    }
   }
 </script>
 
 <style>
+  @property --phi-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+
   .phi { overflow: hidden; }
   .phi__grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(2rem, 6vw, 6rem); align-items: center; }
   .phi__text { display: grid; gap: 1.6rem; }
@@ -72,31 +142,98 @@ const story =
   .phi__title em { text-transform: none; display: block; color: #5a3fc0; }
   .phi__story { font-size: var(--step-1); line-height: 1.5; max-width: 34ch; }
 
-  .phi__venn { position: relative; aspect-ratio: 1; width: min(100%, 560px); justify-self: center; }
-  .orb {
-    position: absolute; width: 58%; aspect-ratio: 1; border-radius: 50%;
-    display: grid; align-content: center; justify-items: center; text-align: center; padding: 14%;
-    background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.95), color-mix(in srgb, var(--c) 70%, transparent) 70%);
-    border: 1px solid rgb(255 255 255 / 0.9); mix-blend-mode: multiply;
-    box-shadow: 0 30px 60px -40px rgb(37 36 60 / 0.5);
+  .phi__diagram { container-type: inline-size; display: grid; gap: 1.2rem; padding-block: 3%; justify-items: center; width: 100%; }
+  .phi__venn { position: relative; aspect-ratio: 1; width: min(100%, 560px); isolation: isolate; }
+  /* Soft reflection of the composition on the "floor". */
+  .phi__venn::after {
+    content: ''; position: absolute; z-index: -1; left: 8%; right: 8%; bottom: -7%; height: 14%; border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(185 165 255 / 0.45), rgb(255 198 172 / 0.25) 55%, transparent);
+    filter: blur(14px);
   }
-  .orb:nth-child(1) { top: 0; left: 0; } .orb:nth-child(2) { top: 0; right: 0; }
-  .orb:nth-child(3) { bottom: 0; left: 0; } .orb:nth-child(4) { bottom: 0; right: 0; }
-  .orb__k { font-family: var(--font-display); font-size: clamp(1.2rem, 0.9rem + 1.2vw, 2rem); }
-  .orb__l { font-size: 0.82rem; color: var(--ink-2); max-width: 14ch; line-height: 1.3; margin-top: 0.3rem; }
-  .orb:nth-child(1) { align-content: start; padding-top: 22%; } .orb:nth-child(2) { align-content: start; padding-top: 22%; }
-  .orb:nth-child(3) { align-content: end; padding-bottom: 22%; } .orb:nth-child(4) { align-content: end; padding-bottom: 22%; }
-  .orb:nth-child(odd) { justify-items: start; text-align: start; padding-left: 18%; }
-  .orb:nth-child(even) { justify-items: end; text-align: end; padding-right: 18%; }
-  .phi__core {
-    position: absolute; inset: 34%; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 4%;
-    background: radial-gradient(circle at 50% 35%, #34304f, var(--ink) 70%); color: var(--gold-light); font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; text-align: center;
-    box-shadow: 0 0 0 1px rgb(216 184 117 / 0.6), 0 0 0 10px rgb(255 255 255 / 0.6), 0 20px 50px -10px rgb(167 122 48 / 0.55);
-  }
-  .phi__core img { width: 58%; height: auto; }
 
-  @media (max-width: 900px) {
-    .phi__grid { grid-template-columns: 1fr; }
+  /* ── Glass orbs ─────────────────────────────────────────────── */
+  .orb {
+    position: absolute; width: 60%; aspect-ratio: 1; border-radius: 50%; padding: 0; border: 0; background: none;
+    color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .orb:nth-of-type(1) { top: 0; left: 0; } .orb:nth-of-type(2) { top: 0; right: 0; }
+  .orb:nth-of-type(3) { bottom: 0; left: 0; } .orb:nth-of-type(4) { bottom: 0; right: 0; }
+  .orb__glass {
+    position: absolute; inset: 0; border-radius: 50%;
+    background:
+      radial-gradient(60% 42% at 32% 24%, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0) 70%),
+      radial-gradient(70% 70% at 70% 78%, color-mix(in srgb, var(--cd) 26%, transparent), transparent 70%),
+      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 62%, transparent) 70%, color-mix(in srgb, var(--cd) 68%, transparent));
+    box-shadow:
+      inset 0 2px 1px rgb(255 255 255 / 0.9), inset 0 -18px 40px -10px color-mix(in srgb, var(--cd) 60%, transparent), 0 0 24px -6px color-mix(in srgb, var(--cd) 55%, transparent),
+      inset 0 16px 34px -14px rgb(255 255 255 / 0.9), 0 34px 60px -38px color-mix(in srgb, var(--cd) 80%, rgb(37 36 60));
+    transition: scale 0.6s var(--ease-out), filter 0.6s var(--ease-out), opacity 0.6s;
+  }
+  /* Iridescent rim. */
+  .orb__glass::before {
+    content: ''; position: absolute; inset: 0; border-radius: 50%; padding: 3px;
+    background: conic-gradient(from var(--phi-ang), #ffffff, #e9a8ff, #7fdcff, #ffffff, #ffc29a, #b39cff, #ffffff);
+    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+    opacity: 0.95;
+  }
+  /* Specular crescent on the lower edge. */
+  .orb__glass::after {
+    content: ''; position: absolute; inset: 6%; border-radius: 50%;
+    background: radial-gradient(80% 50% at 60% 100%, rgb(255 255 255 / 0.55), transparent 60%);
+    mix-blend-mode: screen;
+  }
+
+  .orb__c {
+    position: absolute; z-index: 1; width: 64%; display: grid; justify-items: center; text-align: center; gap: 0.35rem;
+    transition: scale 0.6s var(--ease-out);
+  }
+  .orb:nth-of-type(odd) .orb__c { left: 6%; } .orb:nth-of-type(even) .orb__c { right: 6%; }
+  .orb:nth-of-type(-n + 2) .orb__c { top: 15%; }
+  .orb:nth-of-type(n + 3) .orb__c { bottom: 15%; }
+  .orb__icon { width: 42%; height: auto; overflow: visible; filter: drop-shadow(0 6px 10px color-mix(in srgb, var(--cd) 55%, transparent)) drop-shadow(0 0 6px rgb(255 255 255 / 0.8)); }
+  .orb__k { font-family: var(--font-display); font-size: clamp(1rem, 0.72rem + 1.1vw, 1.9rem); line-height: 1.05; color: var(--ink); white-space: nowrap; }
+  .orb__l { font-size: 0.8rem; color: var(--ink-2); max-width: 15ch; line-height: 1.3; }
+
+  /* Hover / focus / tap: the orb brightens and lifts; the others recede a little. */
+  .orb:hover .orb__glass, .orb:focus-visible .orb__glass, .orb.is-active .orb__glass { scale: 1.035; filter: saturate(1.25) brightness(1.04); }
+  .orb:hover .orb__c, .orb:focus-visible .orb__c, .orb.is-active .orb__c { scale: 1.06; }
+  .orb:hover, .orb:focus-visible, .orb.is-active { z-index: 1; }
+  .orb:focus-visible { outline: none; }
+  .orb:focus-visible .orb__glass { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
+  .has-active .orb:not(.is-active) .orb__glass { opacity: 0.72; }
+
+  /* ── Core ───────────────────────────────────────────────────── */
+  .phi__core {
+    position: absolute; z-index: 2; inset: 33%; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 5%;
+    background: radial-gradient(circle at 50% 30%, #4a4270, #2a2746 55%, #1b1a2e);
+    box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.85), 0 0 0 8px rgb(255 255 255 / 0.4), 0 0 40px 4px rgb(201 182 255 / 0.55), 0 24px 50px -12px rgb(167 122 48 / 0.5);
+    pointer-events: none;
+  }
+  .phi__coreGlass { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(70% 45% at 40% 18%, rgb(255 255 255 / 0.35), transparent 70%); }
+  .phi__core img { position: relative; width: 50%; height: auto; filter: drop-shadow(0 4px 10px rgb(216 184 117 / 0.45)); }
+  .phi__coreLabel { position: relative; color: #fff; font-size: clamp(0.56rem, 0.45rem + 0.45vw, 0.78rem); letter-spacing: 0.28em; text-transform: uppercase; padding-inline-start: 0.28em; }
+  .phi__rule { width: 34%; height: 1.5px; border-radius: 2px; background: var(--gold-line); }
+
+  .phi__cap { display: none; min-height: 3em; text-align: center; color: var(--ink-2); max-width: 34ch; }
+  .phi__cap :global(b) { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; color: var(--ink); display: block; }
+
+  /* Gentle continuous motion (only while on screen, never with reduced motion). */
+  .is-moving .orb__glass { animation: phi-float 7s var(--ease-in-out) infinite alternate; animation-delay: calc(var(--i) * -1.7s); }
+  .is-moving .orb__glass::before { animation: phi-spin 14s linear infinite; }
+  .is-moving .phi__core { animation: phi-glow 5s var(--ease-in-out) infinite alternate; }
+  @keyframes phi-float { from { translate: 0 0; } to { translate: 0 -2.2%; } }
+  @keyframes phi-spin { to { --phi-ang: 360deg; } }
+  @keyframes phi-glow { to { box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.95), 0 0 0 8px rgb(255 255 255 / 0.5), 0 0 56px 8px rgb(201 182 255 / 0.7), 0 24px 50px -12px rgb(167 122 48 / 0.55); } }
+
+  @media (max-width: 900px) { .phi__grid { grid-template-columns: 1fr; } }
+  /* When the diagram is too small for the lines inside the circles, the
+     selected discipline's line is shown in the caption below instead. */
+  @container (max-width: 519px) {
     .orb__l { display: none; }
+    .phi__cap { display: block; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .orb__glass, .orb__c { transition: none; }
   }
 </style>
