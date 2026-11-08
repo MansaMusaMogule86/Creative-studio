@@ -195,6 +195,23 @@ for (const [w, h] of SIZES) {
   await ctx.close();
 }
 
+// Header lockup: crowned M + MANSAS MOGULS on one line, undistorted, clear of the menu button.
+for (const w of [320, 375, 390, 430]) {
+  const ctx = await browser.newContext({ viewport: { width: w, height: 800 }, isMobile: true, hasTouch: true });
+  const p = await ctx.newPage();
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  const r = await p.evaluate(() => {
+    const word = document.querySelector('.hdr__brand .logo__word'), mark = document.querySelector('.hdr__brand .logo__mark'), menu = document.querySelector('[data-menu-toggle]');
+    const wr = word.getBoundingClientRect(), mr = mark.getBoundingClientRect(), br = menu.getBoundingClientRect();
+    const fs = parseFloat(getComputedStyle(word).fontSize);
+    return { text: word.textContent, oneLine: wr.height < fs * 1.6, clipped: word.scrollWidth > word.clientWidth + 1, gap: br.left - wr.right, fs,
+      aspect: Math.abs(mr.width / mr.height - mark.naturalWidth / mark.naturalHeight) < 0.03, centred: Math.abs((wr.top + wr.bottom) / 2 - (mr.top + mr.bottom) / 2) <= 2 };
+  });
+  if (r.text !== 'MANSAS MOGULS' || !r.oneLine || r.clipped || r.gap < 12 || r.fs < 11 || !r.aspect || !r.centred) fail(`${w}px header lockup: ${JSON.stringify(r)}`);
+  else ok(`${w}px: header lockup on one line, ${r.fs.toFixed(1)}px, ${Math.round(r.gap)}px clear of the menu, emblem undistorted`);
+  await ctx.close();
+}
+
 await browser.close();
 console.log(failures.length ? `\n${failures.length} failure(s)` : '\nAll mobile interaction checks passed');
 process.exit(failures.length ? 1 : 0);

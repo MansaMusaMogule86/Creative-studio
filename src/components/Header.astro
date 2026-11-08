@@ -150,7 +150,13 @@ const links = [
     .hdr__toggle { display: grid; }
     .hdr__bar { padding: 6px 6px 6px 16px; }
   }
-  /* Mobile: compact emblem, wordmark only (never the tagline). */
-  @media (max-width: 1023px) { .hdr__brand :global(.logo) { --lh: 34px !important; } }
-  @media (max-width: 380px) { .hdr__brand :global(.logo__word) { font-size: 0.74rem; letter-spacing: 0.16em; } .hdr__brand :global(.logo) { --lh: 30px !important; gap: 8px; } }
+  /* Mobile: the official crowned M, a fine divider and MANSAS MOGULS on one
+     line (never the tagline). Emblem, type and spacing scale with the
+     viewport so the name always fits beside the menu button without wrapping. */
+  @media (max-width: 1023px) {
+    .hdr__brand :global(.logo) { --lh: clamp(34px, 6px + 8.5vw, 44px) !important; gap: clamp(10px, 1px + 2.8vw, 14px); }
+    .hdr__brand :global(.logo__text) { display: flex; align-items: center; height: calc(var(--lh) * 0.72); padding-inline-start: clamp(10px, 1px + 2.8vw, 14px); border-inline-start: 1px solid rgb(37 36 60 / 0.22); }
+    .hdr__brand :global(.logo__word) { font-size: clamp(0.78rem, 0.48rem + 1.5vw, 0.95rem); font-weight: 500; letter-spacing: 0.2em; line-height: 1.2; }
+  }
+  @media (max-width: 360px) { .hdr__brand :global(.logo__word) { letter-spacing: 0.16em; } }
 </style>
