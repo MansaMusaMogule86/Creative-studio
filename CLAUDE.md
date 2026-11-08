@@ -11,3 +11,4 @@
 - Keep it light-themed and use the tokens in `src/styles/global.css`.
 - Accessibility: WCAG 2.1 AA. Respect `prefers-reduced-motion`. Never hijack scrolling.
 - Before pushing, run `pnpm check`, `pnpm build`, then `pnpm preview` and `pnpm qa` (all local; there is no CI).
+- **After any full check or verification run**, review `docs/LAUNCH-CHECKLIST.md` (A–Z), mark each item with evidence (✅ / ⚠ / ❌ / ⏳ owner input) and remind the owner of what remains open.
