@@ -4,19 +4,19 @@ import { t, type Locale } from '../i18n';
 interface Props { locale?: Locale }
 const d = t(Astro.props.locale);
 const links = [
-  { href: '/', label: d.nav.home },
-  { href: '/#universe', label: d.nav.universe },
-  { href: '/#services', label: d.nav.services },
-  { href: '/#work', label: d.nav.work },
-  { href: '/#philosophy', label: d.nav.about },
-  { href: '/#contact', label: d.nav.contact },
+  { href: '/', label: d.nav.home, spy: 'top' },
+  { href: '/#universe', label: d.nav.universe, spy: 'universe' },
+  { href: '/#services', label: d.nav.services, spy: 'services' },
+  { href: '/#work', label: d.nav.work, spy: 'work' },
+  { href: '/#philosophy', label: d.nav.about, spy: 'philosophy' },
+  { href: '/#contact', label: d.nav.contact, spy: 'contact' },
 ];
 ---
 <header class="hdr" data-header>
   <div class="hdr__bar">
     <a href="/" class="hdr__brand" aria-label="Mansas Moguls, home"><Logo size={30} /></a>
     <nav aria-label="Primary" class="hdr__nav">
-      <ul>{links.map((l) => <li><a href={l.href}>{l.label}</a></li>)}</ul>
+      <ul>{links.map((l) => <li><a href={l.href} data-spy={l.spy} class:list={[{ 'is-current': l.spy === 'top' && Astro.url.pathname === '/' }]}>{l.label}</a></li>)}</ul>
     </nav>
     <a href="/#contact" class="btn hdr__cta" data-magnetic>{d.cta.create}</a>
     <button class="hdr__toggle" type="button" aria-expanded="false" aria-controls="mobile-menu" data-menu-toggle>
@@ -51,6 +51,22 @@ const links = [
     if (e.key === 'Escape' && !menu.hidden) { set(false); btn.focus(); }
   });
   matchMedia('(min-width: 1024px)').addEventListener('change', (m) => m.matches && set(false));
+
+  // Scroll-spy for the homepage: highlight the section currently in view.
+  const spy = [...document.querySelectorAll<HTMLAnchorElement>('.hdr__nav [data-spy]')];
+  const sections = spy.map((a) => (a.dataset.spy === 'top' ? document.querySelector('main section') : document.getElementById(a.dataset.spy!))).filter(Boolean) as HTMLElement[];
+  sections.sort((x, y) => (x.compareDocumentPosition(y) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+  if (location.pathname === '/' && sections.length) {
+    const update = () => {
+      const y = innerHeight * 0.35;
+      let idx = 0;
+      sections.forEach((s, i) => { if (s.getBoundingClientRect().top <= y) idx = i; });
+      const target = sections[idx];
+      spy.forEach((a) => a.classList.toggle('is-current', (a.dataset.spy === 'top' ? sections[0] : document.getElementById(a.dataset.spy!)) === target));
+    };
+    update();
+    addEventListener('scroll', update, { passive: true });
+  }
 </script>
 
 <style>
@@ -67,13 +83,14 @@ const links = [
   }
   .hdr__brand { text-decoration: none; flex-shrink: 0; }
   .hdr__nav { margin-inline-start: auto; }
-  .hdr__nav ul { display: flex; gap: 0.3rem; }
+  .hdr__nav ul { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgb(37 36 60 / 0.05); border: 1px solid rgb(255 255 255 / 0.8); }
   .hdr__nav a {
     display: block; padding: 0.55rem 0.85rem; border-radius: 999px; text-decoration: none;
     font-size: 0.78rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 500;
     transition: background-color 0.3s;
   }
-  .hdr__nav a:hover { background: rgb(37 36 60 / 0.06); }
+  .hdr__nav a:hover { background: rgb(255 255 255 / 0.8); }
+  .hdr__nav a.is-current { background: #6a4ce0; color: #fff; box-shadow: 0 8px 20px -8px rgb(106 76 224 / 0.7); }
   .hdr__cta { min-height: 44px; padding: 0 1.2rem; font-size: 0.76rem; }
   .hdr__toggle {
     display: none; margin-inline-start: auto; width: 48px; height: 48px; border-radius: 50%;

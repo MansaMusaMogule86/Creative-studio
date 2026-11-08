@@ -54,9 +54,9 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
       void main(){
         vec2 p = vUv; p.x *= uAspect; float t = uTime * 0.05;
         vec3 col = vec3(0.973, 0.969, 1.0);
-        col = mix(col, vec3(0.80, 0.74, 1.0), 0.30 * blob(p, vec2(uAspect*(0.72 + 0.06*sin(t*3.0)), 0.70 + 0.05*cos(t*2.0)), 0.75));
-        col = mix(col, vec3(0.66, 0.93, 0.93), 0.26 * blob(p, vec2(uAspect*(0.92 + 0.05*cos(t*2.3)), 0.22 + 0.06*sin(t*1.7)), 0.7));
-        col = mix(col, vec3(1.0, 0.84, 0.76), 0.24 * blob(p, vec2(uAspect*(0.18 + 0.05*sin(t*1.9)), 0.12 + 0.04*cos(t*2.6)), 0.65));
+        col = mix(col, vec3(0.80, 0.74, 1.0), 0.62 * blob(p, vec2(uAspect*(0.72 + 0.06*sin(t*3.0)), 0.70 + 0.05*cos(t*2.0)), 0.75));
+        col = mix(col, vec3(0.66, 0.93, 0.93), 0.55 * blob(p, vec2(uAspect*(0.92 + 0.05*cos(t*2.3)), 0.22 + 0.06*sin(t*1.7)), 0.7));
+        col = mix(col, vec3(1.0, 0.84, 0.76), 0.5 * blob(p, vec2(uAspect*(0.18 + 0.05*sin(t*1.9)), 0.12 + 0.04*cos(t*2.6)), 0.65));
         col += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453) - 0.5) / 255.0;
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -144,7 +144,6 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   scene.add(key);
 
   // ── Layout: sculpture right of the headline on wide screens, above it on narrow ──
-  let wide = true;
   const resize = () => {
     const { clientWidth: w, clientHeight: h } = canvas;
     if (!w || !h) return;
@@ -152,10 +151,12 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     camera.aspect = w / h;
     camera.updateProjectionMatrix();
     backdropMat.uniforms.uAspect.value = w / h;
-    wide = w / h > 1.05;
-    const s = wide ? Math.min(1, (w / h) / 1.6) * 1.05 : Math.min(0.62, (w / h) * 1.08);
+    // The sculpture now lives inside the hero's bento card: centre it and fit
+    // it to whichever side of the card is shorter.
+    const visH = 2 * camera.position.z * Math.tan((camera.fov * Math.PI) / 360);
+    const s = Math.min((visH * (w / h)) / 6.0, visH / 5.8);
     group.scale.setScalar(s);
-    group.position.set(wide ? 2.1 * (w / h) / 1.6 : 0, wide ? 0.05 : 1.7, 0);
+    group.position.set(0, 0.25 * s, 0);
     shadow.position.set(group.position.x, group.position.y - 2.6 * s, -1);
     shadow.scale.setScalar(s);
   };
@@ -165,8 +166,9 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const cur = { x: 0, y: 0 };
   const onPointer = (e: PointerEvent) => {
     if (e.pointerType !== 'mouse') return;
-    target.x = (e.clientX / innerWidth - 0.5) * 2;
-    target.y = (e.clientY / innerHeight - 0.5) * 2;
+    const r = canvas.getBoundingClientRect();
+    target.x = Math.max(-1.5, Math.min(1.5, ((e.clientX - r.left) / r.width - 0.5) * 2));
+    target.y = Math.max(-1.5, Math.min(1.5, ((e.clientY - r.top) / r.height - 0.5) * 2));
   };
   if (!opts.reduceMotion) addEventListener('pointermove', onPointer, { passive: true });
 

@@ -28,6 +28,12 @@ export default function AskMoguls() {
   const launcherRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => { if (open) inputRef.current?.focus(); }, [open]);
+  // The hero's "Ask Moguls" card opens this panel too.
+  useEffect(() => {
+    const on = () => setOpen(true);
+    addEventListener('moguls:ask-open', on);
+    return () => removeEventListener('moguls:ask-open', on);
+  }, []);
   // Stay out of the hero's way; appear once the visitor starts exploring.
   useEffect(() => {
     const on = () => setShown(scrollY > innerHeight * 0.6);

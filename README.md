@@ -4,6 +4,7 @@
 
 - Creative directions and the recommendation: [`docs/creative-directions.md`](docs/creative-directions.md)
 - Proposed identity sheet: `/brand` (excluded from the sitemap and set to noindex)
+- Round 2 references: bento hero composition (facts row, pill navigation, division pills over the sculpture card) and spatial floating interfaces (Moguls Digital artwork). Only true facts appear in the hero: Dubai, 5 divisions, 52 services.
 
 ## Stack
 

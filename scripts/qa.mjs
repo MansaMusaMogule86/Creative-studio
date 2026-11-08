@@ -97,7 +97,7 @@ for (const w of WIDTHS) {
   const firstService = await p.textContent('.msg__services li strong');
   if (!firstService) fail('Ask Moguls returned nothing for an example'); else ok(`Ask Moguls → "${firstService}"`);
   await p.click('.msg__cta');
-  await p.waitForTimeout(800);
+  await p.waitForFunction(() => document.querySelectorAll('.f-chip input:checked').length > 0, null, { timeout: 8000 }).catch(() => {});
   const checked = await p.$$eval('.f-chip input:checked', (i) => i.length);
   if (checked < 1) fail('Ask Moguls did not prefill the inquiry form'); else ok(`inquiry prefilled with ${checked} service(s)`);
 
