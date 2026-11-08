@@ -10,8 +10,6 @@ export type Still = {
   palette?: Palette;
   /** Render the Open Graph layout (headline over the sculpture) instead of a bare frame. */
   og?: boolean;
-  /** Render a division 3D scene instead of the hero sculpture. */
-  scene?: Division['slug'];
   /** Output widths; defaults to full and half. */
   widths?: number[];
 };
@@ -34,14 +32,6 @@ const DIV_ANGLES: Record<Division['slug'], Pick<Still, 't' | 'rx' | 'ry' | 'rz'>
   strategy: { t: 5.6, rx: 0.3, ry: 0.15, rz: 0.04 },
 };
 
-// Division 3D artworks (src/scripts/division-scenes.ts) rendered to stills:
-// shown before WebGL boots, for collapsed panels, and where live WebGL is off.
-const SLUGS: Division['slug'][] = ['digital', 'ai', 'growth', 'creative', 'strategy'];
-const DIV_T: Record<Division['slug'], number> = { digital: 3.0, ai: 4.2, growth: 3.4, creative: 2.6, strategy: 2.2 };
-const divisionStills: Still[] = SLUGS.flatMap((slug) => [
-  { id: `div3d-${slug}`, width: 1000, height: 1000, t: DIV_T[slug], rx: 0, ry: 0, scene: slug, widths: [1000, 500] },
-  { id: `div3d-${slug}-wide`, width: 1200, height: 760, t: DIV_T[slug], rx: 0, ry: 0, scene: slug, widths: [1200, 600] },
-]);
 
 export const stills: Still[] = [
   // Hero card: desktop + phone framings of the default (all-division) palette.
@@ -52,7 +42,6 @@ export const stills: Still[] = [
   { id: 'work-ai', width: 1200, height: 1080, fit: 0.9, ...DIV_ANGLES.ai, palette: PALETTES.ai },
   { id: 'work-creative', width: 1200, height: 1080, fit: 0.9, ...DIV_ANGLES.creative, palette: PALETTES.creative },
   { id: 'work-growth', width: 1400, height: 1050, fit: 0.95, ...DIV_ANGLES.growth, palette: PALETTES.growth },
-  ...divisionStills,
   // Section background: sculpture parked to the right, behind the contact form.
   { id: 'bg-contact', width: 1800, height: 1100, t: 6.2, rx: 0.28, ry: 0.9, rz: 0.1, fit: 0.72, x: 0.2, y: 0.02, widths: [1800, 900] },
   // Open Graph sharing image (PNG, see render script).

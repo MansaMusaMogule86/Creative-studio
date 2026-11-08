@@ -2,7 +2,6 @@
 import Base from '../../layouts/Base.astro';
 import { divisions, type Division } from '../../data/divisions';
 import { brand } from '../../config/brand';
-import Logo from '../../components/Logo.astro';
 import DivisionArt from '../../components/divisions/DivisionArt.astro';
 
 export function getStaticPaths() {
@@ -45,7 +44,6 @@ const metaDescription = d.intro.length <= 158 ? d.intro : `${d.intro.slice(0, 15
         </div>
         <figure class="dv__art">
           <DivisionArt division={d} variant="hero" eager />
-          <figcaption><Logo size={22} wordmark={false} /><span>{d.index}</span> {d.name} · 3D artwork</figcaption>
         </figure>
       </div>
     </header>
@@ -83,10 +81,8 @@ const metaDescription = d.intro.length <= 158 ? d.intro : `${d.intro.slice(0, 15
   .dv__crumb a { color: var(--ink-2); }
   .dv .eyebrow { color: var(--ink-d); }
   .dv__ctas { display: flex; flex-wrap: wrap; gap: 0.8rem; }
-  .dv__art { position: relative; justify-self: end; width: min(100%, 560px); margin: 0; border-radius: 34px; overflow: hidden; border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 0 0 1px rgb(216 184 117 / 0.45), 0 50px 90px -50px color-mix(in srgb, var(--ink-d) 55%, transparent); background: color-mix(in srgb, var(--a) 30%, white); }
-  .dv__art :global(.dstage) { border-radius: 0; }
-  .dv__art figcaption { z-index: 2; position: absolute; inset-inline-start: 16px; bottom: 16px; display: inline-flex; gap: 0.6rem; align-items: center; min-height: 34px; padding: 0 0.9rem; border-radius: 999px; font-size: 0.78rem; background: rgb(255 255 255 / 0.86); backdrop-filter: blur(10px); }
-  .dv__art figcaption span { color: var(--ink-d); font-weight: 600; letter-spacing: 0.1em; }
+  .dv__art { position: relative; justify-self: end; width: min(100%, 640px); margin: 0; border-radius: 28px; overflow: hidden; border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 0 0 1px rgb(216 184 117 / 0.45), 0 50px 90px -50px color-mix(in srgb, var(--ink-d) 55%, transparent); background: color-mix(in srgb, var(--a) 30%, white); }
+  .dv__art :global(.dart) { border-radius: 0; }
   .dv__list ol { list-style: none; padding: 0; margin: 2.5rem 0 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 clamp(1.5rem, 4vw, 4rem); }
   .dv__svc { display: grid; grid-template-columns: 3rem 1fr; column-gap: 1rem; row-gap: 0.4rem; padding-block: 1.8rem; border-top: 1px solid var(--line); scroll-margin-top: 110px; }
   .dv__svc:target { background: linear-gradient(90deg, color-mix(in srgb, var(--a) 22%, transparent), transparent); border-radius: 12px; }

@@ -1,34 +1,27 @@
 ---
-// A division's 3D artwork. Every stage first shows a pre-rendered still of the
-// same scene (scripts/render-stills.mjs); the stage manager then brings the
-// single shared WebGL canvas to the active, visible stage on capable devices.
+// A division's artwork: the owner-supplied image, shown whole and unaltered
+// (no crop, overlay or motion). Masters: brand-source/division-art/*.png;
+// the served WebP copies are the same framing at 480–1536 px wide.
 import type { Division } from '../../data/divisions';
 interface Props { division: Division; variant?: 'panel' | 'hero'; eager?: boolean }
 const { division: d, variant = 'panel', eager = false } = Astro.props;
-const sq = (w: number) => `/renders/div3d-${d.slug}-${w}.webp`;
-const wide = (w: number) => `/renders/div3d-${d.slug}-wide-${w}.webp`;
+const src = (w: number) => `/art/division-${d.slug}-${w}.webp`;
+const ALT: Record<Division['slug'], string> = {
+  digital: 'Moguls Digital artwork: a glass laptop and dotted globe ringed by orbits, with code and chart cards.',
+  ai: 'Moguls AI artwork: a translucent glass head with glowing neural pathways and an AI processor chip.',
+  growth: 'Moguls Growth artwork: rising glass columns beneath a glowing ascending arrow.',
+  creative: 'Moguls Creative artwork: an iridescent glass M with a camera, clapperboard, tablet and colour swatches.',
+  strategy: 'Moguls Strategy artwork: a crystal chess king with a gold crown, a knight and a tactics card.',
+};
+const sizes = variant === 'hero' ? '(max-width: 1023px) calc(100vw - 32px), 640px' : '(max-width: 1023px) calc(100vw - 64px), 440px';
+const WIDTHS = [480, 768, 1024, 1536];
 ---
-<div class={`dstage dstage--${variant}`} data-stage={d.slug} style={`--a:${d.palette[0]};--b:${d.palette[1]}`}>
-  <picture class="dstage__still" aria-hidden="true">
-    <source media="(max-width: 1023px)" srcset={`${wide(600)} 600w, ${wide(1200)} 1200w`} sizes="100vw" width="1200" height="760" />
-    <img src={sq(500)} srcset={`${sq(500)} 500w, ${sq(1000)} 1000w`} sizes={variant === 'hero' ? '(max-width: 1440px) 40vw, 560px' : '(max-width: 1440px) 30vw, 420px'}
-      width="1000" height="1000" alt="" loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} />
-  </picture>
+<div class={`dart dart--${variant}`} data-division-art={d.slug}>
+  <img src={src(1536)} srcset={WIDTHS.map((w) => `${src(w)} ${w}w`).join(', ')} {sizes}
+    width="1536" height="1024" alt={ALT[d.slug]} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} />
 </div>
 
-<script>
-  import '../../scripts/stage-manager';
-</script>
-
 <style>
-  .dstage { position: relative; width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: inherit; background: color-mix(in srgb, var(--a) 24%, #f8f7ff); isolation: isolate; }
-  .dstage__still, .dstage__still img { display: block; width: 100%; height: 100%; }
-  .dstage__still img { object-fit: cover; }
-  .dstage :global(.dstage__canvas) { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 0.8s var(--ease-out); }
-  .dstage:global(.is-live) :global(.dstage__canvas) { opacity: 1; }
-  /* No live WebGL (software GPU, no WebGL): the real render, gently floating. */
-  :global(.stage-still) .dstage__still img { animation: dstage-float 9s var(--ease-in-out) infinite alternate; transform-origin: 50% 60%; }
-  @keyframes dstage-float { from { transform: scale(1.02) translateY(0) rotate(0deg); } to { transform: scale(1.05) translateY(-1.5%) rotate(-0.6deg); } }
-  @media (max-width: 1023px) { .dstage { aspect-ratio: 1200 / 760; } }
-  @media (prefers-reduced-motion: reduce) { :global(.stage-still) .dstage__still img { animation: none; } }
+  .dart { position: relative; width: 100%; aspect-ratio: 3 / 2; overflow: hidden; border-radius: inherit; background: #f3f0fb; }
+  .dart img { display: block; width: 100%; height: 100%; object-fit: contain; }
 </style>

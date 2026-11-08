@@ -3,6 +3,15 @@
 All notable changes to the Mansas Moguls website. Newest first. Branch: `claude/affectionate-sagan-nrj1c8`.
 
 ## Unreleased
+- **Division artworks are now the owner's own five images, used exactly as supplied.** This replaces the procedurally generated 3D scenes, which are removed (`division-scenes.ts`, `division-stage.ts`, `stage-manager.ts`, the `div3d-*` stills).
+  - The masters are kept byte-for-byte in `brand-source/division-art/`.
+  - The site serves WebP copies of the same framing at 480, 768, 1024 and 1536 px.
+  - Images are shown whole at 3:2: no crop, overlay, caption pill or motion.
+  - Alt text describes each artwork.
+  - A collapsed mobile panel fetches its image only when first opened.
+- **QA:** checks that each division page shows its owner artwork whole, with no overlay; this replaces the live-3D division checks.
+
+## ab35a4b — Glass 3D division artworks (since replaced) and mobile layout fixes
 - **3D division artworks:** the flat division illustrations are replaced by five procedurally modelled glass scenes in three.js. There are no new dependencies.
   - Digital: laptop, dotted globe, UI cards, orbits.
   - AI: glass bust with a neural core, pulsing pathways and an AI chip.

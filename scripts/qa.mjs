@@ -181,10 +181,10 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
       const kb = Math.round(first.reduce((a, r) => a + r.b, 0) / 1024);
       if (path === '/' && first.some((r) => /^(work-|bg-contact)/.test(r.n))) fail(`${path} ${label}: below-the-fold renders loaded eagerly: ${first.map((r) => r.n).join(', ')}`);
       if (kb > 250) fail(`${path} ${label}: ${kb} KB of images on first load (budget 250 KB)`);
-      const wrongVariant = first.filter((r) => (label === 'mobile' ? /^(hero-card|div3d-[a-z]+)-\d/.test(r.n) : /wide|mobile/.test(r.n)));
+      const wrongVariant = first.filter((r) => (label === 'mobile' ? /^(hero-card)-\d/.test(r.n) : /wide|mobile/.test(r.n)));
       if (wrongVariant.length) fail(`${path} ${label}: wrong art direction served: ${wrongVariant.map((r) => r.n).join(', ')}`);
       if (path === '/') {
-        const eagerPanels = await p.$$eval('.panel .dstage img', (imgs) => imgs.filter((i) => i.loading !== 'lazy').length);
+        const eagerPanels = await p.$$eval('.panel .dart img', (imgs) => imgs.filter((i) => i.loading !== 'lazy').length);
         if (eagerPanels) fail(`${path} ${label}: ${eagerPanels} division panel still(s) not lazy`);
       }
       await scrollThrough(p);
@@ -302,24 +302,13 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
   await p.waitForTimeout(1500);
   if (!(await frameDiff('[data-sculpture]'))) fail('hero sculpture canvas did not change between frames');
   else ok('hero sculpture animates in real time');
-  for (const slug of ['digital', 'strategy']) {
-    await p.goto(BASE + `/universe/${slug}?force-webgl`, { waitUntil: 'networkidle' });
-    await p.waitForFunction(() => document.querySelector('.dstage.is-live canvas'), null, { timeout: 90000 }).catch(() => {});
-    const live = await p.$('.dstage.is-live canvas');
-    if (!live) { fail(`/universe/${slug}: division 3D stage did not go live`); continue; }
-    await p.waitForTimeout(1200);
-    if (!(await frameDiff('.dstage.is-live'))) fail(`/universe/${slug}: division 3D did not animate`);
-    else ok(`/universe/${slug}: division 3D artwork is live and animating`);
+  // Division artworks are the owner's images, shown whole and unaltered.
+  for (const slug of ['digital', 'ai', 'growth', 'creative', 'strategy']) {
+    await p.goto(BASE + `/universe/${slug}`, { waitUntil: 'networkidle' });
+    const a = await p.evaluate(() => { const i = document.querySelector('.dv__art img'); const r = i.getBoundingClientRect(); const fig = i.closest('figure'); return { src: i.currentSrc, nat: i.naturalWidth / i.naturalHeight, box: r.width / r.height, overlays: fig.querySelectorAll('figcaption, canvas').length, fit: getComputedStyle(i).objectFit }; });
+    if (!a.src.includes(`/art/division-${slug}-`) || Math.abs(a.nat - 1.5) > 0.01 || Math.abs(a.box - 1.5) > 0.02 || a.overlays || a.fit !== 'contain') fail(`/universe/${slug}: artwork not shown whole (${JSON.stringify(a)})`);
+    else ok(`/universe/${slug}: owner artwork shown whole at 3:2, no overlay`);
   }
-  // Homepage: exactly one live division canvas, following the active panel.
-  await p.goto(BASE + '/?force-webgl', { waitUntil: 'networkidle' });
-  await p.evaluate(() => document.getElementById('universe').scrollIntoView({ behavior: 'instant' }));
-  await p.waitForTimeout(2500);
-  await p.hover('[data-panel]:nth-child(4)');
-  await p.waitForTimeout(2500);
-  const st = await p.evaluate(() => ({ canvases: document.querySelectorAll('.dstage canvas').length, live: [...document.querySelectorAll('.dstage.is-live')].map((e) => e.dataset.stage) }));
-  if (st.canvases !== 1 || st.live.length !== 1 || st.live[0] !== 'creative') fail(`homepage stages: ${JSON.stringify(st)}`);
-  else ok('homepage: one shared division canvas, moved to the active panel (creative)');
   await ctx.close();
 }
 
