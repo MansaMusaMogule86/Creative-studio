@@ -40,13 +40,22 @@ const links = [
 </header>
 
 <script>
+  import { lockScroll, unlockScroll } from '../scripts/scroll-lock';
   const btn = document.querySelector<HTMLButtonElement>('[data-menu-toggle]')!;
   const menu = document.querySelector<HTMLElement>('[data-menu]')!;
+  const background = [document.querySelector('main'), document.querySelector('footer')].filter(Boolean) as HTMLElement[];
+  let isOpen = false;
   const set = (open: boolean) => {
+    if (open === isOpen) return;
+    isOpen = open;
     btn.setAttribute('aria-expanded', String(open));
     menu.hidden = !open;
     document.documentElement.classList.toggle('menu-open', open);
-    if (open) menu.querySelector<HTMLAnchorElement>('a')?.focus();
+    // iOS-safe lock that restores the exact scroll position on close;
+    // page content behind the menu is made non-interactive.
+    if (open) lockScroll(); else unlockScroll();
+    background.forEach((el) => (el.inert = open));
+    if (open) menu.querySelector<HTMLAnchorElement>('a')?.focus({ preventScroll: true });
   };
   btn.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
   menu.querySelectorAll('[data-menu-link]').forEach((a) => a.addEventListener('click', () => set(false)));
@@ -84,7 +93,7 @@ const links = [
     max-width: 1180px; background: rgb(255 255 255 / 0.72); backdrop-filter: blur(18px) saturate(1.4);
     border-color: rgb(255 255 255 / 0.9); box-shadow: 0 12px 40px -18px rgb(37 36 60 / 0.25);
   }
-  .hdr__brand { text-decoration: none; flex-shrink: 0; }
+  .hdr__brand { text-decoration: none; flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; }
   .hdr__nav { margin-inline-start: auto; }
   .hdr__nav ul { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgb(37 36 60 / 0.05); border: 1px solid rgb(255 255 255 / 0.8); }
   .hdr__nav a {
@@ -126,7 +135,6 @@ const links = [
   .mnav__cta { width: 100%; }
   .mnav__brand { display: flex; justify-content: center; padding-top: 1.4rem; border-top: 1px solid transparent; border-image: var(--gold-line) 1; }
   @keyframes mnav-in { from { opacity: 0; transform: translateY(16px); } }
-  :global(.menu-open) body { overflow: hidden; }
 
   @media (max-width: 1023px) {
     .hdr__nav, .hdr__cta { display: none; }

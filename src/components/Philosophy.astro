@@ -50,7 +50,9 @@ const story =
     // The four disciplines start apart and converge into one shape.
     const offsets = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
     root.querySelectorAll<HTMLElement>('[data-orb]').forEach((o, i) => {
-      gsap.fromTo(o, { xPercent: offsets[i][0] * 38, yPercent: offsets[i][1] * 38, scale: 0.86 }, {
+      // Smaller spread on narrow screens so the circles (and their labels) stay on screen.
+      const spread = matchMedia('(max-width: 767px)').matches ? 8 : 38;
+      gsap.fromTo(o, { xPercent: offsets[i][0] * spread, yPercent: offsets[i][1] * spread, scale: 0.86 }, {
         xPercent: 0, yPercent: 0, scale: 1, ease: 'none',
         scrollTrigger: { trigger: '.phi__venn', start: 'top 85%', end: 'center 50%', scrub: 0.8 },
       });

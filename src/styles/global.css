@@ -40,7 +40,7 @@
   --step-3: clamp(2.2rem, 1.6rem + 3vw, 4.2rem);
   --step-4: clamp(2.9rem, 1.8rem + 5.6vw, 7.6rem);
 
-  --gutter: clamp(1rem, 0.5rem + 2.6vw, 3rem);
+  --gutter: clamp(1.25rem, 0.75rem + 2.4vw, 3rem); /* ≈20–22px on phones, 48px max */
   --max: 1440px;
   --radius: 28px;
   --ease-out: cubic-bezier(0.16, 1, 0.3, 1);

@@ -11,7 +11,8 @@
     "qa": "node scripts/qa.mjs",
     "render:stills": "node scripts/render-stills.mjs",
     "lint": "tsc -p tsconfig.check.json",
-    "brand:assets": "node scripts/build-brand-assets.mjs"
+    "brand:assets": "node scripts/build-brand-assets.mjs",
+    "qa:mobile": "node scripts/qa-mobile.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.4",

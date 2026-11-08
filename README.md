@@ -21,6 +21,7 @@ pnpm dev                     # http://localhost:4321
 pnpm lint                    # strict TypeScript (tsc) over .ts/.tsx (alias: pnpm check)
 pnpm build && pnpm preview   # production build
 pnpm qa                      # with preview running: responsive, axe, links, flows, reduced motion
+pnpm qa:mobile               # with preview running: chat dialog, scroll restore, rotation, menu at 360/390/430/768
 pnpm render:stills           # re-render sculpture stills to public/renders (local, free)
 pnpm brand:assets            # regenerate emblem, favicons, app icons from the master
 ```

@@ -111,7 +111,7 @@ const facts = [
     'requestIdleCallback' in window ? requestIdleCallback(boot, { timeout: 600 }) : setTimeout(boot, 200);
   }
   document.querySelectorAll('[data-open-ask]').forEach((b) =>
-    b.addEventListener('click', () => window.dispatchEvent(new CustomEvent('moguls:ask-open'))),
+    b.addEventListener('click', () => window.dispatchEvent(new CustomEvent('moguls:ask-open', { detail: { opener: b } }))),
   );
 </script>
 
