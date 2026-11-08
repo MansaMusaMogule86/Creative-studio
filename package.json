@@ -10,7 +10,8 @@
     "check": "tsc -p tsconfig.check.json",
     "qa": "node scripts/qa.mjs",
     "render:stills": "node scripts/render-stills.mjs",
-    "lint": "tsc -p tsconfig.check.json"
+    "lint": "tsc -p tsconfig.check.json",
+    "brand:assets": "node scripts/build-brand-assets.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.4",

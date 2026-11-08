@@ -1,10 +1,10 @@
 # Mansas Moguls: The Creative Universe (homepage prototype)
 
-**We architect what's next.** This is a homepage prototype for the proposed new light, holographic identity. It is **not deployed** and does not replace any approved brand asset.
+**We architect what's next.** Homepage and division pages in the light, holographic Liquid Pearl direction, carrying the official **golden crowned M** emblem. It is **not deployed**.
 
 - Creative directions and the recommendation: [`docs/creative-directions.md`](docs/creative-directions.md)
 - Full-site audit and proposed build order: [`docs/full-site-audit.md`](docs/full-site-audit.md)
-- Proposed identity sheet: `/brand` (excluded from the sitemap and set to noindex)
+- Identity sheet: `/brand` (noindex). Brand assets are generated from `brand-source/crowned-m-master.png` by `pnpm brand:assets`
 - Round 2 references: bento hero composition (facts row, pill navigation, division pills over the sculpture card) and spatial floating interfaces (Moguls Digital artwork). Only true facts appear in the hero: Dubai, 5 divisions, 52 services.
 
 ## Stack
@@ -22,6 +22,7 @@ pnpm lint                    # strict TypeScript (tsc) over .ts/.tsx (alias: pnp
 pnpm build && pnpm preview   # production build
 pnpm qa                      # with preview running: responsive, axe, links, flows, reduced motion
 pnpm render:stills           # re-render sculpture stills to public/renders (local, free)
+pnpm brand:assets            # regenerate emblem, favicons, app icons from the master
 ```
 
 Set `SITE_URL` before a real build; canonical, Open Graph and sitemap URLs come from it. See `.env.example`.

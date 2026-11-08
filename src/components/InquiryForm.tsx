@@ -177,7 +177,7 @@ export default function InquiryForm() {
 
       {state === 'error' && <p className="f-err" role="alert">Something went wrong while sending. Please try again.</p>}
       <div className="f-actions">
-        <button type="submit" className="btn" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Send inquiry'} <span className="arrow" aria-hidden="true">→</span></button>
+        <button type="submit" className="btn btn--gold" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Send inquiry'} <span className="arrow" aria-hidden="true">→</span></button>
         <p className="f-note"><span aria-hidden="true">*</span> Required. We only use these details to reply to you.</p>
       </div>
     </form>

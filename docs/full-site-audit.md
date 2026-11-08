@@ -12,7 +12,7 @@ Legend: ✅ in place · ◐ partial or placeholder · ❌ missing · 🔒 needs 
 |---|---|---|
 | `/` | ✅ | Hero (bento), universe, services explorer, philosophy, method, selected work, contact, Ask Moguls |
 | `/universe/digital`, `/ai`, `/growth`, `/creative`, `/strategy` | ✅ | Render hero, every service as an anchored section, an inquiry link per service, next-division link, ItemList/Service JSON-LD |
-| `/brand` | ✅ (noindex) | Proposed identity sheet: monogram variants, colour, type |
+| `/brand` | ✅ (noindex) | Official identity sheet: crowned M lockups (light and dark), icons, colour including gold, type |
 | `/legal/privacy`, `/legal/terms` | ◐ 🔒 | Placeholder text, set to noindex. Needs legal copy |
 | `/404` | ✅ | |
 | `/robots.txt`, `/sitemap-index.xml` | ✅ | `SITE_URL` still defaults to localhost 🔒 |
@@ -49,7 +49,7 @@ Legend: ✅ in place · ◐ partial or placeholder · ❌ missing · 🔒 needs 
 | Social profile URLs | Footer, `sameAs` in JSON-LD |
 | Privacy policy and terms (UAE PDPL and GDPR, if applicable) | `/legal/*` |
 | French, Arabic and Simplified Chinese translations | Localised routes |
-| Identity approval: monogram, palette, type | Before any brand-asset replacement |
+| ~~Identity approval~~ | Done: the golden crowned M is the official emblem |
 
 ## 5. Missing functionality
 

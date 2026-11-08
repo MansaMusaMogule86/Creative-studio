@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { divisions, type Division } from '../../data/divisions';
 import { brand } from '../../config/brand';
+import Logo from '../../components/Logo.astro';
 
 export function getStaticPaths() {
   return divisions.map((d) => ({ params: { division: d.slug }, props: { d } }));
@@ -37,7 +38,7 @@ const jsonLd = [{
             <img src={`/renders/division-${d.slug}-520.webp`} srcset={`/renders/division-${d.slug}-520.webp 520w, /renders/division-${d.slug}-1040.webp 1040w`}
               sizes="(max-width: 1440px) 40vw, 560px" width="1040" height="1040" alt="" decoding="async" fetchpriority="high" />
           </picture>
-          <figcaption><span>{d.index}</span> Twin Arch study · {d.short} palette</figcaption>
+          <figcaption><Logo size={22} wordmark={false} /><span>{d.index}</span> Liquid glass study · {d.short} palette</figcaption>
         </figure>
       </div>
     </header>
@@ -75,7 +76,7 @@ const jsonLd = [{
   .dv__crumb a { color: var(--ink-2); }
   .dv .eyebrow { color: var(--ink-d); }
   .dv__ctas { display: flex; flex-wrap: wrap; gap: 0.8rem; }
-  .dv__art { position: relative; justify-self: end; width: min(100%, 560px); margin: 0; border-radius: 34px; overflow: hidden; border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 50px 90px -50px color-mix(in srgb, var(--ink-d) 55%, transparent); background: color-mix(in srgb, var(--a) 30%, white); }
+  .dv__art { position: relative; justify-self: end; width: min(100%, 560px); margin: 0; border-radius: 34px; overflow: hidden; border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 0 0 1px rgb(216 184 117 / 0.45), 0 50px 90px -50px color-mix(in srgb, var(--ink-d) 55%, transparent); background: color-mix(in srgb, var(--a) 30%, white); }
   .dv__art img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; animation: dv-float 9s var(--ease-in-out) infinite alternate; }
   @keyframes dv-float { from { transform: scale(1.02) translateY(0); } to { transform: scale(1.05) translateY(-1.5%); } }
   .dv__art figcaption { position: absolute; inset-inline-start: 16px; bottom: 16px; display: inline-flex; gap: 0.6rem; align-items: center; min-height: 34px; padding: 0 0.9rem; border-radius: 999px; font-size: 0.78rem; background: rgb(255 255 255 / 0.86); backdrop-filter: blur(10px); }

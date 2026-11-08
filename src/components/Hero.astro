@@ -47,13 +47,13 @@ const facts = [
         </ul>
       </article>
 
-      <article class="tile tile--ask hero__in" style="--d:.38s">
+      <article class="tile tile--ask gold-trace hero__in" style="--d:.38s">
         <p class="tile__h">Not sure where to start?</p>
         <p class="tile__p">Describe your challenge and our service finder points you to the right division.</p>
         <button type="button" class="tile__btn" data-open-ask>Ask Moguls <span aria-hidden="true">↗</span></button>
       </article>
 
-      <article class="tile tile--stage hero__in" style="--d:.46s">
+      <article class="tile tile--stage gold-trace hero__in" style="--d:.46s">
         <picture class="stage__fallback" aria-hidden="true">
           <source media="(max-width: 640px)" srcset="/renders/hero-card-mobile-350.webp 350w, /renders/hero-card-mobile-700.webp 700w" sizes="100vw" />
           <img src="/renders/hero-card-660.webp" srcset="/renders/hero-card-660.webp 660w, /renders/hero-card-1320.webp 1320w" sizes="(max-width: 1100px) 100vw, 50vw" alt="" width="1320" height="760" decoding="async" fetchpriority="high" />
@@ -74,7 +74,8 @@ const facts = [
             ))}
           </ul>
         </nav>
-        <p class="stage__label">Twin Arch, liquid glass study · {brand.identityStatus.toLowerCase()}</p>
+        <span class="stage__sweep" aria-hidden="true"></span>
+        <p class="stage__label">Liquid glass study · the artistic centrepiece of the Mansas Moguls universe</p>
       </article>
     </div>
   </div>
@@ -82,9 +83,22 @@ const facts = [
 
 <script>
   const canvas = document.querySelector<HTMLCanvasElement>('[data-sculpture]');
+  // Real-time 3D only on hardware GPUs. Software rasterisers (SwiftShader,
+  // llvmpipe…) render the glass on the CPU and block the main thread, so those
+  // devices keep the pre-rendered still instead.
   const supportsGL = (() => {
-    try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
+    try {
+      const gl = document.createElement('canvas').getContext('webgl2');
+      if (!gl) return false;
+      const info = gl.getExtension('WEBGL_debug_renderer_info');
+      const renderer = String(info ? gl.getParameter(info.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER));
+      gl.getExtension('WEBGL_lose_context')?.loseContext();
+      // ?force-webgl lets QA and design review see the live scene on GPU-less machines.
+      if (new URLSearchParams(location.search).has('force-webgl')) return true;
+      return !/swiftshader|llvmpipe|softpipe|software|basic render/i.test(renderer);
+    } catch { return false; }
   })();
+  document.documentElement.dataset.webgl = String(supportsGL);
   if (canvas && supportsGL) {
     const boot = async () => {
       const { mountSculpture } = await import('../scripts/sculpture');
@@ -117,7 +131,8 @@ const facts = [
 
   /* ── Statement ── */
   .hero__main { display: grid; grid-template-rows: auto 1fr auto; gap: 2rem; min-width: 0; }
-  .hero__facts { display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 1rem; margin: 0; padding-bottom: 1.4rem; border-bottom: 1px solid var(--line); }
+  .hero__facts { position: relative; display: grid; grid-template-columns: repeat(3, auto); justify-content: space-between; gap: 1rem; margin: 0; padding-bottom: 1.4rem; }
+  .hero__facts::after { content: ''; position: absolute; inset: auto 0 0; height: 1px; background: linear-gradient(90deg, var(--gold-antique), var(--gold-champagne) 30%, rgb(216 184 117 / 0.15)); }
   .hero__facts div { display: flex; flex-direction: column-reverse; gap: 0.2rem; }
   .hero__facts dd { margin: 0; font-family: var(--font-display); font-style: italic; font-size: clamp(1.5rem, 1.1rem + 1.2vw, 2.2rem); line-height: 1; }
   .hero__facts dt { font-size: 0.8rem; color: var(--ink-2); }
@@ -158,6 +173,15 @@ const facts = [
   /* A locally rendered still of the same sculpture: shown before WebGL boots and when it can't. */
   .stage__fallback { position: absolute; inset: 0; background: #f1eeff; }
   .stage__fallback img { width: 100%; height: 100%; object-fit: cover; object-position: 75% 50%; }
+  /* Champagne ambient light behind the sculpture (static; no loop). */
+  .tile--stage::before { content: ''; position: absolute; inset: 8% 6% 14% 30%; z-index: 0; border-radius: 50%; background: radial-gradient(closest-side, rgb(245 229 186 / 0.55), rgb(216 184 117 / 0.18) 55%, transparent); filter: blur(24px); pointer-events: none; }
+  .stage__fallback, .stage__canvas { z-index: 0; }
+  .stage__top, .stage__pills, .stage__label { z-index: 2; }
+  /* One delicate gold light sweep on entrance, and again when hovered. */
+  .stage__sweep { position: absolute; inset: 0; z-index: 1; pointer-events: none; background: var(--gold-sheen); background-size: 300% 100%; background-position: 150% 0; mix-blend-mode: soft-light; opacity: 0.9; }
+  .js .stage__sweep { animation: sweep 2.6s var(--ease-in-out) 1.4s 1 both; }
+  .tile--stage:hover .stage__sweep { animation: sweep 2.2s var(--ease-in-out) 1 both; }
+  @keyframes sweep { from { background-position: 150% 0; } to { background-position: -60% 0; } }
   .stage__canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.6s var(--ease-out); }
   .stage__canvas:global(.is-ready) { opacity: 1; }
   .stage__top { position: absolute; top: 18px; inset-inline: 18px; display: flex; gap: 6px; }
@@ -173,7 +197,7 @@ const facts = [
   }
   .stage__pills a span { width: 28px; height: 28px; border-radius: 50%; border: 1px solid currentColor; display: grid; place-items: center; font-size: 0.85rem; transition: transform 0.5s var(--ease-out), background-color 0.3s; }
   .stage__pills a:hover { transform: translateX(6px); color: var(--ink-d); }
-  .stage__pills a:hover span { transform: rotate(-90deg); background: var(--a); border-color: transparent; color: var(--ink); }
+  .stage__pills a:hover span { transform: rotate(-90deg); background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--a) 70%); border-color: var(--gold-champagne); color: var(--ink); }
   @keyframes pill-in { from { opacity: 0; transform: translateX(-14px); } }
   .stage__label { position: absolute; inset-inline-end: 20px; bottom: 18px; font-size: 0.72rem; letter-spacing: 0.06em; color: var(--ink-2); max-width: 20ch; text-align: end; }
 

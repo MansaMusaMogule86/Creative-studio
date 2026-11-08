@@ -119,7 +119,7 @@ import { divisions } from '../data/divisions';
   .row__i { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line-strong); position: relative; transition: background-color 0.4s, transform 0.6s var(--ease-out); }
   .row__i::before, .row__i::after { content: ''; position: absolute; inset: 18px 12px; background: var(--ink); }
   .row__i::after { transform: rotate(90deg); transition: transform 0.5s var(--ease-out); }
-  .row[open] .row__i { background: var(--a); transform: rotate(180deg); }
+  .row[open] .row__i { background: radial-gradient(circle at 35% 30%, var(--gold-light), var(--a) 75%); border-color: var(--gold-champagne); transform: rotate(180deg); }
   .row[open] .row__i::after { transform: rotate(0); }
   .row[open] .row__t { color: var(--ink-d); }
 

@@ -59,7 +59,10 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   card(pal.lights[2], [2, -9, 3], [10, 5], 2.0);
   card('#ffffff', [0, 9, 6], [12, 3], 3.2);
   card('#d9a8ff', [-4, -3, -9], [10, 8], 1.8);
-  card('#ffd27a', [-8, -6, 2], [4, 6], 1.6);
+  // Champagne-gold light cards: warm highlights on the glass edges.
+  card('#e8c98a', [-8, -6, 2], [4, 6], 1.9);
+  card('#f5e5ba', [7, 8, 3], [2.2, 9], 2.4);
+  card('#d4a43b', [-2, 10, -6], [9, 1.2], 1.4);
   card('#7fb4ff', [7, 6, -6], [5, 7], 1.8);
   card('#ffffff', [4, 2, 10], [3, 8], 2.6);
   // Thin ink strips give the glass defined, darker rims, as in a studio shot.
@@ -82,6 +85,8 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
         col = mix(col, uC1, 0.62 * blob(p, vec2(uAspect*(0.72 + 0.06*sin(t*3.0)), 0.70 + 0.05*cos(t*2.0)), 0.75));
         col = mix(col, uC2, 0.55 * blob(p, vec2(uAspect*(0.92 + 0.05*cos(t*2.3)), 0.22 + 0.06*sin(t*1.7)), 0.7));
         col = mix(col, uC3, 0.5 * blob(p, vec2(uAspect*(0.18 + 0.05*sin(t*1.9)), 0.12 + 0.04*cos(t*2.6)), 0.65));
+        // Very subtle champagne ambient behind the sculpture's centre.
+        col = mix(col, vec3(0.97, 0.90, 0.74), 0.22 * blob(p, vec2(uAspect*0.5, 0.52), 0.42));
         col += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453) - 0.5) / 255.0;
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -164,9 +169,12 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const shadow = new Mesh(new PlaneGeometry(6, 1.2), new MeshBasicMaterial({ map: new CanvasTexture(sc), transparent: true, depthWrite: false, opacity: 0.35 }));
   scene.add(shadow);
 
-  const key = new DirectionalLight('#ffffff', 1.4);
+  const key = new DirectionalLight('#fff4de', 1.4);
   key.position.set(3, 5, 6);
   scene.add(key);
+  const rim = new DirectionalLight('#e8c98a', 0.9); // warm gold rim from behind-left
+  rim.position.set(-5, 2, -4);
+  scene.add(rim);
 
   // ── Layout: sculpture right of the headline on wide screens, above it on narrow ──
   const resize = () => {

@@ -1,5 +1,6 @@
 ---
 import InquiryForm from './InquiryForm';
+import Logo from './Logo.astro';
 ---
 <section id="contact" class="section ct" aria-labelledby="ct-title">
   <img class="ct__bg" aria-hidden="true" alt="" src="/renders/bg-contact-900.webp"
@@ -7,6 +8,7 @@ import InquiryForm from './InquiryForm';
   <div class="ct__veil" aria-hidden="true"></div>
   <div class="wrap ct__grid">
     <div class="ct__intro">
+      <div data-reveal><Logo size={56} wordmark={false} /></div>
       <p class="eyebrow" data-reveal>Start a project</p>
       <h2 id="ct-title" class="ct__title" data-reveal style="--d:.08s">Your next big idea <em class="holo-text">starts here.</em></h2>
       <p class="lede" data-reveal style="--d:.16s">Tell us where you want to go. The team reads every inquiry and replies with a clear next step.</p>

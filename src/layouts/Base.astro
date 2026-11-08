@@ -4,6 +4,10 @@ import Header from '../components/Header.astro';
 import Footer from '../components/Footer.astro';
 import { brand } from '../config/brand';
 import { dirFor, langTag, t, type Locale } from '../i18n';
+// Above-the-fold fonts, preloaded so the hero headline doesn't reflow (CLS) when they swap in.
+import serifNormal from '@fontsource/instrument-serif/files/instrument-serif-latin-400-normal.woff2?url';
+import serifItalic from '@fontsource/instrument-serif/files/instrument-serif-latin-400-italic.woff2?url';
+import outfit from '@fontsource-variable/outfit/files/outfit-latin-wght-normal.woff2?url';
 
 interface Props {
   title?: string;
@@ -23,7 +27,8 @@ const org = {
   slogan: brand.tagline,
   description: brand.description,
   url: new URL('/', Astro.site).href,
-  logo: new URL('/brand/monogram-holo.svg', Astro.site).href,
+  logo: new URL(brand.emblem.png, Astro.site).href,
+  image: new URL('/og.png', Astro.site).href,
   areaServed: 'Worldwide',
   address: { '@type': 'PostalAddress', addressLocality: brand.city, addressCountry: 'AE' },
 };
@@ -39,7 +44,13 @@ const d = t(locale);
     <link rel="canonical" href={canonical} />
     {noindex && <meta name="robots" content="noindex" />}
     <meta name="theme-color" content="#F8F7FF" />
-    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="icon" href="/favicon.ico" sizes="48x48" />
+    <link rel="icon" href="/favicon-32.png" type="image/png" sizes="32x32" />
+    <link rel="icon" href="/favicon-16.png" type="image/png" sizes="16x16" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="preload" as="image" href={brand.emblem.light[44]} imagesrcset={`${brand.emblem.light[44]} 1x, ${brand.emblem.light[88]} 2x, ${brand.emblem.light[132]} 3x`} />
+    {[serifNormal, serifItalic, outfit].map((href) => <link rel="preload" as="font" type="font/woff2" href={href} crossorigin />)}
     <link rel="sitemap" href="/sitemap-index.xml" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content={brand.name} />
@@ -49,6 +60,7 @@ const d = t(locale);
     <meta property="og:image" content={ogImage} />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={`${brand.name}: golden crowned M emblem with the tagline ${brand.tagline}`} />
     <meta name="twitter:card" content="summary_large_image" />
     <script is:inline>document.documentElement.classList.add('js');</script>
     <script type="application/ld+json" set:html={JSON.stringify([org, ...jsonLd])} />

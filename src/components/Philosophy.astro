@@ -1,4 +1,5 @@
 ---
+import { brand } from '../config/brand';
 const pillars = [
   { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8C8FF' },
   { key: 'Engineering', line: 'Built to last and to scale', color: '#8EE7E8' },
@@ -25,7 +26,10 @@ const story =
           <span class="orb__l">{p.line}</span>
         </div>
       ))}
-      <div class="phi__core" data-core><span>One team</span></div>
+      <div class="phi__core" data-core>
+        <img src={brand.emblem.dark[160]} srcset={`${brand.emblem.dark[160]} 160w, ${brand.emblem.dark[320]} 320w`} sizes="120px" width="127" height="120" alt="" loading="lazy" decoding="async" />
+        <span>One team</span>
+      </div>
     </div>
   </div>
 </section>
@@ -83,10 +87,11 @@ const story =
   .orb:nth-child(odd) { justify-items: start; text-align: start; padding-left: 18%; }
   .orb:nth-child(even) { justify-items: end; text-align: end; padding-right: 18%; }
   .phi__core {
-    position: absolute; inset: 39%; border-radius: 50%; display: grid; place-items: center;
-    background: var(--ink); color: var(--white); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; text-align: center;
-    box-shadow: 0 0 0 10px rgb(255 255 255 / 0.6), 0 20px 50px -10px rgb(90 63 192 / 0.6);
+    position: absolute; inset: 34%; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 4%;
+    background: radial-gradient(circle at 50% 35%, #34304f, var(--ink) 70%); color: var(--gold-light); font-size: 0.66rem; letter-spacing: 0.2em; text-transform: uppercase; text-align: center;
+    box-shadow: 0 0 0 1px rgb(216 184 117 / 0.6), 0 0 0 10px rgb(255 255 255 / 0.6), 0 20px 50px -10px rgb(167 122 48 / 0.55);
   }
+  .phi__core img { width: 58%; height: auto; }
 
   @media (max-width: 900px) {
     .phi__grid { grid-template-columns: 1fr; }

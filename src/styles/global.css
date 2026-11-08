@@ -15,6 +15,18 @@
   --line: rgb(37 36 60 / 0.12);
   --line-strong: rgb(37 36 60 / 0.24);
   --focus: #5a3fc0;
+  --warm-white: #fbf8f1;
+
+  /* Gold: the master-brand accent. Keep it to roughly 5–10% of the page.
+     Decorative only (lines, light, borders); text uses --gold-text for AA. */
+  --gold-champagne: #d8b875;
+  --gold-royal: #d4a43b;
+  --gold-light: #f5e5ba;
+  --gold-antique: #a77a30;
+  --gold-dark: #78531f;
+  --gold-text: #78531f; /* 7.0:1 on white, 6.6:1 on pearl */
+  --gold-line: linear-gradient(90deg, transparent, var(--gold-champagne) 18%, var(--gold-royal) 50%, var(--gold-champagne) 82%, transparent);
+  --gold-sheen: linear-gradient(105deg, transparent 30%, rgb(245 229 186 / 0.75) 46%, rgb(255 255 255 / 0.9) 50%, rgb(216 184 117 / 0.6) 54%, transparent 70%);
 
   --holo: linear-gradient(115deg, #b9a5ff 0%, #8ee7e8 38%, #ffc6ac 70%, #e8c8ff 100%);
 
@@ -79,8 +91,14 @@ ul { margin: 0; padding: 0; list-style: none; }
   color: var(--ink-2);
 }
 .eyebrow::before {
-  content: ''; width: 22px; height: 1px; background: currentColor;
+  content: ''; width: 22px; height: 1px;
+  background: linear-gradient(90deg, var(--gold-antique), var(--gold-champagne));
+  transform-origin: left; transition: transform 1.1s var(--ease-out) 0.2s;
 }
+[dir='rtl'] .eyebrow::before { transform-origin: right; }
+/* Metallic highlight during scroll: the gold rule draws in as its section reveals. */
+.js [data-reveal].eyebrow::before { transform: scaleX(0); }
+.js [data-reveal].eyebrow.is-in::before { transform: scaleX(1); }
 .display { font-family: var(--font-display); font-size: var(--step-4); }
 .display em, .h2 em { font-style: italic; }
 .h2 { font-family: var(--font-display); font-size: var(--step-3); }
@@ -115,11 +133,41 @@ ul { margin: 0; padding: 0; list-style: none; }
 .btn:hover .arrow { transform: translateX(4px); }
 [dir='rtl'] .btn .arrow { transform: scaleX(-1); }
 [dir='rtl'] .btn:hover .arrow { transform: scaleX(-1) translateX(4px); }
+/* Soft gold reflection that crosses primary CTAs once per hover. */
+.btn::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none;
+  background: var(--gold-sheen); background-size: 250% 100%; background-position: 140% 0;
+  opacity: 0; mix-blend-mode: screen;
+}
+.btn:not(.btn--ghost):hover::after { opacity: 1; background-position: -40% 0; transition: background-position 1.1s var(--ease-out), opacity 0.2s; }
+.btn:not(.btn--ghost):hover { box-shadow: 0 14px 40px -12px rgb(90 63 192 / 0.4), inset 0 0 0 1px rgb(216 184 117 / 0.55); }
+/* Gold CTA: reserved for the single most important action on a view. */
+.btn--gold {
+  --bg: linear-gradient(135deg, #2b2840, #25243c 55%, #3a3046);
+  background: var(--bg);
+  box-shadow: inset 0 0 0 1px rgb(216 184 117 / 0.7), 0 16px 36px -16px rgb(167 122 48 / 0.55);
+}
+.btn--gold .arrow { color: var(--gold-light); }
 .btn--ghost {
   --bg: rgb(255 255 255 / 0.55); --fg: var(--ink);
   border-color: var(--line-strong); backdrop-filter: blur(12px);
 }
 .btn--ghost:hover { --bg: var(--white); }
+
+/* ───────── Gold details ───────── */
+.gold-rule { height: 1px; border: 0; margin: 0; background: var(--gold-line); }
+/* Light tracing: a thin gold line travels once around a featured card on hover. */
+@property --trace { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
+.gold-trace { position: relative; }
+.gold-trace::after {
+  content: ''; position: absolute; inset: 0; border-radius: inherit; padding: 1px; pointer-events: none;
+  background: conic-gradient(from var(--trace), transparent 0deg, var(--gold-light) 20deg, var(--gold-royal) 40deg, transparent 70deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+  opacity: 0; transition: opacity 0.4s;
+}
+.gold-trace:hover::after, .gold-trace:focus-within::after { opacity: 1; animation: trace 1.8s var(--ease-in-out) 1 forwards; }
+@keyframes trace { from { --trace: 0deg; } to { --trace: 360deg; } }
 
 /* ───────── Reveal (progressive: content is visible without JS) ───────── */
 .js [data-reveal] { opacity: 0; transform: translateY(28px); }

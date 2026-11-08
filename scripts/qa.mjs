@@ -185,7 +185,7 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
       if (wrongVariant.length) fail(`${path} ${label}: wrong art direction served: ${wrongVariant.map((r) => r.n).join(', ')}`);
       await scrollThrough(p);
       await p.waitForLoadState('networkidle');
-      const broken = await p.$$eval('img', (imgs) => imgs.filter((i) => !i.complete || i.naturalWidth === 0).map((i) => i.currentSrc || i.src));
+      const broken = await p.$$eval('img', (imgs) => imgs.filter((i) => i.getClientRects().length && i.checkVisibility() && (!i.complete || i.naturalWidth === 0)).map((i) => i.currentSrc || i.src));
       if (broken.length) fail(`${path} ${label}: images failed to decode: ${broken.join(', ')}`);
       ok(`${path} ${label}: ${first.length} image(s), ${kb} KB on first load; all images decode`);
       await p.close();
@@ -211,6 +211,32 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
   });
   if (!state.img || !state.canvasHidden) fail(`no-WebGL fallback: ${JSON.stringify(state)}`); else ok('no-WebGL: hero shows the rendered still, canvas stays hidden');
   await ctx.close();
+}
+
+// 8. Brand consistency: official emblem everywhere, icons and metadata resolve.
+{
+  const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
+  for (const asset of ['/favicon.ico', '/favicon-32.png', '/favicon-16.png', '/apple-touch-icon.png', '/site.webmanifest', '/icon-192.png', '/icon-512.png', '/icon-maskable-512.png', '/og.png', '/brand/emblem-512.png']) {
+    const r = await p.request.get(BASE + asset);
+    if (r.status() !== 200) fail(`brand asset ${asset} → ${r.status()}`);
+  }
+  for (const path of PAGES) {
+    await p.goto(BASE + path, { waitUntil: 'networkidle' });
+    const b = await p.evaluate(() => ({
+      header: document.querySelector('.hdr__brand .logo__word')?.textContent?.trim(),
+      headerEmblem: !!document.querySelector('.hdr__brand img.logo__mark[src*="/brand/emblem-"]'),
+      footerEmblem: !!document.querySelector('.ftr img.logo__mark[src*="/brand/emblem-"]'),
+      oldMarks: document.querySelectorAll('[src*="monogram"], [href*="favicon.svg"]').length,
+      ldLogo: JSON.parse(document.querySelector('script[type="application/ld+json"]').textContent)[0].logo,
+      og: document.querySelector('meta[property="og:image"]')?.content,
+    }));
+    if (b.header !== 'MANSAS MOGULS') fail(`${path}: header wordmark reads "${b.header}"`);
+    if (!b.headerEmblem || !b.footerEmblem) fail(`${path}: crowned M missing (header ${b.headerEmblem}, footer ${b.footerEmblem})`);
+    if (b.oldMarks) fail(`${path}: ${b.oldMarks} reference(s) to the old monogram`);
+    if (!/emblem-512\.png$/.test(b.ldLogo) || !/og\.png$/.test(b.og)) fail(`${path}: metadata logo/og wrong (${b.ldLogo}, ${b.og})`);
+  }
+  ok(`brand: crowned M in header and footer on ${PAGES.length} pages; icons, manifest, OG and JSON-LD resolve`);
+  await p.close();
 }
 
 await browser.close();

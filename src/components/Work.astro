@@ -25,7 +25,7 @@ const projects = [
     <ul class="work__grid">
       {projects.map((p, i) => (
         <li class={`case case--${p.layout}`} data-reveal style={`--d:${(i % 2) * 0.1}s;--a:${p.d.palette[0]};--b:${p.d.palette[1]};--c:${p.d.palette[2]};--ink-d:${p.d.ink}`}>
-          <figure class="case__frame">
+          <figure class="case__frame gold-trace">
             <div class="case__visual" aria-hidden="true">
               <img src={`/renders/${p.img}-${p.w / 2}.webp`} srcset={`/renders/${p.img}-${p.w / 2}.webp ${p.w / 2}w, /renders/${p.img}-${p.w}.webp ${p.w}w`}
                 sizes="(max-width: 900px) 100vw, 55vw" alt="" width={p.w} height={p.w * 0.75} loading="lazy" decoding="async" />
@@ -46,6 +46,7 @@ const projects = [
 <style>
   .work__head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: 1.5rem 3rem; margin-bottom: clamp(2rem, 5vw, 4rem); }
   .work__head > div { display: grid; gap: 1.2rem; }
+  .work__note strong { color: var(--gold-text); }
   .work__note { max-width: 40ch; font-size: 0.95rem; color: var(--ink-2); padding: 1rem 1.2rem; border-radius: 16px; border: 1px dashed var(--line-strong); background: var(--white); }
   .work__grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: clamp(12px, 1.6vw, 24px); }
   .case--wide { grid-column: span 7; } .case--tall { grid-column: span 5; }
@@ -60,7 +61,7 @@ const projects = [
   }
   .case__visual img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.6s var(--ease-out); }
   .case:hover .case__visual img { transform: scale(1.06) rotate(-1deg); }
-  .case__badge { position: absolute; top: 18px; inset-inline-start: 18px; padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 560; background: rgb(255 255 255 / 0.85); border: 1px dashed var(--line-strong); }
+  .case__badge { position: absolute; top: 18px; inset-inline-start: 18px; padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 560; background: rgb(255 255 255 / 0.88); border: 1px dashed var(--gold-champagne); color: var(--gold-text); }
   .case__cap { position: absolute; inset: auto 0 0; display: grid; gap: 0.25rem; padding: 1.4rem 1.6rem; background: linear-gradient(transparent, rgb(255 255 255 / 0.92) 40%); }
   .case__div { font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-d); font-weight: 560; }
   .case__title { font-family: var(--font-display); font-size: var(--step-2); line-height: 1.05; }

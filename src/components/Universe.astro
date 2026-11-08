@@ -70,6 +70,8 @@ import { divisions } from '../data/divisions';
     border: 1px solid var(--line); transition: flex-grow 0.9s var(--ease-out), background 0.9s, box-shadow 0.9s;
     display: flex; flex-direction: column;
   }
+  .panel::before { content: ''; position: absolute; inset: 0 12% auto; height: 1.5px; background: var(--gold-line); opacity: 0; transform: scaleX(0.4); transition: opacity 0.6s, transform 0.9s var(--ease-out); z-index: 1; }
+  .panel.is-active::before { opacity: 1; transform: none; }
   .panel.is-active {
     flex-grow: 4.2;
     background: linear-gradient(160deg, var(--white) 0%, color-mix(in srgb, var(--a) 38%, var(--white)) 55%, color-mix(in srgb, var(--b) 30%, var(--white)) 100%);
