@@ -1,0 +1,74 @@
+{
+  "$comment": "Proposed field mapping. Standard GHL field keys and custom-field types must be confirmed against the live account and docs (marketplace.gohighlevel.com was not reachable from this environment). Custom fields are resolved by fieldKey at runtime via GET /locations/{locationId}/customFields.",
+  "status": "PROPOSED",
+  "conventions": {
+    "customFieldPrefix": "mm_",
+    "tagPrefix": "mm:",
+    "serviceValues": "service slugs from src/data/divisions.ts (52 values)",
+    "divisionValues": ["digital", "ai", "growth", "creative", "strategy"]
+  },
+  "contact": {
+    "standard": [
+      { "formField": "firstName", "crm": "firstName", "type": "text", "required": true, "validation": "1–80 chars", "note": "Today the form has one 'name' field; v2 splits it. Until then the server splits on the first space (lastName may be empty)." },
+      { "formField": "lastName", "crm": "lastName", "type": "text", "required": false, "validation": "0–80 chars" },
+      { "formField": "email", "crm": "email", "type": "email", "required": true, "validation": "RFC-like check, lower-cased, max 254", "note": "Primary duplicate key (follows the location 'Allow Duplicate Contact' setting)." },
+      { "formField": "phone", "crm": "phone", "type": "phone", "required": "when preferred channel = phone", "validation": "E.164 after normalisation" },
+      { "formField": "company", "crm": "companyName", "type": "text", "required": false, "validation": "max 120" },
+      { "formField": "website", "crm": "website", "type": "url", "required": false, "validation": "https URL, max 200" },
+      { "formField": "country", "crm": "country", "type": "ISO 3166-1 alpha-2", "required": false },
+      { "formField": "city", "crm": "city", "type": "text", "required": false, "note": "Not collected at launch (data minimisation)." },
+      { "formField": "-", "crm": "source", "type": "text", "required": true, "value": "Website — Inquiry form" },
+      { "formField": "-", "crm": "tags", "type": "tags", "value": ["mm:web-inquiry", "mm:division:{division}"] }
+    ],
+    "custom": [
+      { "key": "mm_job_title", "type": "SINGLE_LINE", "required": false, "launch": false },
+      { "key": "mm_preferred_language", "type": "SINGLE_OPTIONS", "options": ["en", "ar", "fr", "zh"], "required": false, "launch": true },
+      { "key": "mm_preferred_channel", "type": "SINGLE_OPTIONS", "options": ["email", "phone", "video"], "required": true, "launch": true, "source": "form 'contact' (existing)" },
+      { "key": "mm_consent_marketing", "type": "CHECKBOX/boolean", "required": true, "launch": true, "note": "Default false; only true from an explicit unticked checkbox." },
+      { "key": "mm_consent_marketing_at", "type": "DATE/time", "required": false, "launch": true },
+      { "key": "mm_privacy_notice_version", "type": "SINGLE_LINE", "required": true, "launch": true },
+      { "key": "mm_first_utm_source", "type": "SINGLE_LINE", "launch": true },
+      { "key": "mm_first_utm_medium", "type": "SINGLE_LINE", "launch": true },
+      { "key": "mm_first_utm_campaign", "type": "SINGLE_LINE", "launch": true },
+      { "key": "mm_first_utm_content", "type": "SINGLE_LINE", "launch": true },
+      { "key": "mm_first_utm_term", "type": "SINGLE_LINE", "launch": true },
+      { "key": "mm_first_landing_page", "type": "SINGLE_LINE", "launch": true, "note": "Path only, no query string beyond UTMs." },
+      { "key": "mm_first_referrer", "type": "SINGLE_LINE", "launch": true, "note": "Origin only (scheme + host)." }
+    ],
+    "custom_field_type_status": "NEEDS CONFIRMATION — GHL custom field data type names must be matched to the account UI/API."
+  },
+  "opportunity": {
+    "standard": [
+      { "crm": "name", "value": "{companyName or fullName} — {primary division} inquiry", "required": true },
+      { "crm": "pipelineId", "value": "env HIGHLEVEL_PIPELINE_ID_SALES", "required": true },
+      { "crm": "pipelineStageId", "value": "env HIGHLEVEL_STAGE_ID_NEW_LEAD", "required": "NEEDS CONFIRMATION (required by some integrations)" },
+      { "crm": "status", "value": "open", "required": true },
+      { "crm": "contactId", "value": "from upsert response", "required": true },
+      { "crm": "monetaryValue", "value": "not set by the website", "required": false, "note": "Sales sets this at the Qualified stage." },
+      { "crm": "assignedTo", "value": "per routing table (NEEDS CONFIRMATION: user IDs)", "required": false },
+      { "crm": "source", "value": "Website — Inquiry form", "required": false }
+    ],
+    "custom": [
+      { "key": "mm_opp_division", "type": "SINGLE_OPTIONS", "options": ["digital", "ai", "growth", "creative", "strategy", "multiple"], "required": true },
+      { "key": "mm_opp_services", "type": "MULTIPLE_OPTIONS or LARGE_TEXT", "required": true, "note": "52 slugs; if multi-select is impractical, store comma-separated slugs." },
+      { "key": "mm_opp_budget_range", "type": "SINGLE_OPTIONS", "options": ["Prefer not to say", "Under USD 10k", "USD 10k–25k", "USD 25k–75k", "USD 75k–150k", "Above USD 150k"], "required": false },
+      { "key": "mm_opp_timeline", "type": "SINGLE_OPTIONS", "options": ["As soon as possible", "1–3 months", "3–6 months", "6+ months", "Not sure yet"], "required": false, "launch": "v2 form" },
+      { "key": "mm_opp_lead_source_detail", "type": "SINGLE_OPTIONS", "options": ["inquiry-form", "ask-moguls", "division-page", "service-inquire-link"], "required": false },
+      { "key": "mm_opp_qualification", "type": "SINGLE_OPTIONS", "options": ["unreviewed", "qualified", "not-a-fit", "spam"], "required": true, "default": "unreviewed" },
+      { "key": "mm_opp_lost_reason", "type": "SINGLE_OPTIONS", "options": ["budget", "timing", "chose-competitor", "no-response", "not-a-fit", "other"], "required": "when status = lost" },
+      { "key": "mm_submission_id", "type": "SINGLE_LINE", "required": true, "note": "UUID from the browser; used for idempotency." }
+    ]
+  },
+  "notes": [
+    { "content": "Project description (verbatim, max 4000 chars) + submission summary (services, budget, preferred channel, page). No hidden tracking data." }
+  ],
+  "serviceSpecific": {
+    "status": "PROPOSED — phase 2, optional conditional questions, stored as an opportunity note rather than dozens of custom fields",
+    "digital": ["Current website URL", "Platform type (website / web app / mobile / e-commerce / SaaS)"],
+    "ai": ["Process to automate (short text)", "Tools in use (short text)"],
+    "growth": ["Channels of interest (SEO / paid / social / CRO)", "Monthly marketing budget range"],
+    "creative": ["Deliverables needed", "Existing brand guidelines? (yes/no)"],
+    "strategy": ["Company stage", "Decision timeline"]
+  },
+  "notCollected": ["date of birth", "address", "national ID", "payment data", "Ask Moguls free text", "IP address in CRM records"]
+}

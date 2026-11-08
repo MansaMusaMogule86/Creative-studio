@@ -1,0 +1,95 @@
+{
+  "$comment": "Workflows are configured by people in the GoHighLevel workflow builder, not by the website. Trigger and action names must be matched to the GHL UI (NEEDS CONFIRMATION). No workflow sends marketing messages without mm_consent_marketing = true.",
+  "status": "PROPOSED",
+  "globalRules": {
+    "suppression": ["contact has DND enabled", "tag mm:do-not-contact", "opportunity qualification = spam"],
+    "marketingRequiresConsent": true,
+    "transactionalAllowed": ["reply to the inquiry the visitor submitted", "booking confirmations and reminders the visitor requested"],
+    "loopPrevention": "No workflow adds the tag that triggers another workflow it is triggered by. Every workflow has 'allow re-entry' OFF unless stated.",
+    "quietHours": "NEEDS CONFIRMATION (Gulf Standard Time business hours)",
+    "owner": "Sales lead (NEEDS CONFIRMATION)"
+  },
+  "workflows": [
+    {
+      "id": "WF-01-NEW-LEAD-INTAKE",
+      "trigger": "Opportunity created in pipeline 'Sales — New Business' at stage 'New Lead' (or tag mm:web-inquiry added)",
+      "conditions": ["mm_opp_qualification != spam"],
+      "steps": [
+        { "action": "Assign opportunity owner by division (routing table)", "delay": "0" },
+        { "action": "Internal notification to owner (email/app) with a link to the opportunity", "delay": "0" },
+        { "action": "Send acknowledgement email to the contact (transactional: 'we received your inquiry')", "delay": "0" },
+        { "action": "Create task 'First contact within 1 business day' for the owner", "delay": "0" },
+        { "action": "If stage still 'New Lead' after 1 business day → notify owner and the sales lead", "delay": "1 business day" }
+      ],
+      "exit": ["stage moves past 'New Lead'", "status won/lost"],
+      "reentry": false
+    },
+    {
+      "id": "WF-02-DISCOVERY-BOOKING",
+      "trigger": "Appointment booked on the 'Discovery call' calendar",
+      "steps": [
+        { "action": "Move opportunity to 'Discovery Scheduled' (find the open opportunity for the contact)" },
+        { "action": "Confirmation email with meeting details and a reschedule link" },
+        { "action": "Reminder 24 h before", "delay": "-24h" },
+        { "action": "Reminder 1 h before", "delay": "-1h" }
+      ],
+      "branches": {
+        "noShow": "Mark appointment no-show → task for owner to follow up once; no automated chasing beyond one message",
+        "cancelled": "Move back to 'Contacting'; notify owner",
+        "completed": "Owner moves to 'Discovery Completed' manually"
+      },
+      "status": "NEEDS CONFIRMATION (calendar, meeting tool, staff)"
+    },
+    {
+      "id": "WF-03-PROPOSAL-FOLLOW-UP",
+      "trigger": "Opportunity stage changed to 'Proposal Sent'",
+      "steps": [
+        { "action": "Task for owner: follow up", "delay": "3 business days" },
+        { "action": "Task for owner: second follow-up", "delay": "7 business days" },
+        { "action": "If there is no response after 14 business days, notify the owner only. Stages are moved by people, never by this workflow.", "delay": "14 business days" }
+      ],
+      "exit": ["stage changes", "status won/lost"],
+      "note": "Follow-ups are tasks for people, not automated emails, to avoid sending stale messages."
+    },
+    {
+      "id": "WF-04-CLIENT-ONBOARDING",
+      "trigger": "Opportunity status = won (Sales pipeline)",
+      "steps": [
+        { "action": "Create opportunity in pipeline 'Client Onboarding' at 'Kickoff Scheduled' (only if none open for this contact)" },
+        { "action": "Welcome email (transactional) from the account owner" },
+        { "action": "Send project intake form link (GHL form or external tool — NEEDS CONFIRMATION)" },
+        { "action": "Internal tasks: contract/invoice check, access & assets checklist, kickoff booking" }
+      ],
+      "status": "NEEDS CONFIRMATION (contracts, invoicing, project management tool)"
+    },
+    {
+      "id": "WF-05-DIVISION-ROUTING",
+      "trigger": "Part of WF-01",
+      "routing": {
+        "digital": "OWNER_DIGITAL (NEEDS CONFIRMATION)",
+        "ai": "OWNER_AI (NEEDS CONFIRMATION)",
+        "growth": "OWNER_GROWTH (NEEDS CONFIRMATION)",
+        "creative": "OWNER_CREATIVE (NEEDS CONFIRMATION)",
+        "strategy": "OWNER_STRATEGY (NEEDS CONFIRMATION)",
+        "multiple": "Sales lead"
+      },
+      "fallback": "Sales lead"
+    },
+    {
+      "id": "WF-06-RE-ENGAGEMENT",
+      "trigger": "Opportunity in 'Contacting' with no activity for 10 business days",
+      "conditions": ["no reply recorded", "mm_consent_marketing not required (it is a reply to their own inquiry)"],
+      "steps": [
+        { "action": "One polite follow-up email: 'Is this still a priority?'", "delay": "0" },
+        { "action": "If no reply after 10 more business days → status lost, reason no-response", "delay": "10 business days" }
+      ],
+      "maxMessages": 1,
+      "reentry": false
+    },
+    {
+      "id": "WF-07-SPAM-HANDLING",
+      "trigger": "Owner sets mm_opp_qualification = spam",
+      "steps": [{ "action": "Status lost, reason other; tag mm:do-not-contact; remove from all workflows" }]
+    }
+  ]
+}
