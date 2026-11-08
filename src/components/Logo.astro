@@ -1,0 +1,33 @@
+---
+// Proposed "Twin Arch" monogram: two interlocking arches form the M.
+// Architecture (the arch), connection (the shared centre pillar) and
+// progress (the second arch rising past the first).
+interface Props { variant?: 'holo' | 'ink' | 'white'; wordmark?: boolean; size?: number; class?: string }
+const { variant = 'holo', wordmark = true, size = 34, class: cls = '' } = Astro.props;
+const id = `mm-${Math.random().toString(36).slice(2, 8)}`;
+const stroke = variant === 'holo' ? `url(#${id})` : variant === 'ink' ? '#25243C' : '#FFFFFF';
+---
+<span class={`logo ${cls}`}>
+  <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
+    <defs>
+      <linearGradient id={id} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+        <stop offset="0" stop-color="#7B5CF0" />
+        <stop offset="0.5" stop-color="#2AA9B4" />
+        <stop offset="1" stop-color="#E07A55" />
+      </linearGradient>
+    </defs>
+    <g fill="none" stroke={stroke} stroke-width="5.5" stroke-linecap="round">
+      <path d="M8 56V28a14 14 0 0 1 28 0v28" />
+      <path d="M28 56V28a14 14 0 0 1 28 0v28" opacity="0.92" />
+    </g>
+  </svg>
+  {wordmark && <span class="logo__word">Mansas&nbsp;Moguls</span>}
+</span>
+
+<style>
+  .logo { display: inline-flex; align-items: center; gap: 0.7rem; }
+  .logo__word {
+    font-family: var(--font-sans); font-weight: 560; font-size: 0.92rem;
+    letter-spacing: 0.24em; text-transform: uppercase; white-space: nowrap;
+  }
+</style>

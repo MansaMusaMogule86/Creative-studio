@@ -1,0 +1,31 @@
+{
+  "name": "mansas-moguls-universe",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "astro dev",
+    "build": "astro build",
+    "preview": "astro preview",
+    "check": "tsc -p tsconfig.check.json",
+    "qa": "node scripts/qa.mjs"
+  },
+  "dependencies": {
+    "@astrojs/react": "^7.1.4",
+    "@astrojs/sitemap": "^3.7.4",
+    "@fontsource-variable/outfit": "^5.3.0",
+    "@fontsource/instrument-serif": "^5.3.0",
+    "astro": "^7.4.7",
+    "gsap": "^3.15.1",
+    "react": "^19.3.1",
+    "react-dom": "^19.3.1",
+    "three": "^0.187.0"
+  },
+  "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
+    "@types/react": "^19.3.0",
+    "@types/react-dom": "^19.3.0",
+    "@types/three": "^0.187.0",
+    "typescript": "^6"
+  }
+}

@@ -1,0 +1,131 @@
+---
+import DivisionArt from './divisions/DivisionArt.astro';
+import { divisions } from '../data/divisions';
+---
+<section id="universe" class="section uni" aria-labelledby="uni-title">
+  <div class="wrap">
+    <header class="uni__head">
+      <p class="eyebrow" data-reveal>The universe</p>
+      <h2 id="uni-title" class="h2" data-reveal style="--d:.08s">Five divisions. <em>One connected</em> system.</h2>
+      <p class="lede" data-reveal style="--d:.16s">Each world has its own craft and character. Together they cover the full path from idea to growth.</p>
+    </header>
+
+    <div class="uni__panels" data-universe>
+      {divisions.map((d, i) => (
+        <article class:list={['panel', { 'is-active': i === 0 }]} style={`--a:${d.palette[0]};--b:${d.palette[1]};--ink-d:${d.ink}`} data-panel>
+          <h3 class="panel__h">
+            <button type="button" class="panel__btn" aria-expanded={i === 0 ? 'true' : 'false'} aria-controls={`panel-${d.slug}`}>
+              <span class="panel__idx">{d.index}</span>
+              <span class="panel__name">{d.name}</span>
+              <span class="panel__plus" aria-hidden="true"></span>
+            </button>
+          </h3>
+          <div class="panel__body" id={`panel-${d.slug}`}>
+            <div class="panel__art"><DivisionArt division={d} /></div>
+            <div class="panel__copy">
+              <p class="panel__tag">{d.tagline}</p>
+              <p class="panel__intro">{d.intro}</p>
+              <ul class="panel__list">
+                {d.services.slice(0, 4).map((s) => <li><a href={`/universe/${d.slug}#${s.slug}`}>{s.title}</a></li>)}
+              </ul>
+              <a class="panel__enter" href={`/universe/${d.slug}`}>Enter {d.name} <span aria-hidden="true">→</span></a>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  const root = document.querySelector<HTMLElement>('[data-universe]');
+  if (root) {
+    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
+    const desktop = matchMedia('(min-width: 1024px)');
+    const activate = (p: HTMLElement, toggle = false) => {
+      const open = toggle && !desktop.matches ? !p.classList.contains('is-active') : true;
+      panels.forEach((q) => {
+        const on = q === p ? open : false;
+        q.classList.toggle('is-active', on);
+        q.querySelector('button')!.setAttribute('aria-expanded', String(on));
+      });
+    };
+    panels.forEach((p) => {
+      p.querySelector('button')!.addEventListener('click', () => activate(p, true));
+      p.addEventListener('pointerenter', (e) => { if (desktop.matches && e.pointerType === 'mouse') activate(p); });
+      p.addEventListener('focusin', () => { if (desktop.matches) activate(p); });
+    });
+    // Desktop always keeps one world open.
+    desktop.addEventListener('change', () => { if (!panels.some((p) => p.classList.contains('is-active'))) activate(panels[0]); });
+  }
+</script>
+
+<style>
+  .uni__head { display: grid; gap: 1.2rem; max-width: 920px; margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
+
+  .uni__panels { display: flex; gap: 12px; height: min(78vh, 720px); min-height: 600px; }
+  .panel {
+    position: relative; flex: 1 1 0; min-width: 0; border-radius: var(--radius); overflow: hidden;
+    background: linear-gradient(170deg, var(--white) 0%, color-mix(in srgb, var(--a) 16%, var(--white)) 100%);
+    border: 1px solid var(--line); transition: flex-grow 0.9s var(--ease-out), background 0.9s, box-shadow 0.9s;
+    display: flex; flex-direction: column;
+  }
+  .panel.is-active {
+    flex-grow: 4.2;
+    background: linear-gradient(160deg, var(--white) 0%, color-mix(in srgb, var(--a) 38%, var(--white)) 55%, color-mix(in srgb, var(--b) 30%, var(--white)) 100%);
+    box-shadow: 0 40px 80px -50px color-mix(in srgb, var(--ink-d) 60%, transparent);
+  }
+  .panel__h { font: inherit; }
+  .panel__btn {
+    width: 100%; display: flex; align-items: center; gap: 0.9rem; padding: 1.5rem 1.6rem;
+    background: none; border: 0; cursor: pointer; text-align: start;
+  }
+  .panel__idx { font-size: 0.78rem; letter-spacing: 0.14em; color: var(--ink-d); font-weight: 600; }
+  .panel__name { font-family: var(--font-display); font-size: clamp(1.4rem, 1.1rem + 0.8vw, 2.1rem); line-height: 1; white-space: nowrap; }
+  .panel__plus { margin-inline-start: auto; width: 14px; height: 14px; position: relative; flex-shrink: 0; }
+  .panel__plus::before, .panel__plus::after { content: ''; position: absolute; inset: 6px 0; background: currentColor; transition: transform 0.5s var(--ease-out); }
+  .panel__plus::after { transform: rotate(90deg); }
+  .panel.is-active .panel__plus::after { transform: rotate(0); }
+
+  .panel__body { flex: 1; display: grid; grid-template-rows: 1fr auto; padding: 0 1.6rem 1.6rem; min-height: 0; }
+  .panel__art { display: grid; place-items: center; min-height: 0; }
+  .panel__art { width: 100%; height: 100%; }
+  .panel__art :global(.art) { width: min(100%, 420px); height: auto; margin-inline: auto; }
+  .panel__copy { display: grid; gap: 0.8rem; align-content: end; }
+  .panel__tag { font-size: 0.8rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 560; color: var(--ink-d); }
+  .panel__intro { color: var(--ink-2); max-width: 46ch; }
+  .panel__list { display: flex; flex-wrap: wrap; gap: 0.45rem; }
+  .panel__list a {
+    display: inline-block; padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.86rem; text-decoration: none;
+    background: rgb(255 255 255 / 0.7); border: 1px solid var(--line); transition: background-color 0.3s, border-color 0.3s;
+  }
+  .panel__list a:hover { background: var(--white); border-color: var(--line-strong); }
+  .panel__enter {
+    justify-self: start; margin-top: 0.4rem; font-weight: 560; font-size: 0.86rem; letter-spacing: 0.14em; text-transform: uppercase;
+    text-decoration: none; padding-block: 0.6rem; border-bottom: 1px solid currentColor; color: var(--ink-d);
+  }
+  .panel__enter span { display: inline-block; transition: transform 0.4s var(--ease-out); }
+  .panel__enter:hover span { transform: translateX(5px); }
+
+  /* Desktop: collapsed panels show a vertical label and only the artwork. */
+  @media (min-width: 1024px) {
+    .panel:not(.is-active) .panel__btn { flex-direction: column; align-items: flex-start; height: 100%; }
+    .panel:not(.is-active) .panel__name { writing-mode: vertical-rl; rotate: 180deg; margin-top: auto; }
+    .panel:not(.is-active) .panel__plus { position: absolute; top: 1.6rem; inset-inline-end: 1.4rem; }
+    .panel:not(.is-active) .panel__body { position: absolute; inset: 22% 0 auto; padding: 0 10%; opacity: 0.85; pointer-events: none; }
+    .panel:not(.is-active) .panel__copy { display: none; }
+    .panel.is-active .panel__body { grid-template-columns: 1.05fr 1fr; grid-template-rows: 1fr; gap: 1.5rem; align-items: end; animation: panel-in 0.9s var(--ease-out) both; }
+    .panel.is-active .panel__art { align-self: center; }
+  }
+  @keyframes panel-in { from { opacity: 0; transform: translateY(14px); } }
+
+  /* Mobile & tablet: accessible tap accordion, one world at a time. */
+  @media (max-width: 1023px) {
+    .uni__panels { flex-direction: column; height: auto; min-height: 0; gap: 10px; }
+    .panel, .panel.is-active { flex: none; }
+    .panel__body { display: none; }
+    .panel.is-active .panel__body { display: grid; grid-template-rows: auto auto; animation: panel-in 0.6s var(--ease-out) both; }
+    .panel__art :global(.art) { width: min(64vw, 300px); height: auto; margin-block: 0.4rem 1rem; }
+    .panel__name { white-space: normal; }
+  }
+</style>

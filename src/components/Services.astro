@@ -1,0 +1,147 @@
+---
+import { divisions } from '../data/divisions';
+---
+<section id="services" class="section svc" aria-labelledby="svc-title">
+  <div class="wrap svc__grid">
+    <div class="svc__side">
+      <p class="eyebrow" data-reveal>Services explorer</p>
+      <h2 id="svc-title" class="h2" data-reveal style="--d:.08s">Fifty-two ways <em>to move</em> forward.</h2>
+      <div class="svc__tabs" role="tablist" aria-label="Browse services by division" data-tabs hidden>
+        {divisions.map((d, i) => (
+          <button role="tab" id={`tab-${d.slug}`} aria-controls={`list-${d.slug}`} aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1} style={`--ink-d:${d.ink};--a:${d.palette[0]}`}>
+            <span>{d.index}</span>{d.short}<small>{d.services.length}</small>
+          </button>
+        ))}
+      </div>
+    </div>
+
+    <div class="svc__lists">
+      {divisions.map((d, i) => (
+        <div class="svc__list" id={`list-${d.slug}`} role="tabpanel" aria-labelledby={`tab-${d.slug}`} data-list style={`--ink-d:${d.ink};--a:${d.palette[0]};--b:${d.palette[1]};--c:${d.palette[2]}`}>
+          <h3 class="svc__division"><span>{d.index}</span> {d.name}<small>{d.tagline}</small></h3>
+          <ol>
+            {d.services.map((s, j) => (
+              <li>
+                <details class="row">
+                  <summary>
+                    <span class="row__n">{String(j + 1).padStart(2, '0')}</span>
+                    <span class="row__t">{s.title}</span>
+                    <span class="row__i" aria-hidden="true"></span>
+                  </summary>
+                  <div class="row__body">
+                    <span class="row__orb" aria-hidden="true" style={`--r:${(j * 47) % 360}deg`}></span>
+                    <div>
+                      <p>{s.desc}</p>
+                      <p class="row__links">
+                        <a href={`/universe/${d.slug}#${s.slug}`}>Service details</a>
+                        <a href={`/?service=${s.slug}#contact`} data-inquire={s.slug}>Inquire about {s.title.toLowerCase()} →</a>
+                      </p>
+                    </div>
+                  </div>
+                </details>
+              </li>
+            ))}
+          </ol>
+        </div>
+      ))}
+    </div>
+  </div>
+</section>
+
+<script>
+  // Progressive enhancement: without JS every division's list is shown.
+  const tabs = document.querySelector<HTMLElement>('[data-tabs]');
+  const lists = [...document.querySelectorAll<HTMLElement>('[data-list]')];
+  if (tabs) {
+    tabs.hidden = false;
+    const btns = [...tabs.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+    const select = (i: number, focus = false) => {
+      btns.forEach((b, j) => { b.setAttribute('aria-selected', String(i === j)); b.tabIndex = i === j ? 0 : -1; });
+      lists.forEach((l, j) => { l.hidden = i !== j; if (i === j) { l.classList.remove('is-entering'); void l.offsetWidth; l.classList.add('is-entering'); } });
+      if (focus) btns[i].focus();
+    };
+    btns.forEach((b, i) => {
+      b.addEventListener('click', () => select(i));
+      b.addEventListener('keydown', (e) => {
+        const k = e.key;
+        if (k === 'ArrowRight' || k === 'ArrowDown') { e.preventDefault(); select((i + 1) % btns.length, true); }
+        if (k === 'ArrowLeft' || k === 'ArrowUp') { e.preventDefault(); select((i - 1 + btns.length) % btns.length, true); }
+        if (k === 'Home') { e.preventDefault(); select(0, true); }
+        if (k === 'End') { e.preventDefault(); select(btns.length - 1, true); }
+      });
+    });
+    lists.forEach((l) => l.querySelector('.svc__division')?.classList.add('sr-only'));
+    select(0);
+  }
+</script>
+
+<style>
+  .svc { background: var(--white); border-block: 1px solid var(--line); }
+  .svc__grid { display: grid; grid-template-columns: minmax(280px, 0.8fr) 1.6fr; gap: clamp(2rem, 6vw, 6rem); align-items: start; }
+  .svc__side { position: sticky; top: 110px; display: grid; gap: 1.4rem; }
+  .svc__tabs { display: grid; gap: 4px; margin-top: 1rem; }
+  .svc__tabs[hidden] { display: none; }
+  .svc__tabs button {
+    display: flex; align-items: baseline; gap: 0.9rem; padding: 0.85rem 1rem; border-radius: 16px;
+    border: 1px solid transparent; background: none; cursor: pointer; text-align: start;
+    font-family: var(--font-display); font-size: var(--step-2); line-height: 1; color: var(--ink-3);
+    transition: color 0.3s, background-color 0.4s, border-color 0.4s;
+  }
+  .svc__tabs button span { font-family: var(--font-sans); font-size: 0.75rem; letter-spacing: 0.12em; }
+  .svc__tabs button small { margin-inline-start: auto; font-family: var(--font-sans); font-size: 0.8rem; }
+  .svc__tabs button:hover { color: var(--ink); }
+  .svc__tabs button[aria-selected='true'] {
+    color: var(--ink); border-color: var(--line);
+    background: linear-gradient(90deg, color-mix(in srgb, var(--a) 30%, white), white);
+  }
+  .svc__tabs button[aria-selected='true'] span { color: var(--ink-d); }
+
+  .svc__division { font-family: var(--font-display); font-size: var(--step-2); margin: 2rem 0 1rem; display: grid; }
+  .svc__division small { font-family: var(--font-sans); font-size: var(--step--1); color: var(--ink-3); letter-spacing: 0.12em; text-transform: uppercase; }
+  .svc__list ol { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--line); }
+  .svc__list li { border-bottom: 1px solid var(--line); }
+  :global(.is-entering) li { animation: row-in 0.8s var(--ease-out) both; }
+  :global(.is-entering) li:nth-child(n) { animation-delay: calc(var(--n, 0) * 1ms); }
+  .svc__list li:nth-child(1) { --n: 0; } .svc__list li:nth-child(2) { --n: 40; } .svc__list li:nth-child(3) { --n: 80; }
+  .svc__list li:nth-child(4) { --n: 120; } .svc__list li:nth-child(5) { --n: 160; } .svc__list li:nth-child(6) { --n: 200; }
+  .svc__list li:nth-child(n + 7) { --n: 240; }
+  @keyframes row-in { from { opacity: 0; transform: translateY(18px); } }
+
+  .row summary {
+    list-style: none; cursor: pointer; display: grid; grid-template-columns: 3rem 1fr auto; align-items: center; gap: 1rem;
+    padding: 1.15rem 0.2rem; transition: padding 0.5s var(--ease-out);
+  }
+  .row summary::-webkit-details-marker { display: none; }
+  .row__n { font-size: 0.78rem; letter-spacing: 0.12em; color: var(--ink-3); }
+  .row__t { font-family: var(--font-display); font-size: clamp(1.5rem, 1.1rem + 1.6vw, 2.7rem); line-height: 1.05; transition: transform 0.6s var(--ease-out), color 0.4s; }
+  .row summary:hover .row__t { transform: translateX(10px); color: var(--ink-d); }
+  [dir='rtl'] .row summary:hover .row__t { transform: translateX(-10px); }
+  .row__i { width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line-strong); position: relative; transition: background-color 0.4s, transform 0.6s var(--ease-out); }
+  .row__i::before, .row__i::after { content: ''; position: absolute; inset: 18px 12px; background: var(--ink); }
+  .row__i::after { transform: rotate(90deg); transition: transform 0.5s var(--ease-out); }
+  .row[open] .row__i { background: var(--a); transform: rotate(180deg); }
+  .row[open] .row__i::after { transform: rotate(0); }
+  .row[open] .row__t { color: var(--ink-d); }
+
+  .row__body { display: grid; grid-template-columns: 96px 1fr; gap: 1.4rem; align-items: center; padding: 0 0.2rem 1.6rem 4rem; animation: row-in 0.6s var(--ease-out); }
+  .row__orb {
+    width: 96px; aspect-ratio: 1; border-radius: 50%;
+    background: conic-gradient(from var(--r), var(--a), var(--b), var(--c), var(--a));
+    box-shadow: inset -10px -14px 26px rgb(255 255 255 / 0.85), 0 18px 30px -18px var(--ink-d);
+    animation: orb 8s linear infinite;
+  }
+  @keyframes orb { to { rotate: 360deg; } }
+  .row__body p { color: var(--ink-2); max-width: 52ch; }
+  .row__links { display: flex; flex-wrap: wrap; gap: 0.6rem 1.4rem; margin-top: 0.8rem; font-size: 0.92rem; font-weight: 500; }
+  .row__links a { color: var(--ink-d); text-underline-offset: 4px; }
+
+  @media (max-width: 900px) {
+    .svc__grid { grid-template-columns: 1fr; }
+    .svc__side { position: static; }
+    .svc__tabs { display: flex; overflow-x: auto; gap: 6px; scroll-snap-type: x mandatory; margin-inline: calc(-1 * var(--gutter)); padding-inline: var(--gutter); scrollbar-width: none; }
+    .svc__tabs button { flex: 0 0 auto; scroll-snap-align: start; font-size: 1.3rem; border-color: var(--line); min-height: 48px; }
+    .row__body { grid-template-columns: 64px 1fr; padding-inline-start: 0; }
+    .row__orb { width: 64px; }
+    .row summary { grid-template-columns: 2.2rem 1fr auto; }
+  }
+</style>

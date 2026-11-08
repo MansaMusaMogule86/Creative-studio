@@ -1,0 +1,154 @@
+---
+const stages = [
+  { key: 'Discover', x: 8, y: 78, text: 'We listen first: goals, audiences, constraints and what success looks like. Research replaces assumptions.', out: 'Brief, research findings, success measures' },
+  { key: 'Architect', x: 29, y: 52, text: 'We design the system before the surface: structure, technology, data and the journey people will take.', out: 'Experience map, technical architecture, roadmap' },
+  { key: 'Create', x: 50, y: 64, text: 'Design, engineering and content move together in short cycles, reviewed with you as they take shape.', out: 'Identity, product, content, integrations' },
+  { key: 'Activate', x: 71, y: 34, text: 'We launch with intent: performance checks, analytics, campaigns and a team ready on day one.', out: 'Launch plan, tracking, go-to-market' },
+  { key: 'Evolve', x: 92, y: 16, text: 'Real usage becomes the next brief. We measure, learn and keep improving what we built together.', out: 'Reporting cadence, experiments, iterations' },
+];
+const d = 'M80 437 C 180 420, 220 300, 290 291 S 420 380, 500 358 S 620 210, 710 190 S 860 120, 920 90';
+---
+<section id="method" class="section mth" aria-labelledby="mth-title" data-method>
+  <div class="wrap">
+    <header class="mth__head">
+      <p class="eyebrow" data-reveal>The Moguls method</p>
+      <h2 id="mth-title" class="h2" data-reveal style="--d:.08s">Five stages, <em>one rising line.</em></h2>
+    </header>
+
+    <div class="mth__stage">
+      <svg class="mth__svg" viewBox="0 0 1000 560" aria-hidden="true">
+        <defs>
+          <linearGradient id="mth-g" x1="0" x2="1"><stop offset="0" stop-color="#FFC6AC" /><stop offset=".5" stop-color="#B9A5FF" /><stop offset="1" stop-color="#8EE7E8" /></linearGradient>
+        </defs>
+        <g class="mth__grid">{Array.from({ length: 9 }, (_, i) => <line x1={i * 125} y1="0" x2={i * 125} y2="560" />)}</g>
+        <path d={d} class="mth__ghost" />
+        <path d={d} class="mth__line" pathLength="1" data-line />
+      </svg>
+
+      <ol class="mth__nodes" role="list">
+        {stages.map((s, i) => (
+          <li class="node" style={`--x:${s.x}%;--y:${s.y}%`} data-node>
+            <button type="button" class="node__btn" aria-pressed={i === 0 ? 'true' : 'false'} aria-controls="mth-detail" data-stage={i}>
+              <span class={`glyph glyph--${s.key.toLowerCase()}`} aria-hidden="true"><i></i><i></i><i></i></span>
+              <span class="node__label"><small>0{i + 1}</small>{s.key}</span>
+            </button>
+            <div class="node__mobile"><p>{s.text}</p><p class="node__out">{s.out}</p></div>
+          </li>
+        ))}
+      </ol>
+
+      <div id="mth-detail" class="mth__detail" aria-live="polite" data-detail>
+        {stages.map((s, i) => (
+          <div class="detail" hidden={i !== 0} data-detail-item>
+            <p class="detail__k"><span>0{i + 1}</span> {s.key}</p>
+            <p class="detail__t">{s.text}</p>
+            <p class="detail__o"><span>Outputs</span>{s.out}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  const root = document.querySelector<HTMLElement>('[data-method]')!;
+  const btns = [...root.querySelectorAll<HTMLButtonElement>('[data-stage]')];
+  const items = [...root.querySelectorAll<HTMLElement>('[data-detail-item]')];
+  const nodes = [...root.querySelectorAll<HTMLElement>('[data-node]')];
+  const select = (i: number) => {
+    btns.forEach((b, j) => b.setAttribute('aria-pressed', String(i === j)));
+    items.forEach((it, j) => (it.hidden = i !== j));
+  };
+  btns.forEach((b, i) => b.addEventListener('click', () => select(i)));
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const line = root.querySelector<SVGPathElement>('[data-line]')!;
+  if (reduce) {
+    line.style.strokeDashoffset = '0';
+    nodes.forEach((n) => n.classList.add('is-lit'));
+  } else {
+    gsap.registerPlugin(ScrollTrigger);
+    // Scrubbed with the user's own scroll; nothing is pinned or hijacked.
+    ScrollTrigger.create({
+      trigger: '.mth__stage', start: 'top 75%', end: 'bottom 55%', scrub: 0.6,
+      onUpdate: (st) => {
+        line.style.strokeDashoffset = String(1 - st.progress);
+        nodes.forEach((n, i) => n.classList.toggle('is-lit', st.progress >= i / (nodes.length - 1) - 0.02));
+      },
+    });
+  }
+</script>
+
+<style>
+  .mth { background: linear-gradient(180deg, var(--pearl), #f2f0ff 60%, var(--pearl)); }
+  .mth__head { display: grid; gap: 1.2rem; margin-bottom: 2rem; }
+  .mth__stage { position: relative; aspect-ratio: 1000 / 560; }
+  .mth__svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+  .mth__grid line { stroke: var(--line); stroke-dasharray: 2 8; }
+  .mth__ghost { fill: none; stroke: var(--line-strong); stroke-width: 1.5; stroke-dasharray: 4 8; }
+  .mth__line { fill: none; stroke: url(#mth-g); stroke-width: 5; stroke-linecap: round; stroke-dasharray: 1; stroke-dashoffset: 1; filter: drop-shadow(0 6px 14px rgb(185 165 255 / 0.7)); }
+
+  .mth__nodes { list-style: none; margin: 0; padding: 0; }
+  .node { position: absolute; left: var(--x); top: var(--y); translate: -50% -50%; }
+  .node__btn { display: grid; justify-items: center; gap: 0.7rem; background: none; border: 0; cursor: pointer; padding: 0.4rem; }
+  .node__label { display: grid; justify-items: center; font-family: var(--font-display); font-size: var(--step-1); line-height: 1; }
+  .node__label small { font-family: var(--font-sans); font-size: 0.7rem; letter-spacing: 0.14em; color: var(--ink-3); margin-bottom: 0.2rem; }
+  .node__mobile { display: none; }
+
+  .glyph {
+    position: relative; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
+    background: var(--white); border: 1px solid var(--line-strong); transition: transform 0.6s var(--ease-out), box-shadow 0.6s, border-color 0.6s;
+  }
+  .node.is-lit .glyph { border-color: transparent; box-shadow: 0 0 0 1px #b9a5ff, 0 14px 30px -10px rgb(90 63 192 / 0.5); }
+  .node__btn:hover .glyph, .node__btn[aria-pressed='true'] .glyph { transform: scale(1.14); }
+  .node__btn[aria-pressed='true'] .glyph { background: var(--ink); }
+  .node__btn[aria-pressed='true'] .glyph i { border-color: var(--white); background-color: transparent; }
+  .glyph i { position: absolute; }
+  /* Discover: radar ripples */
+  .glyph--discover i { inset: 40%; border-radius: 50%; border: 1.5px solid var(--ink); animation: ripple 2.6s var(--ease-out) infinite; }
+  .glyph--discover i:nth-child(2) { animation-delay: 0.85s; } .glyph--discover i:nth-child(3) { animation-delay: 1.7s; }
+  @keyframes ripple { from { inset: 44%; opacity: 1; } to { inset: 8%; opacity: 0; } }
+  /* Architect: a frame being drawn */
+  .glyph--architect i { inset: 30%; border: 1.5px solid var(--ink); animation: build 3.6s var(--ease-in-out) infinite; }
+  .glyph--architect i:nth-child(2) { inset: 30% 48%; animation-delay: 0.3s; } .glyph--architect i:nth-child(3) { inset: 48% 30%; animation-delay: 0.6s; }
+  @keyframes build { 0%, 100% { clip-path: inset(0 100% 0 0); } 40%, 70% { clip-path: inset(0 0 0 0); } }
+  /* Create: rotating petals */
+  .glyph--create i { inset: 26% 44%; border-radius: 50%; border: 1.5px solid var(--ink); animation: petal 6s linear infinite; }
+  .glyph--create i:nth-child(2) { rotate: 60deg; animation-delay: -2s; } .glyph--create i:nth-child(3) { rotate: 120deg; animation-delay: -4s; }
+  @keyframes petal { to { transform: rotate(360deg); } }
+  /* Activate: a launch pulse */
+  .glyph--activate i { width: 2px; height: 34%; background: var(--ink); border: 0 solid; bottom: 30%; animation: launch 1.8s var(--ease-out) infinite; }
+  .glyph--activate i:nth-child(1) { left: 36%; animation-delay: 0.2s; } .glyph--activate i:nth-child(2) { left: calc(50% - 1px); } .glyph--activate i:nth-child(3) { right: 36%; animation-delay: 0.4s; }
+  .node__btn[aria-pressed='true'] .glyph--activate i { background: var(--white); }
+  @keyframes launch { 0% { transform: translateY(40%) scaleY(0.2); opacity: 0; } 50% { opacity: 1; } 100% { transform: translateY(-40%) scaleY(1); opacity: 0; } }
+  /* Evolve: an orbit that keeps going */
+  .glyph--evolve i { inset: 28%; border-radius: 50%; border: 1.5px solid var(--ink); border-top-color: transparent; animation: petal 2.4s linear infinite; }
+  .glyph--evolve i:nth-child(2) { inset: 38%; animation-direction: reverse; } .glyph--evolve i:nth-child(3) { inset: 47%; border-radius: 50%; background: var(--ink); animation: none; }
+  .node__btn[aria-pressed='true'] .glyph--evolve i:nth-child(3) { background: var(--white); }
+
+  .mth__detail { position: absolute; inset-inline-start: 0; top: 0; width: min(34%, 400px); }
+  .detail { display: grid; gap: 0.7rem; padding: 1.5rem; border-radius: 22px; background: rgb(255 255 255 / 0.8); border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 30px 60px -40px rgb(37 36 60 / 0.4); backdrop-filter: blur(14px); animation: panel-in 0.6s var(--ease-out); }
+  .detail[hidden] { display: none; }
+  .detail__k { font-family: var(--font-display); font-size: var(--step-2); line-height: 1; }
+  .detail__k span { font-family: var(--font-sans); font-size: 0.75rem; color: var(--ink-3); letter-spacing: 0.14em; vertical-align: middle; }
+  .detail__t { color: var(--ink-2); }
+  .detail__o { font-size: 0.9rem; display: grid; gap: 0.15rem; }
+  .detail__o span, .node__out::before { font-size: 0.7rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-3); font-weight: 560; }
+  @keyframes panel-in { from { opacity: 0; transform: translateY(10px); } }
+
+  /* Tablet & mobile: the rising line becomes a vertical journey. */
+  @media (max-width: 899px) {
+    .mth__stage { aspect-ratio: auto; }
+    .mth__svg, .mth__detail { display: none; }
+    .mth__nodes { position: relative; display: grid; gap: 2rem; padding-inline-start: 0; }
+    .mth__nodes::before { content: ''; position: absolute; inset-inline-start: 32px; top: 32px; bottom: 32px; width: 2px; background: linear-gradient(#ffc6ac, #b9a5ff, #8ee7e8); }
+    .node { position: relative; left: auto; top: auto; translate: none; display: grid; gap: 0.6rem; }
+    .node__btn { display: flex; align-items: center; gap: 1.2rem; padding: 0; text-align: start; }
+    .node__label { justify-items: start; font-size: var(--step-2); }
+    .node__mobile { display: grid; gap: 0.4rem; padding-inline-start: calc(64px + 1.2rem); color: var(--ink-2); }
+    .node__out::before { content: 'Outputs · '; }
+    .node__out { font-size: 0.92rem; }
+  }
+</style>

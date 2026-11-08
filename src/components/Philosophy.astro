@@ -1,0 +1,95 @@
+---
+const pillars = [
+  { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8C8FF' },
+  { key: 'Engineering', line: 'Built to last and to scale', color: '#8EE7E8' },
+  { key: 'Intelligence', line: 'Systems that learn and assist', color: '#B9A5FF' },
+  { key: 'Commerce', line: 'Every decision tied to value', color: '#FFC6AC' },
+];
+const story =
+  'Most projects are split between people who never meet: designers, engineers, data specialists and marketers each optimising their own piece. We work the other way round. One team holds the whole picture, so the brand, the product, the intelligence behind it and the plan to grow it are designed as a single system from the first conversation.';
+---
+<section id="philosophy" class="section phi" aria-labelledby="phi-title" data-phi>
+  <div class="wrap phi__grid">
+    <div class="phi__text">
+      <p class="eyebrow" data-reveal>Our philosophy</p>
+      <h2 id="phi-title" class="phi__title" data-reveal style="--d:.08s">
+        We don’t just build digital. <em>We build what comes next.</em>
+      </h2>
+      <p class="phi__story" data-words>{story.split(' ').map((w) => <span>{w} </span>)}</p>
+    </div>
+
+    <div class="phi__venn" aria-label="Four disciplines, one team" role="img">
+      {pillars.map((p, i) => (
+        <div class="orb" style={`--c:${p.color};--i:${i}`} data-orb>
+          <span class="orb__k">{p.key}</span>
+          <span class="orb__l">{p.line}</span>
+        </div>
+      ))}
+      <div class="phi__core" data-core><span>One team</span></div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { gsap } from 'gsap';
+  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  const root = document.querySelector<HTMLElement>('[data-phi]');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (root && !reduce) {
+    gsap.registerPlugin(ScrollTrigger);
+    const words = root.querySelectorAll('[data-words] span');
+    // Colour, not opacity: even the 'unread' state keeps AA contrast.
+    gsap.fromTo(words, { color: '#6a6880' }, {
+      color: '#25243c', stagger: 0.04, ease: 'none',
+      scrollTrigger: { trigger: '[data-words]', start: 'top 80%', end: 'bottom 45%', scrub: 0.6 },
+    });
+    // The four disciplines start apart and converge into one shape.
+    const offsets = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
+    root.querySelectorAll<HTMLElement>('[data-orb]').forEach((o, i) => {
+      gsap.fromTo(o, { xPercent: offsets[i][0] * 38, yPercent: offsets[i][1] * 38, scale: 0.86 }, {
+        xPercent: 0, yPercent: 0, scale: 1, ease: 'none',
+        scrollTrigger: { trigger: '.phi__venn', start: 'top 85%', end: 'center 50%', scrub: 0.8 },
+      });
+    });
+    gsap.fromTo('[data-core]', { scale: 0 }, {
+      scale: 1, ease: 'back.out(2)',
+      scrollTrigger: { trigger: '.phi__venn', start: 'center 62%', end: 'center 45%', scrub: 0.6 },
+    });
+  }
+</script>
+
+<style>
+  .phi { overflow: hidden; }
+  .phi__grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(2rem, 6vw, 6rem); align-items: center; }
+  .phi__text { display: grid; gap: 1.6rem; }
+  .phi__title { font-family: var(--font-display); font-size: var(--step-3); text-transform: uppercase; letter-spacing: -0.01em; }
+  .phi__title em { text-transform: none; display: block; color: #5a3fc0; }
+  .phi__story { font-size: var(--step-1); line-height: 1.5; max-width: 34ch; }
+
+  .phi__venn { position: relative; aspect-ratio: 1; width: min(100%, 560px); justify-self: center; }
+  .orb {
+    position: absolute; width: 58%; aspect-ratio: 1; border-radius: 50%;
+    display: grid; align-content: center; justify-items: center; text-align: center; padding: 14%;
+    background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.95), color-mix(in srgb, var(--c) 70%, transparent) 70%);
+    border: 1px solid rgb(255 255 255 / 0.9); mix-blend-mode: multiply;
+    box-shadow: 0 30px 60px -40px rgb(37 36 60 / 0.5);
+  }
+  .orb:nth-child(1) { top: 0; left: 0; } .orb:nth-child(2) { top: 0; right: 0; }
+  .orb:nth-child(3) { bottom: 0; left: 0; } .orb:nth-child(4) { bottom: 0; right: 0; }
+  .orb__k { font-family: var(--font-display); font-size: clamp(1.2rem, 0.9rem + 1.2vw, 2rem); }
+  .orb__l { font-size: 0.82rem; color: var(--ink-2); max-width: 14ch; line-height: 1.3; margin-top: 0.3rem; }
+  .orb:nth-child(1) { align-content: start; padding-top: 22%; } .orb:nth-child(2) { align-content: start; padding-top: 22%; }
+  .orb:nth-child(3) { align-content: end; padding-bottom: 22%; } .orb:nth-child(4) { align-content: end; padding-bottom: 22%; }
+  .orb:nth-child(odd) { justify-items: start; text-align: start; padding-left: 18%; }
+  .orb:nth-child(even) { justify-items: end; text-align: end; padding-right: 18%; }
+  .phi__core {
+    position: absolute; inset: 39%; border-radius: 50%; display: grid; place-items: center;
+    background: var(--ink); color: var(--white); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; text-align: center;
+    box-shadow: 0 0 0 10px rgb(255 255 255 / 0.6), 0 20px 50px -10px rgb(90 63 192 / 0.6);
+  }
+
+  @media (max-width: 900px) {
+    .phi__grid { grid-template-columns: 1fr; }
+    .orb__l { display: none; }
+  }
+</style>

@@ -1,0 +1,51 @@
+---
+import Base from '../layouts/Base.astro';
+import Logo from '../components/Logo.astro';
+import { brand } from '../config/brand';
+const swatches = [
+  ['Pearl', '#F8F7FF'], ['White', '#FFFFFF'], ['Electric lavender', '#B9A5FF'],
+  ['Digital aqua', '#8EE7E8'], ['Soft peach', '#FFC6AC'], ['Deep ink', '#25243C'],
+];
+---
+<Base title="Proposed identity" noindex>
+  <section class="section bs">
+    <div class="wrap bs__wrap">
+      <p class="eyebrow">{brand.identityStatus}</p>
+      <h1 class="h2">The Twin Arch <em>monogram.</em></h1>
+      <p class="lede">Two interlocking arches form the M. The arch stands for architecture, the shared pillar for connection, and the second arch rising past the first for progress. No crowns, no circuitry. This is a proposal for review and does not replace any approved brand asset.</p>
+
+      <div class="bs__grid">
+        <figure class="tile"><Logo size={72} /><figcaption>Full wordmark · holographic</figcaption></figure>
+        <figure class="tile"><Logo size={96} wordmark={false} /><figcaption>Symbol only</figcaption></figure>
+        <figure class="tile tile--dark"><Logo size={72} variant="white" /><figcaption>Dark variant</figcaption></figure>
+        <figure class="tile"><Logo size={72} variant="ink" /><figcaption>Monochrome</figcaption></figure>
+        <figure class="tile"><img src="/favicon.svg" width="64" height="64" alt="" /><img src="/favicon.svg" width="32" height="32" alt="" /><img src="/favicon.svg" width="16" height="16" alt="" /><figcaption>Favicon at 64, 32 and 16 px</figcaption></figure>
+        <figure class="tile"><a href="/">See it in 3D on the homepage →</a><figcaption>Animated 3D form: the hero sculpture traces the same arch path</figcaption></figure>
+      </div>
+
+      <h2 class="h2 bs__h">Colour</h2>
+      <ul class="bs__sw">{swatches.map(([n, c]) => <li><span style={`background:${c}`}></span><strong>{n}</strong><code>{c}</code></li>)}</ul>
+
+      <h2 class="h2 bs__h">Type</h2>
+      <div class="bs__type">
+        <p class="display">Instrument Serif</p>
+        <p class="bs__sans">Outfit: modern geometric sans for interface and body text.</p>
+      </div>
+    </div>
+  </section>
+</Base>
+<style>
+  .bs { padding-top: 150px; }
+  .bs__wrap { display: grid; gap: 1.6rem; }
+  .bs__grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; margin-top: 1rem; }
+  .tile { margin: 0; min-height: 220px; display: flex; flex-wrap: wrap; gap: 1rem; align-items: center; justify-content: center; position: relative; border-radius: var(--radius); background: var(--white); border: 1px solid var(--line); padding: 2rem 1rem 3rem; }
+  .tile--dark { background: var(--ink); color: var(--white); }
+  .tile figcaption { position: absolute; bottom: 1rem; inset-inline: 1rem; text-align: center; font-size: 0.82rem; color: var(--ink-3); }
+  .tile--dark figcaption { color: #cfcde0; }
+  .bs__h { margin-top: 2rem; }
+  .bs__sw { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+  .bs__sw li { display: grid; gap: 0.3rem; }
+  .bs__sw span { height: 96px; border-radius: 18px; border: 1px solid var(--line); }
+  .bs__sw code { font-size: 0.85rem; color: var(--ink-2); }
+  .bs__sans { font-size: var(--step-2); }
+</style>

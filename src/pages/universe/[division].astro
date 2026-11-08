@@ -1,0 +1,85 @@
+---
+import Base from '../../layouts/Base.astro';
+import DivisionArt from '../../components/divisions/DivisionArt.astro';
+import { divisions, type Division } from '../../data/divisions';
+import { brand } from '../../config/brand';
+
+export function getStaticPaths() {
+  return divisions.map((d) => ({ params: { division: d.slug }, props: { d } }));
+}
+const { d } = Astro.props as { d: Division };
+const i = divisions.indexOf(d);
+const next = divisions[(i + 1) % divisions.length];
+const jsonLd = [{
+  '@context': 'https://schema.org', '@type': 'ItemList', name: `${d.name} services`,
+  itemListElement: d.services.map((s, n) => ({
+    '@type': 'ListItem', position: n + 1,
+    item: { '@type': 'Service', name: s.title, description: s.desc, provider: { '@type': 'Organization', name: brand.name } },
+  })),
+}];
+---
+<Base title={`${d.name}: ${d.tagline}`} description={`${d.intro} Services: ${d.services.map((s) => s.title).join(', ')}.`} jsonLd={jsonLd}>
+  <article class="dv" style={`--a:${d.palette[0]};--b:${d.palette[1]};--c:${d.palette[2]};--ink-d:${d.ink}`}>
+    <header class="dv__hero">
+      <div class="wrap dv__heroGrid">
+        <div class="dv__copy">
+          <nav aria-label="Breadcrumb" class="dv__crumb"><a href="/">Home</a> <span aria-hidden="true">/</span> <a href="/#universe">Universe</a> <span aria-hidden="true">/</span> <span aria-current="page">{d.short}</span></nav>
+          <p class="eyebrow">{d.index}: {d.tagline}</p>
+          <h1 class="display">{d.name.split(' ')[0]} <em>{d.name.split(' ').slice(1).join(' ')}</em></h1>
+          <p class="lede">{d.intro}</p>
+          <div class="dv__ctas">
+            <a class="btn" href={`/?service=${d.services[0].slug}#contact`} data-magnetic>Start a {d.short.toLowerCase()} project <span class="arrow" aria-hidden="true">→</span></a>
+            <a class="btn btn--ghost" href="#services-list">See all {d.services.length} services</a>
+          </div>
+        </div>
+        <div class="dv__art is-active" data-hover-art><DivisionArt division={d} size="lg" /></div>
+      </div>
+    </header>
+
+    <section id="services-list" class="section dv__list" aria-labelledby="dv-services">
+      <div class="wrap">
+        <h2 id="dv-services" class="h2">What we <em>do here.</em></h2>
+        <ol>
+          {d.services.map((s, n) => (
+            <li id={s.slug} class="dv__svc" data-reveal>
+              <span class="dv__n">{String(n + 1).padStart(2, '0')}</span>
+              <h3>{s.title}</h3>
+              <p>{s.desc}</p>
+              <a href={`/?service=${s.slug}#contact`}>Inquire <span class="sr-only">about {s.title}</span> →</a>
+            </li>
+          ))}
+        </ol>
+      </div>
+    </section>
+
+    <nav class="dv__next" aria-label="Next division">
+      <a href={`/universe/${next.slug}`} class="wrap" style={`--na:${next.palette[0]}`}>
+        <span class="eyebrow">Next world · {next.index}</span>
+        <span class="dv__nextName">{next.name} <span aria-hidden="true">→</span></span>
+      </a>
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .dv__hero { overflow-x: clip; padding-top: 140px; padding-bottom: clamp(3rem, 6vw, 6rem); background: radial-gradient(60% 70% at 80% 30%, color-mix(in srgb, var(--a) 45%, transparent), transparent 70%), radial-gradient(40% 50% at 10% 90%, color-mix(in srgb, var(--b) 35%, transparent), transparent 70%); }
+  .dv__heroGrid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 2rem; align-items: center; }
+  .dv__copy { display: grid; gap: 1.4rem; justify-items: start; }
+  .dv__crumb { font-size: 0.86rem; color: var(--ink-3); display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .dv__crumb a { color: var(--ink-2); }
+  .dv .eyebrow { color: var(--ink-d); }
+  .dv__ctas { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+  .dv__art { justify-self: center; width: min(100%, 520px); }
+  .dv__list ol { list-style: none; padding: 0; margin: 2.5rem 0 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 clamp(1.5rem, 4vw, 4rem); }
+  .dv__svc { display: grid; grid-template-columns: 3rem 1fr; column-gap: 1rem; row-gap: 0.4rem; padding-block: 1.8rem; border-top: 1px solid var(--line); scroll-margin-top: 110px; }
+  .dv__svc:target { background: linear-gradient(90deg, color-mix(in srgb, var(--a) 22%, transparent), transparent); border-radius: 12px; }
+  .dv__n { font-size: 0.78rem; letter-spacing: 0.12em; color: var(--ink-d); padding-top: 0.5rem; grid-row: span 3; }
+  .dv__svc h3 { font-family: var(--font-display); font-size: var(--step-2); }
+  .dv__svc p { color: var(--ink-2); }
+  .dv__svc a { justify-self: start; color: var(--ink-d); font-weight: 560; font-size: 0.92rem; text-underline-offset: 4px; }
+  .dv__next { border-top: 1px solid var(--line); background: var(--white); }
+  .dv__next a { display: grid; gap: 0.6rem; padding-block: clamp(3rem, 6vw, 5rem); text-decoration: none; }
+  .dv__nextName { font-family: var(--font-display); font-size: var(--step-4); line-height: 1; transition: color 0.4s; }
+  .dv__next a:hover .dv__nextName { color: var(--ink-d); }
+  @media (max-width: 900px) { .dv__heroGrid { grid-template-columns: 1fr; } .dv__art { order: -1; width: min(70vw, 340px); } .dv__list ol { grid-template-columns: 1fr; } .dv__hero { padding-top: 110px; } }
+</style>

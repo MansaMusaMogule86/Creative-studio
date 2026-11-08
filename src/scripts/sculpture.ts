@@ -1,0 +1,211 @@
+// The hero centrepiece: a liquid-glass ribbon that traces the twin-arch M.
+// Loaded lazily after first paint; the hero is fully usable without it.
+import {
+  ACESFilmicToneMapping, BackSide, BufferAttribute, BufferGeometry, CatmullRomCurve3, Color,
+  DirectionalLight, DoubleSide, Group, Mesh, MeshBasicMaterial, MeshPhysicalMaterial, PerspectiveCamera,
+  PlaneGeometry, PMREMGenerator, Scene, ShaderMaterial, SphereGeometry, SRGBColorSpace, Vector3,
+  WebGLRenderer, CanvasTexture,
+} from 'three';
+
+type Options = { reduceMotion: boolean; mobile: boolean };
+
+const PATH: [number, number, number][] = [
+  [-2.0, -1.3, 0.3], [-2.0, 0.9, 0.45], [-0.85, 2.05, 0.65], [0.3, 0.95, 0.35],
+  [0.38, -1.05, -0.1], [-0.05, -1.55, -0.75], [-0.38, -0.55, -0.65], [-0.36, 0.9, -0.3],
+  [0.85, 2.05, 0.05], [2.0, 0.9, 0.35], [2.0, -1.3, 0.45], [1.05, -1.95, -0.85], [-1.05, -1.95, -0.85],
+];
+
+export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
+  const renderer = new WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: false, powerPreference: 'high-performance' });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, opts.mobile ? 1.5 : 2));
+  renderer.outputColorSpace = SRGBColorSpace;
+  renderer.toneMapping = ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.18;
+
+  const scene = new Scene();
+  const camera = new PerspectiveCamera(32, 1, 0.1, 100);
+  camera.position.set(0, 0, 11);
+
+  // ── Environment: soft studio with lavender / aqua / peach light cards ──
+  const env = new Scene();
+  env.add(new Mesh(new SphereGeometry(20, 32, 16), new MeshBasicMaterial({ color: new Color('#f6f3ff').multiplyScalar(1.7), side: BackSide })));
+  const card = (color: string, pos: [number, number, number], s: [number, number], i = 1) => {
+    const m = new Mesh(new PlaneGeometry(...s), new MeshBasicMaterial({ color: new Color(color).multiplyScalar(i), side: DoubleSide }));
+    m.position.set(...pos); m.lookAt(0, 0, 0); env.add(m);
+  };
+  card('#a58cff', [-9, 4, 4], [8, 10], 2.2);
+  card('#5fd6d8', [9, -2, 5], [7, 9], 2.0);
+  card('#ffb08f', [2, -9, 3], [10, 5], 2.0);
+  card('#ffffff', [0, 9, 6], [12, 3], 3.2);
+  card('#d9a8ff', [-4, -3, -9], [10, 8], 1.8);
+  card('#ffd27a', [-8, -6, 2], [4, 6], 1.6);
+  card('#7fb4ff', [7, 6, -6], [5, 7], 1.8);
+  card('#ffffff', [4, 2, 10], [3, 8], 2.6);
+  const pmrem = new PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(env, 0.035).texture;
+
+  // ── Backdrop: pearl with slowly drifting light fields ──
+  const backdropMat = new ShaderMaterial({
+    uniforms: { uTime: { value: 0 }, uAspect: { value: 1 } },
+    vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }`,
+    fragmentShader: `
+      varying vec2 vUv; uniform float uTime; uniform float uAspect;
+      float blob(vec2 p, vec2 c, float r){ return smoothstep(r, 0.0, length(p - c)); }
+      void main(){
+        vec2 p = vUv; p.x *= uAspect; float t = uTime * 0.05;
+        vec3 col = vec3(0.973, 0.969, 1.0);
+        col = mix(col, vec3(0.80, 0.74, 1.0), 0.30 * blob(p, vec2(uAspect*(0.72 + 0.06*sin(t*3.0)), 0.70 + 0.05*cos(t*2.0)), 0.75));
+        col = mix(col, vec3(0.66, 0.93, 0.93), 0.26 * blob(p, vec2(uAspect*(0.92 + 0.05*cos(t*2.3)), 0.22 + 0.06*sin(t*1.7)), 0.7));
+        col = mix(col, vec3(1.0, 0.84, 0.76), 0.24 * blob(p, vec2(uAspect*(0.18 + 0.05*sin(t*1.9)), 0.12 + 0.04*cos(t*2.6)), 0.65));
+        col += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453) - 0.5) / 255.0;
+        gl_FragColor = vec4(col, 1.0);
+      }`,
+    depthWrite: false, depthTest: false,
+  });
+  const backdrop = new Mesh(new PlaneGeometry(2, 2), backdropMat);
+  backdrop.frustumCulled = false;
+  backdrop.renderOrder = -1;
+  scene.add(backdrop);
+
+  // ── Ribbon geometry, rebuilt on the CPU each frame for the liquid motion ──
+  const curve = new CatmullRomCurve3(PATH.map((p) => new Vector3(...p)), true, 'centripetal', 0.5);
+  const SEG = opts.mobile ? 260 : 420;
+  const RAD = opts.mobile ? 20 : 28;
+  const frames = curve.computeFrenetFrames(SEG, true);
+  const centres = curve.getSpacedPoints(SEG);
+  const vCount = (SEG + 1) * (RAD + 1);
+  const pos = new Float32Array(vCount * 3);
+  const nor = new Float32Array(vCount * 3);
+  const idx: number[] = [];
+  for (let i = 0; i < SEG; i++) for (let j = 0; j < RAD; j++) {
+    const a = i * (RAD + 1) + j, b = (i + 1) * (RAD + 1) + j;
+    idx.push(a, b, a + 1, b, b + 1, a + 1);
+  }
+  const geo = new BufferGeometry();
+  geo.setAttribute('position', new BufferAttribute(pos, 3));
+  geo.setAttribute('normal', new BufferAttribute(nor, 3));
+  geo.setIndex(idx);
+
+  const N = new Vector3(), B = new Vector3();
+  const build = (time: number) => {
+    for (let i = 0; i <= SEG; i++) {
+      const u = i / SEG;
+      const k = i % SEG;
+      const c = centres[k];
+      const twist = u * Math.PI * 4 + Math.sin(u * Math.PI * 2 + time * 0.6) * 0.9;
+      const w = 0.44 * (0.72 + 0.28 * Math.sin(u * Math.PI * 6 + time * 0.8));
+      const h = 0.085;
+      const ct = Math.cos(twist), st = Math.sin(twist);
+      N.copy(frames.normals[k]).multiplyScalar(ct).addScaledVector(frames.binormals[k], st);
+      B.copy(frames.binormals[k]).multiplyScalar(ct).addScaledVector(frames.normals[k], -st);
+      for (let j = 0; j <= RAD; j++) {
+        const th = (j / RAD) * Math.PI * 2;
+        const cx = Math.cos(th), sy = Math.sin(th);
+        const o = (i * (RAD + 1) + j) * 3;
+        pos[o] = c.x + N.x * cx * w + B.x * sy * h;
+        pos[o + 1] = c.y + N.y * cx * w + B.y * sy * h;
+        pos[o + 2] = c.z + N.z * cx * w + B.z * sy * h;
+        let nx = cx / w, ny = sy / h; const l = Math.hypot(nx, ny); nx /= l; ny /= l;
+        nor[o] = N.x * nx + B.x * ny; nor[o + 1] = N.y * nx + B.y * ny; nor[o + 2] = N.z * nx + B.z * ny;
+      }
+    }
+    geo.attributes.position.needsUpdate = true;
+    geo.attributes.normal.needsUpdate = true;
+    geo.computeBoundingSphere();
+  };
+  build(0);
+
+  const glass = new MeshPhysicalMaterial({
+    color: '#ffffff', metalness: 0.1, roughness: 0.08,
+    transmission: 0.9, thickness: 1.6, ior: 1.45,
+    iridescence: 1, iridescenceIOR: 1.6, iridescenceThicknessRange: [250, 950],
+    sheen: 1, sheenColor: new Color('#e8c8ff'), sheenRoughness: 0.35,
+    clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 2,
+    attenuationColor: new Color('#b9a5ff'), attenuationDistance: 1.4,
+    side: DoubleSide,
+  });
+  const ribbon = new Mesh(geo, glass);
+
+  const group = new Group();
+  group.add(ribbon);
+  scene.add(group);
+
+  // Soft contact shadow, like a studio product shot.
+  const sc = document.createElement('canvas'); sc.width = sc.height = 128;
+  const g = sc.getContext('2d')!;
+  const grad = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grad.addColorStop(0, 'rgba(90,70,160,0.55)'); grad.addColorStop(1, 'rgba(90,70,160,0)');
+  g.fillStyle = grad; g.fillRect(0, 0, 128, 128);
+  const shadow = new Mesh(new PlaneGeometry(6, 1.2), new MeshBasicMaterial({ map: new CanvasTexture(sc), transparent: true, depthWrite: false, opacity: 0.35 }));
+  scene.add(shadow);
+
+  const key = new DirectionalLight('#ffffff', 1.4);
+  key.position.set(3, 5, 6);
+  scene.add(key);
+
+  // ── Layout: sculpture right of the headline on wide screens, above it on narrow ──
+  let wide = true;
+  const resize = () => {
+    const { clientWidth: w, clientHeight: h } = canvas;
+    if (!w || !h) return;
+    renderer.setSize(w, h, false);
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    backdropMat.uniforms.uAspect.value = w / h;
+    wide = w / h > 1.05;
+    const s = wide ? Math.min(1, (w / h) / 1.6) * 1.05 : Math.min(0.62, (w / h) * 1.08);
+    group.scale.setScalar(s);
+    group.position.set(wide ? 2.1 * (w / h) / 1.6 : 0, wide ? 0.05 : 1.7, 0);
+    shadow.position.set(group.position.x, group.position.y - 2.6 * s, -1);
+    shadow.scale.setScalar(s);
+  };
+
+  // ── Interaction ──
+  const target = { x: 0, y: 0 };
+  const cur = { x: 0, y: 0 };
+  const onPointer = (e: PointerEvent) => {
+    if (e.pointerType !== 'mouse') return;
+    target.x = (e.clientX / innerWidth - 0.5) * 2;
+    target.y = (e.clientY / innerHeight - 0.5) * 2;
+  };
+  if (!opts.reduceMotion) addEventListener('pointermove', onPointer, { passive: true });
+
+  let visible = true;
+  let running = false, raf = 0, last = performance.now(), time = 0;
+  const intro = { v: opts.reduceMotion ? 1 : 0 };
+  const frame = (now: number) => {
+    const dt = Math.min(0.05, (now - last) / 1000); last = now;
+    time += dt;
+    intro.v = Math.min(1, intro.v + dt / 2.2);
+    const e = 1 - Math.pow(1 - intro.v, 4);
+    build(time);
+    cur.x += (target.x - cur.x) * 0.04;
+    cur.y += (target.y - cur.y) * 0.04;
+    group.rotation.y = -0.22 + Math.sin(time * 0.25) * 0.35 + cur.x * 0.35 + (1 - e) * 1.2;
+    group.rotation.x = 0.12 + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
+    group.rotation.z = -0.05 + Math.sin(time * 0.17) * 0.05;
+    ribbon.position.y = Math.sin(time * 0.7) * 0.08 - (1 - e) * 0.6;
+    ribbon.scale.setScalar(0.86 + 0.14 * e);
+    (shadow.material as MeshBasicMaterial).opacity = 0.32 * e - Math.sin(time * 0.7) * 0.04;
+    backdropMat.uniforms.uTime.value = time;
+    renderer.render(scene, camera);
+    if (running) raf = requestAnimationFrame(frame);
+  };
+  const start = () => {
+    if (running || opts.reduceMotion || !visible || document.hidden) return;
+    running = true; last = performance.now(); raf = requestAnimationFrame(frame);
+  };
+  const stop = () => { running = false; cancelAnimationFrame(raf); };
+  const renderStatic = () => { build(0.8); group.rotation.set(0.12, -0.45, -0.05); renderer.render(scene, camera); };
+
+  const ro = new ResizeObserver(() => { resize(); if (!running) renderStatic(); });
+  ro.observe(canvas);
+  resize();
+
+  const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; visible ? start() : stop(); });
+  io.observe(canvas);
+  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+  if (opts.reduceMotion) renderStatic(); else start();
+
+  return () => { stop(); ro.disconnect(); io.disconnect(); removeEventListener('pointermove', onPointer); renderer.dispose(); };
+}

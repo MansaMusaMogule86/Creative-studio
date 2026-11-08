@@ -1,0 +1,91 @@
+---
+import { brand } from '../config/brand';
+---
+<section class="hero" aria-labelledby="hero-title">
+  <div class="hero__stage" aria-hidden="true">
+    <div class="hero__fallback"></div>
+    <canvas class="hero__canvas" data-sculpture></canvas>
+  </div>
+
+  <div class="wrap hero__content">
+    <p class="eyebrow hero__in" style="--d:.1s">{brand.city} · Creative technology universe</p>
+    <h1 id="hero-title" class="hero__title">
+      <span class="line"><span class="hero__in" style="--d:.2s">We architect</span></span>
+      <span class="line"><em class="hero__in holo-text" style="--d:.34s">what’s next.</em></span>
+    </h1>
+    <p class="lede hero__in" style="--d:.5s">
+      We unite design, intelligence, technology, and growth to build extraordinary digital experiences and businesses ready for tomorrow.
+    </p>
+    <div class="hero__ctas hero__in" style="--d:.62s">
+      <a href="#universe" class="btn" data-magnetic>Explore our universe <span class="arrow" aria-hidden="true">→</span></a>
+      <a href="#contact" class="btn btn--ghost">Start a project</a>
+    </div>
+  </div>
+
+  <a href="#universe" class="hero__scroll" aria-label="Scroll to the five divisions"><span></span></a>
+</section>
+
+<script>
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-sculpture]');
+  const supportsGL = (() => {
+    try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; }
+  })();
+  if (canvas && supportsGL) {
+    const boot = async () => {
+      const { mountSculpture } = await import('../scripts/sculpture');
+      mountSculpture(canvas, {
+        reduceMotion: matchMedia('(prefers-reduced-motion: reduce)').matches,
+        mobile: matchMedia('(max-width: 767px), (pointer: coarse)').matches,
+      });
+      requestAnimationFrame(() => canvas.classList.add('is-ready'));
+    };
+    'requestIdleCallback' in window ? requestIdleCallback(boot, { timeout: 600 }) : setTimeout(boot, 200);
+  }
+</script>
+
+<style>
+  .hero { position: relative; min-height: 100svh; display: grid; align-items: center; overflow: hidden; isolation: isolate; }
+  .hero__stage { position: absolute; inset: 0; z-index: -1; background: var(--pearl); }
+  .hero__fallback {
+    position: absolute; inset: 0;
+    background:
+      radial-gradient(40% 50% at 72% 42%, rgb(185 165 255 / 0.45), transparent 70%),
+      radial-gradient(30% 40% at 86% 74%, rgb(142 231 232 / 0.4), transparent 70%),
+      radial-gradient(35% 35% at 16% 88%, rgb(255 198 172 / 0.35), transparent 70%);
+    filter: blur(10px);
+  }
+  .hero__canvas { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; transition: opacity 1.6s var(--ease-out); }
+  .hero__canvas:global(.is-ready) { opacity: 1; }
+
+  .hero__content { padding-block: 120px 96px; display: grid; gap: 1.8rem; justify-items: start; pointer-events: none; }
+  .hero__content > * { pointer-events: auto; }
+  .hero__title {
+    font-family: var(--font-display); font-size: clamp(3.2rem, 1rem + 8.4vw, 9.6rem);
+    line-height: 0.9; letter-spacing: -0.025em; text-transform: uppercase; max-width: 9ch;
+  }
+  .hero__title .line { display: block; overflow: hidden; padding-bottom: 0.06em; }
+  .hero__title .line > * { display: inline-block; }
+  .hero__title em { text-transform: none; font-size: 1.04em; }
+  .hero__ctas { display: flex; flex-wrap: wrap; gap: 0.8rem; }
+
+  .js .hero__in { opacity: 0; transform: translateY(0.6em); animation: hero-in 1.3s var(--ease-out) forwards; animation-delay: var(--d); }
+  .js .hero__title .hero__in { transform: translateY(105%); }
+  @keyframes hero-in { to { opacity: 1; transform: none; } }
+
+  .hero__scroll {
+    position: absolute; bottom: 28px; inset-inline-start: 50%; translate: -50% 0;
+    width: 28px; height: 46px; border-radius: 999px; border: 1px solid var(--line-strong);
+    display: grid; justify-items: center; padding-top: 8px;
+  }
+  .hero__scroll span { width: 3px; height: 9px; border-radius: 2px; background: var(--ink); animation: cue 2.4s var(--ease-in-out) infinite; }
+  @keyframes cue { 0%, 100% { transform: translateY(0); opacity: 1; } 60% { transform: translateY(12px); opacity: 0; } }
+
+  @media (max-width: 1023px) and (orientation: portrait), (max-width: 767px) {
+    .hero { align-items: end; }
+    .hero__content { padding-block: 46svh 88px; gap: 1.3rem; }
+    .hero__title { font-size: clamp(2.7rem, 13.5vw, 5.6rem); }
+    .hero__fallback { background: radial-gradient(60% 34% at 50% 26%, rgb(185 165 255 / 0.5), transparent 70%), radial-gradient(40% 30% at 70% 36%, rgb(142 231 232 / 0.4), transparent 70%); }
+    .hero__scroll { display: none; }
+  }
+  @media (max-width: 380px) { .hero__ctas .btn { width: 100%; } }
+</style>
