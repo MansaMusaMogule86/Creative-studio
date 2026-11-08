@@ -2,7 +2,7 @@
 
 - Read `README.md` and `docs/creative-directions.md` first.
 - **No deployment, paid services or live AI inference without explicit approval.** Never put API keys in frontend code.
-- **Official emblem:** the golden crowned M (`brand-source/crowned-m-master.png`, never modified). Never redraw it, swap the crown or set the M in a font. Regenerate assets with `pnpm brand:assets`. The liquid-glass sculpture is the artistic centrepiece, not the logo.
+- **Official emblem:** the golden crowned M (`brand-source/crowned-m-master.png`, never modified). Never redraw it, swap the crown or set the M in a font. Regenerate assets with `pnpm brand:assets`. **Artwork:** use only the owner's supplied artwork (`brand-source/division-art/`), shown unaltered, brought to life with motion (`src/components/ui/Living.astro`). Do not generate replacement artwork, 3D models or illustrations.
 - **Gold** is an accent (about 5–10%): lines, light, borders and the single primary CTA. Never a black-and-gold theme. Gold text uses `--gold-text`.
 - Don't push or deploy without explicit approval.
 - **No invented facts.** That means no clients, testimonials, statistics, awards, contact details or social handles. Placeholders must be labelled as placeholders.

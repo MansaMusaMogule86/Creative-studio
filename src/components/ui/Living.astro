@@ -1,0 +1,55 @@
+---
+// Brings the owner's artwork to life without altering it: a 3D tilt that
+// follows the pointer (or drifts on its own on touch screens), a gentle
+// float, a moving glass glare and a soft contact shadow. Static with
+// prefers-reduced-motion. Script: src/scripts/living.ts.
+interface Props { class?: string; tilt?: number; float?: boolean; glare?: boolean; shadow?: boolean; label?: string }
+const { class: cls = '', tilt = 1, float = true, glare = true, shadow = true } = Astro.props;
+---
+<div class:list={['living', cls, { 'living--float': float, 'living--shadow': shadow }]} data-living style={`--tilt:${tilt}`}>
+  <div class="living__float">
+    <div class="living__card">
+      <slot />
+      {glare && <span class="living__glare" aria-hidden="true"></span>}
+    </div>
+  </div>
+</div>
+
+<script>
+  import '../../scripts/living';
+</script>
+
+<style>
+  .living { --rx: 0; --ry: 0; --gx: 50%; --gy: 30%; position: relative; }
+  .living__float { position: relative; border-radius: inherit; }
+  .living--float:global(.is-alive) .living__float { animation: living-float 7.5s var(--ease-in-out) infinite alternate; }
+  .living__card {
+    position: relative; border-radius: inherit; will-change: transform;
+    /* Perspective lives in the transform itself: no shared 3D context, so
+       hit-testing of controls inside the artwork stays exact while it tilts. */
+    transform: perspective(1100px) rotateX(calc(var(--ry) * -7deg * var(--tilt))) rotateY(calc(var(--rx) * 9deg * var(--tilt)));
+  }
+  .living__card > :global(*:not(.living__glare)) { border-radius: inherit; }
+  /* Glass glare: a soft highlight that slides with the tilt. */
+  .living__glare {
+    position: absolute; inset: 0; z-index: 3; border-radius: inherit; pointer-events: none; overflow: hidden;
+    background:
+      radial-gradient(42% 36% at var(--gx) var(--gy), rgb(255 255 255 / 0.42), transparent 70%),
+      linear-gradient(115deg, transparent 30%, rgb(255 255 255 / 0.22) 45%, transparent 58%);
+    background-size: 100% 100%, 260% 260%;
+    background-position: 0 0, calc(50% + var(--rx) * 45%) calc(50% + var(--ry) * 45%);
+    mix-blend-mode: soft-light;
+  }
+  /* Contact shadow that breathes with the float. */
+  .living--shadow::after {
+    content: ''; position: absolute; left: 12%; right: 12%; bottom: -5%; height: 9%; z-index: -1; border-radius: 50%;
+    background: radial-gradient(closest-side, rgb(90 63 192 / 0.28), transparent); filter: blur(10px);
+  }
+  .living--shadow.living--float:global(.is-alive)::after { animation: living-shadow 7.5s var(--ease-in-out) infinite alternate; }
+  @keyframes living-float { from { translate: 0 0; } to { translate: 0 -2.2%; } }
+  @keyframes living-shadow { from { scale: 1; opacity: 1; } to { scale: 0.88; opacity: 0.7; } }
+  @media (prefers-reduced-motion: reduce) {
+    .living__card { transform: none; }
+    .living__float, .living::after { animation: none !important; }
+  }
+</style>

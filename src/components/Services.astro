@@ -114,13 +114,15 @@ import ArrowRight from '@lucide/astro/icons/arrow-right';
   /* Division-accented icon tile. */
   .row__icon {
     width: 44px; height: 44px; border-radius: 13px; display: grid; place-items: center; color: var(--ink-d);
-    background: linear-gradient(145deg, #fff, color-mix(in srgb, var(--a) 38%, white));
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--ink-d) 18%, transparent), 0 8px 18px -12px var(--ink-d);
+    position: relative;
+    background: radial-gradient(70% 50% at 30% 20%, rgb(255 255 255 / 0.95), transparent 70%), linear-gradient(160deg, color-mix(in srgb, var(--a) 30%, white), color-mix(in srgb, var(--a) 70%, white));
+    box-shadow: inset 0 1px 0 #fff, inset 0 -6px 12px -6px color-mix(in srgb, var(--ink-d) 35%, transparent), 0 0 0 1px rgb(255 255 255 / 0.95), 0 10px 20px -12px var(--ink-d);
     transition: background-color 0.4s, transform 0.5s var(--ease-out);
   }
   .row__t { font-family: var(--font-display); font-size: clamp(1.4rem, 1.05rem + 1.4vw, 2.4rem); line-height: 1.08; transition: transform 0.6s var(--ease-out), color 0.4s; }
   .row summary:hover .row__t { transform: translateX(8px); color: var(--ink-d); }
-  .row summary:hover .row__icon, .row[open] .row__icon { transform: rotate(-6deg) scale(1.05); }
+  .row summary:hover .row__icon, .row[open] .row__icon { transform: perspective(300px) rotateY(-14deg) rotateX(8deg) scale(1.08); }
+  .row__icon :global(svg) { filter: drop-shadow(0 2px 3px color-mix(in srgb, var(--ink-d) 35%, transparent)); }
   [dir='rtl'] .row summary:hover .row__t { transform: translateX(-8px); }
   .row summary:focus-visible { outline: 2px solid var(--ink-d); outline-offset: 2px; border-radius: 12px; }
   .row__i { width: 36px; height: 36px; border-radius: 50%; border: 1px solid var(--line-strong); position: relative; transition: background-color 0.4s, border-color 0.4s, transform 0.6s var(--ease-out); }

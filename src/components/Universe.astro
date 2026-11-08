@@ -112,7 +112,7 @@ import { divisions } from '../data/divisions';
   .panel__body { flex: 1; display: grid; grid-template-rows: 1fr auto; padding: 0 1.6rem 1.6rem; min-height: 0; }
   .panel__art { display: grid; place-items: center; min-height: 0; }
   .panel__art { width: 100%; height: 100%; }
-  .panel__art :global(.dart) { width: min(100%, 440px); margin-inline: auto; border-radius: 22px; box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--ink-d) 55%, transparent); }
+  .panel__art :global(.dart-live) { width: min(100%, 440px); margin-inline: auto; border-radius: 22px; box-shadow: 0 30px 60px -40px color-mix(in srgb, var(--ink-d) 55%, transparent); }
   .panel__sub { display: none; }
   .panel__copy { display: grid; gap: 0.8rem; align-content: end; }
   .panel__tag { font-size: 0.8rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 560; color: var(--ink-d); }
@@ -138,7 +138,7 @@ import { divisions } from '../data/divisions';
     .panel__inner { display: contents; }
     .panel__title { display: contents; }
     .panel:not(.is-active) .panel__body { position: absolute; inset: auto 0 4%; padding: 0 8%; opacity: 0.9; pointer-events: none; }
-    .panel:not(.is-active) .panel__art :global(.dart) { border-radius: 16px; box-shadow: none; }
+    .panel:not(.is-active) .panel__art :global(.dart-live) { border-radius: 16px; box-shadow: none; }
     .panel:not(.is-active) .panel__copy { display: none; }
     .panel.is-active .panel__body { grid-template-columns: 1.05fr 1fr; grid-template-rows: 1fr; gap: 1.5rem; align-items: end; animation: panel-in 0.9s var(--ease-out) both; }
     .panel.is-active .panel__art { align-self: center; }
@@ -162,7 +162,7 @@ import { divisions } from '../data/divisions';
     .panel.is-active .panel__body { grid-template-rows: 1fr; padding-bottom: 1rem; }
     .panel__inner { min-height: 0; overflow: hidden; display: grid; gap: 1rem; }
     .panel__art { height: auto; }
-    .panel__art :global(.dart) { width: 100%; border-radius: 16px; }
+    .panel__art :global(.dart-live) { width: 100%; border-radius: 16px; }
     /* A collapsed world's artwork is fetched only once it is first opened. */
     .panel:not(.is-active):not([data-opened]) .panel__art :global(.dart img) { display: none; }
     .panel__copy { gap: 0.7rem; opacity: 0; transform: translateY(8px); transition: opacity 0.35s, transform 0.45s var(--ease-out); }

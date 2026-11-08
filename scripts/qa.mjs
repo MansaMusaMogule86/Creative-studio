@@ -2,7 +2,7 @@
 //   pnpm build && pnpm preview &   then   pnpm qa
 // Checks: console errors, horizontal overflow at 320–1440 px, axe (WCAG 2.1 AA),
 // internal links, the inquiry form, Ask Moguls, the division explorer, reduced motion,
-// sculpture overlap, image loading/weight/art direction and the no-WebGL fallback.
+// artwork overlap, image loading/weight/art direction, motion and reduced motion.
 import { createRequire } from 'node:module';
 import { mkdirSync } from 'node:fs';
 const require = createRequire(import.meta.url);
@@ -140,12 +140,12 @@ for (const w of WIDTHS) {
 
 // 5. Visual integrity: the sculpture never overlaps navigation, headings or buttons.
 const GUARDED = {
-  '/': { art: ['.tile--stage', '.stage__pills', '.stage__label'], keep: ['.hdr__bar', '#hero-title', '.hero__ctas', '.hero__facts', '.hero__copy'] },
-  '/universe/digital': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.dv__crumb', '.lede'] },
-  '/universe/ai': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
-  '/universe/growth': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
-  '/universe/creative': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
-  '/universe/strategy': { art: ['.dv__art', '.dv__art figcaption'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+  '/': { art: ['.tile--stage', '.stage__pills'], keep: ['.hdr__bar', '#hero-title', '.hero__ctas', '.hero__facts', '.hero__copy'] },
+  '/universe/digital': { art: ['.dv__art'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.dv__crumb', '.lede'] },
+  '/universe/ai': { art: ['.dv__art'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+  '/universe/growth': { art: ['.dv__art'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+  '/universe/creative': { art: ['.dv__art'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
+  '/universe/strategy': { art: ['.dv__art'], keep: ['.hdr__bar', 'h1', '.dv__ctas', '.lede'] },
 };
 for (const w of WIDTHS) {
   const p = await browser.newPage({ viewport: { width: w, height: w < 768 ? 800 : 900 } });
@@ -159,7 +159,7 @@ for (const w of WIDTHS) {
       for (const a of art.flatMap(box)) for (const k of keep.flatMap(box)) if (hit(a.r, k.r)) out.push(`${a.sel} × ${k.sel}`);
       return out;
     }, g);
-    if (hits.length) fail(`${path} @${w}: sculpture overlaps ${hits.join(', ')}`);
+    if (hits.length) fail(`${path} @${w}: artwork overlaps ${hits.join(', ')}`);
     // Composition: on desktop the division artwork must sit fully above the fold.
     if (path.startsWith('/universe/') && w >= 1024) {
       const bottom = await p.$eval('.dv__art', (e) => e.getBoundingClientRect().bottom - innerHeight);
@@ -168,7 +168,7 @@ for (const w of WIDTHS) {
   }
   await p.close();
 }
-ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 widths)');
+ok('artwork never overlaps navigation, headings or buttons (6 pages × 6 widths)');
 
 // 6. Assets: every image decodes, lazy images stay lazy, first-load weight is bounded.
 {
@@ -179,9 +179,9 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
       await p.goto(BASE + path, { waitUntil: 'networkidle' });
       const first = await p.evaluate(() => performance.getEntriesByType('resource').filter((r) => /\.(webp|png|jpe?g|avif)$/.test(r.name)).map((r) => ({ n: r.name.split('/').pop(), b: r.transferSize || r.encodedBodySize })));
       const kb = Math.round(first.reduce((a, r) => a + r.b, 0) / 1024);
-      if (path === '/' && first.some((r) => /^(work-|bg-contact)/.test(r.n))) fail(`${path} ${label}: below-the-fold renders loaded eagerly: ${first.map((r) => r.n).join(', ')}`);
+      if (path === '/' && (await p.$$eval('.phi__art, .panel .dart img, .ct__emblem img', (imgs) => imgs.filter((i) => i.loading !== 'lazy').length))) fail(`${path} ${label}: below-the-fold artwork is not lazy-loaded`);
       if (kb > 250) fail(`${path} ${label}: ${kb} KB of images on first load (budget 250 KB)`);
-      const wrongVariant = first.filter((r) => (label === 'mobile' ? /^(hero-card)-\d/.test(r.n) : /wide|mobile/.test(r.n)));
+      const wrongVariant = first.filter((r) => (label === 'mobile' ? /-1536\.webp$/.test(r.n) : false));
       if (wrongVariant.length) fail(`${path} ${label}: wrong art direction served: ${wrongVariant.map((r) => r.n).join(', ')}`);
       if (path === '/') {
         const eagerPanels = await p.$$eval('.panel .dart img', (imgs) => imgs.filter((i) => i.loading !== 'lazy').length);
@@ -189,7 +189,7 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
       }
       await scrollThrough(p);
       await p.waitForLoadState('networkidle');
-      const broken = await p.$$eval('img', (imgs) => imgs.filter((i) => i.getClientRects().length && i.checkVisibility() && (!i.complete || i.naturalWidth === 0)).map((i) => i.currentSrc || i.src));
+      const broken = await p.$$eval('img', (imgs) => imgs.filter((i) => !i.hasAttribute('data-src') && i.getClientRects().length && i.checkVisibility() && (!i.complete || i.naturalWidth === 0)).map((i) => i.currentSrc || i.src));
       if (broken.length) fail(`${path} ${label}: images failed to decode: ${broken.join(', ')}`);
       ok(`${path} ${label}: ${first.length} image(s), ${kb} KB on first load; all images decode`);
       await p.close();
@@ -198,22 +198,21 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
   }
 }
 
-// 7. WebGL fallback: with WebGL unavailable the hero shows the rendered still.
+// 7. Reduced motion: artwork stays still, the hero deck never advances, no canvas anywhere.
 {
-  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 } });
-  await ctx.addInitScript(() => {
-    const o = HTMLCanvasElement.prototype.getContext;
-    HTMLCanvasElement.prototype.getContext = function (t, ...a) { return /webgl/.test(t) ? null : o.call(this, t, ...a); };
-  });
+  const ctx = await browser.newContext({ viewport: { width: 1440, height: 900 }, reducedMotion: 'reduce' });
   const p = await ctx.newPage();
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  await p.waitForTimeout(1500);
-  const state = await p.evaluate(() => {
-    const img = document.querySelector('.stage__fallback img');
-    const c = document.querySelector('[data-sculpture]');
-    return { img: !!img && img.complete && img.naturalWidth > 0, canvasHidden: getComputedStyle(c).opacity === '0' };
-  });
-  if (!state.img || !state.canvasHidden) fail(`no-WebGL fallback: ${JSON.stringify(state)}`); else ok('no-WebGL: hero shows the rendered still, canvas stays hidden');
+  await p.waitForTimeout(5600);
+  const st = await p.evaluate(() => ({
+    active: document.querySelector('[data-deck]')?.dataset.active,
+    alive: document.querySelectorAll('[data-living].is-alive').length,
+    tilted: [...document.querySelectorAll('[data-living]')].filter((e) => e.style.getPropertyValue('--rx')).length,
+    canvases: document.querySelectorAll('canvas').length,
+    pauseHidden: document.querySelector('[data-deck-pause]')?.hidden,
+  }));
+  if (st.active !== '0' || st.alive || st.tilted || st.canvases || !st.pauseHidden) fail(`reduced motion: ${JSON.stringify(st)}`);
+  else ok('reduced motion: artwork static, deck does not advance, no canvas');
   await ctx.close();
 }
 
@@ -287,43 +286,37 @@ ok('sculpture never overlaps navigation, headings or buttons (6 pages × 6 width
   await p.close();
 }
 
-// 10. Real-time 3D actually animates (forced on, since this machine has no GPU).
+// 10. Motion: the owner's artwork moves (hero deck, 3D tilt/float, One Team), and nothing is a placeholder.
 {
   const ctx = await browser.newContext({ viewport: { width: 1280, height: 800 } });
   const p = await ctx.newPage();
-  const frameDiff = async (sel) => {
-    const a = await p.locator(sel).screenshot({ timeout: 60000 });
-    await p.waitForTimeout(1500);
-    const b = await p.locator(sel).screenshot({ timeout: 60000 });
-    return Buffer.compare(a, b) !== 0;
-  };
-  await p.goto(BASE + '/?force-webgl', { waitUntil: 'networkidle' });
-  await p.waitForFunction(() => document.querySelector('[data-sculpture]')?.classList.contains('is-ready'), null, { timeout: 60000 });
-  await p.waitForTimeout(1500);
-  if (!(await frameDiff('[data-sculpture]'))) fail('hero sculpture canvas did not change between frames');
-  else ok('hero sculpture animates in real time');
-  // Showcase: live 3D sculpture animates, one shared canvas across all five.
-  {
-    await p.goto(BASE + '/?force-webgl', { waitUntil: 'networkidle' });
-    await p.evaluate(() => document.getElementById('work').scrollIntoView({ behavior: 'instant' }));
-    await p.waitForFunction(() => document.querySelector('[data-show-stage].is-live canvas'), null, { timeout: 90000 }).catch(() => {});
-    if (!(await p.$('[data-show-stage].is-live canvas'))) fail('showcase: 3D stage did not go live');
-    else {
-      await p.waitForTimeout(1200);
-      if (!(await frameDiff('[data-show-stage]'))) fail('showcase: 3D sculpture did not animate');
-      else ok('showcase: live 3D sculpture animates');
-      for (const slug of ['ai', 'growth', 'creative', 'strategy']) { await p.click('#show-tab-' + slug); await p.waitForTimeout(1500); }
-      const st = await p.evaluate(() => ({ canvases: document.querySelectorAll('canvas.dstage__canvas').length, sel: document.querySelector('.show__tabs [aria-selected=true]').dataset.slug, info: [...document.querySelectorAll('[data-info]')].filter((e) => !e.hidden).map((e) => e.dataset.info) }));
-      if (st.canvases !== 1 || st.sel !== 'strategy' || st.info.join() !== 'strategy') fail(`showcase: ${JSON.stringify(st)}`);
-      else ok('showcase: five sculptures share one canvas; tabs switch scene and caption');
-    }
-    const labels = await p.evaluate(() => /placeholder|concept render/i.test(document.querySelector('main').innerText));
-    if (labels) fail('homepage still shows PLACEHOLDER / CONCEPT RENDER labels'); else ok('no placeholder or concept-render labels on the homepage');
-  }
+  await p.goto(BASE + '/', { waitUntil: 'networkidle' });
+  const a0 = await p.evaluate(() => document.querySelector('[data-deck]').dataset.active);
+  await p.waitForTimeout(5200);
+  const a1 = await p.evaluate(() => document.querySelector('[data-deck]').dataset.active);
+  if (a0 === a1) fail(`hero deck did not advance (${a0} → ${a1})`); else ok(`hero deck turns on its own (${a0} → ${a1})`);
+  const tilt = async () => p.evaluate(() => document.querySelector('.deck__card[data-pos="0"] [data-living]').style.getPropertyValue('--rx'));
+  const t0 = await tilt(); await p.waitForTimeout(700); const t1 = await tilt();
+  if (!t0 || t0 === t1) fail(`hero artwork 3D tilt is not moving (${t0} → ${t1})`); else ok('hero artwork drifts in 3D (tilt changes every frame)');
+  await p.hover('.stage__pills a >> nth=4');
+  await p.waitForTimeout(400);
+  if ((await p.evaluate(() => document.querySelector('[data-deck]').dataset.active)) !== '4') fail('hovering a division pill does not bring its artwork forward');
+  else ok('hovering a division pill brings its artwork forward');
+  await p.evaluate(() => document.querySelector('.phi__diagram').scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await p.waitForTimeout(1800);
+  await p.hover('.spot >> nth=1', { force: true });
+  await p.waitForTimeout(500);
+  const ph = await p.evaluate(() => ({ lit: document.querySelector('.spot.is-active')?.querySelector('.orb__k')?.textContent, cap: document.querySelector('[data-cap]').textContent, art: document.querySelector('.phi__art').currentSrc }));
+  if (ph.lit !== 'Engineering' || !ph.cap.startsWith('Engineering') || !ph.art.includes('/art/one-team-')) fail(`one team hover: ${JSON.stringify(ph)}`);
+  else ok('one team: owner artwork, hover lights Engineering and shows its role');
+  const labels = await p.evaluate(() => /placeholder|concept render/i.test(document.querySelector('main').innerText));
+  if (labels) fail('homepage still shows PLACEHOLDER / CONCEPT RENDER labels'); else ok('no placeholder or concept-render labels on the homepage');
+  const canv = await p.evaluate(() => document.querySelectorAll('canvas').length);
+  if (canv) fail(`homepage still renders ${canv} generated canvas(es)`); else ok('no generated 3D canvases: only the owner artwork is shown');
   // Division artworks are the owner's images, shown whole and unaltered.
   for (const slug of ['digital', 'ai', 'growth', 'creative', 'strategy']) {
     await p.goto(BASE + `/universe/${slug}`, { waitUntil: 'networkidle' });
-    const a = await p.evaluate(() => { const i = document.querySelector('.dv__art img'); const r = i.getBoundingClientRect(); const fig = i.closest('figure'); return { src: i.currentSrc, nat: i.naturalWidth / i.naturalHeight, box: r.width / r.height, overlays: fig.querySelectorAll('figcaption, canvas').length, fit: getComputedStyle(i).objectFit }; });
+    const a = await p.evaluate(() => { const i = document.querySelector('.dv__art img'); const fig = i.closest('figure'); return { src: i.currentSrc, nat: i.naturalWidth / i.naturalHeight, box: i.offsetWidth / i.offsetHeight, overlays: fig.querySelectorAll('figcaption, canvas').length, fit: getComputedStyle(i).objectFit }; });
     if (!a.src.includes(`/art/division-${slug}-`) || Math.abs(a.nat - 1.5) > 0.01 || Math.abs(a.box - 1.5) > 0.02 || a.overlays || a.fit !== 'contain') fail(`/universe/${slug}: artwork not shown whole (${JSON.stringify(a)})`);
     else ok(`/universe/${slug}: owner artwork shown whole at 3:2, no overlay`);
   }

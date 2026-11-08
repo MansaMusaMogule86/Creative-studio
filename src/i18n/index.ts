@@ -11,7 +11,7 @@ export const langTag: Record<Locale, string> = { en: 'en', fr: 'fr', ar: 'ar', z
 
 const en = {
   skip: 'Skip to content',
-  nav: { home: 'Home', universe: 'Universe', services: 'Services', work: 'Showcase', about: 'About', contact: 'Contact' },
+  nav: { home: 'Home', universe: 'Universe', services: 'Services', about: 'About', contact: 'Contact' },
   cta: { create: 'Let’s create', explore: 'Explore our universe', start: 'Start a project' },
 };
 export type Dict = typeof en;

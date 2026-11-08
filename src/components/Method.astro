@@ -97,10 +97,15 @@ const d = 'M80 437 C 180 420, 220 300, 290 291 S 420 380, 500 358 S 620 210, 710
   .node__label small { font-family: var(--font-sans); font-size: 0.7rem; letter-spacing: 0.14em; color: var(--ink-3); margin-bottom: 0.2rem; }
   .node__mobile { display: none; }
 
+  /* Glass orb nodes (same material language as the One Team artwork). */
   .glyph {
     position: relative; width: 64px; height: 64px; border-radius: 50%; display: grid; place-items: center;
-    background: var(--white); border: 1px solid var(--line-strong); transition: transform 0.6s var(--ease-out), box-shadow 0.6s, border-color 0.6s;
+    background: radial-gradient(60% 45% at 35% 25%, rgb(255 255 255 / 0.95), transparent 70%), radial-gradient(circle at 50% 60%, #f4f0ff, #ddd3ff 75%, #c9b6ff);
+    border: 1px solid rgb(255 255 255 / 0.95);
+    box-shadow: inset 0 -8px 16px -6px rgb(138 114 240 / 0.45), inset 0 2px 1px #fff, 0 0 0 1px rgb(185 165 255 / 0.55), 0 14px 26px -14px rgb(90 63 192 / 0.6);
+    transition: transform 0.6s var(--ease-out), box-shadow 0.6s, border-color 0.6s;
   }
+  .glyph::after { content: ''; position: absolute; inset: 0; border-radius: 50%; pointer-events: none; background: radial-gradient(70% 40% at 60% 100%, rgb(255 255 255 / 0.55), transparent 60%); }
   .node.is-lit .glyph { border-color: transparent; box-shadow: 0 0 0 1px #b9a5ff, 0 14px 30px -10px rgb(90 63 192 / 0.5); }
   .node__btn:hover .glyph, .node__btn[aria-pressed='true'] .glyph { transform: scale(1.14); }
   .node__btn[aria-pressed='true'] .glyph { background: var(--ink); }

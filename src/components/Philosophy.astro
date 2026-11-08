@@ -1,10 +1,12 @@
 ---
-import { brand } from '../config/brand';
+import Living from './ui/Living.astro';
+// Hotspots sit over the four circles of the owner's One Team artwork
+// (brand-source/division-art/one-team.png, 1199×1312): centre x/y and colour.
 const pillars = [
-  { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8C8FF', deep: '#B57BEA', icon: 'clapper', mat: 'pearl' },
-  { key: 'Engineering', line: 'Built to last and to scale', color: '#8EE7E8', deep: '#4FB4E8', icon: 'layers', mat: 'crystal' },
-  { key: 'Intelligence', line: 'Systems that learn and assist', color: '#B9A5FF', deep: '#8A72F0', icon: 'brain', mat: 'neural' },
-  { key: 'Commerce', line: 'Every decision tied to value', color: '#FFC6AC', deep: '#F09A6E', icon: 'cart', mat: 'rosegold' },
+  { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8A8FF', x: 27.5, y: 27.4 },
+  { key: 'Engineering', line: 'Built to last and to scale', color: '#7FDCF0', x: 72.6, y: 27.4 },
+  { key: 'Intelligence', line: 'Systems that learn and assist', color: '#A58CFF', x: 27.5, y: 65.5 },
+  { key: 'Commerce', line: 'Every decision tied to value', color: '#FFB48E', x: 72.1, y: 65.5 },
 ] as const;
 const story =
   'Most projects are split between people who never meet: designers, engineers, data specialists and marketers each optimising their own piece. We work the other way round. One team holds the whole picture, so the brand, the product, the intelligence behind it and the plan to grow it are designed as a single system from the first conversation.';
@@ -20,61 +22,20 @@ const story =
     </div>
 
     <div class="phi__diagram">
-      <div class="phi__venn" role="group" aria-label="Four disciplines, one team">
-        {pillars.map((p, i) => (
-          <button type="button" class={`orb orb--${p.mat}`} style={`--c:${p.color};--cd:${p.deep};--i:${i}`} data-orb aria-pressed="false" aria-describedby={`phi-l-${i}`}>
-            <span class="orb__glass" aria-hidden="true"><span class="orb__mat"></span></span>
-            <span class="orb__c">
-              <svg class="orb__icon" viewBox="0 0 64 64" aria-hidden="true">
-                <defs>
-                  <linearGradient id={`phi-g${i}`} x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0" stop-color="#fff" stop-opacity="0.95" />
-                    <stop offset="0.55" stop-color={p.color} stop-opacity="0.9" />
-                    <stop offset="1" stop-color={p.deep} stop-opacity="0.95" />
-                  </linearGradient>
-                </defs>
-                <g fill={`url(#phi-g${i})`} stroke="#fff" stroke-width="1.4" stroke-linejoin="round" stroke-linecap="round">
-                  {p.icon === 'clapper' && (<>
-                    <rect x="9" y="27" width="46" height="28" rx="4" />
-                    <path d="M9 19.5l43.5-8.2 1.6 7.6L10.6 27z" />
-                    <path d="M18 17.8l-2.5 8 M29 15.7l-2.5 8 M40 13.6l-2.5 8" fill="none" stroke-width="3" stroke={p.deep} stroke-opacity="0.75" />
-                    <path d="M28 34.5v13l11-6.5z" fill="#fff" stroke="none" />
-                  </>)}
-                  {p.icon === 'layers' && (<>
-                    <path d="M32 42l22 8-22 8-22-8z" opacity="0.7" />
-                    <path d="M32 32l22 8-22 8-22-8z" opacity="0.85" />
-                    <path d="M32 20l22 8-22 8-22-8z" />
-                    <path d="M32 23.5l12 4.5-12 4.5-12-4.5z" fill="none" stroke={p.deep} stroke-width="1.6" />
-                    <circle cx="32" cy="28" r="1.8" fill="#fff" stroke="none" />
-                  </>)}
-                  {p.icon === 'brain' && (<>
-                    <path d="M31 13c-4-3-11-2-13 3-5 0-8 5-6.5 9.5C8 28 8 35 12 38c-1 5 3 9 8 9 2 4 7 5 11 2z" />
-                    <path d="M33 13c4-3 11-2 13 3 5 0 8 5 6.5 9.5C56 28 56 35 52 38c1 5-3 9-8 9-2 4-7 5-11 2z" />
-                    <path d="M18 22c3 1 5 4 4 7 M14 33c4-1 7 1 8 4 M24 42c0-3 2-5 5-5 M46 22c-3 1-5 4-4 7 M50 33c-4-1-7 1-8 4 M40 42c0-3-2-5-5-5" fill="none" stroke={p.deep} stroke-opacity="0.7" />
-                    <path d="M30 50c0 4 1 6 3 8" fill="none" />
-                  </>)}
-                  {p.icon === 'cart' && (<>
-                    <path d="M6 14h7l6 27h30l5-19H16" fill="none" stroke-width="3" stroke={p.deep} />
-                    <path d="M16.5 22H54l-5 19H19z" />
-                    <path d="M26 22l2 19 M36 22v19 M46 22l-2 19 M18 31.5h33" fill="none" stroke="#fff" stroke-opacity="0.85" />
-                    <circle cx="23" cy="50" r="4" /><circle cx="45" cy="50" r="4" />
-                  </>)}
-                </g>
-              </svg>
-              <span class="orb__k">{p.key}</span>
-              <span class="orb__l" id={`phi-l-${i}`}>{p.line}</span>
-            </span>
-          </button>
-        ))}
-        <div class="phi__core" data-core>
-          <span class="phi__coreGlass" aria-hidden="true"></span>
-          <img src={brand.emblem.dark[160]} srcset={`${brand.emblem.dark[160]} 160w, ${brand.emblem.dark[320]} 320w`} sizes="120px" width="127" height="120" alt="" loading="lazy" decoding="async" />
-          <span class="phi__coreLabel">One team</span>
-          <i class="phi__rule" aria-hidden="true"></i>
+      <Living class="phi__live" tilt={0.7}>
+        <div class="phi__venn" role="group" aria-label="Four disciplines, one team">
+          <img class="phi__art" src="/art/one-team-800.webp" srcset="/art/one-team-560.webp 560w, /art/one-team-800.webp 800w, /art/one-team-1199.webp 1199w"
+            sizes="(max-width: 900px) calc(100vw - 32px), 560px" width="1199" height="1312" loading="lazy" decoding="async"
+            alt="Four glass circles labelled Creativity, Engineering, Intelligence and Commerce overlap around the crowned Mansas Moguls M, with ONE TEAM beneath it." />
+          {pillars.map((p, i) => (
+            <button type="button" class="spot" style={`--c:${p.color};--x:${p.x}%;--y:${p.y}%;--i:${i}`} data-orb aria-pressed="false" aria-describedby={`phi-l-${i}`}>
+              <span class="sr-only orb__k">{p.key}</span>
+              <span class="sr-only orb__l" id={`phi-l-${i}`}>{p.line}</span>
+            </button>
+          ))}
         </div>
-      </div>
-      <!-- Small diagrams hide the lines inside the circles; the selected one is shown here. -->
-      <p class="phi__cap" aria-hidden="true" data-cap><b>{pillars[0].key}</b> {pillars[0].line}</p>
+      </Living>
+      <p class="phi__cap" aria-live="polite" data-cap><b>Tap a circle</b> to see each discipline’s role.</p>
     </div>
   </div>
 </section>
@@ -85,19 +46,26 @@ const story =
   const root = document.querySelector<HTMLElement>('[data-phi]');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (root) {
-    // Tap / click: one discipline at a time is "lit"; the caption mirrors it on phones.
-    const orbs = [...root.querySelectorAll<HTMLButtonElement>('[data-orb]')];
+    // Hover, focus or tap lights one discipline and shows its role below.
+    const spots = [...root.querySelectorAll<HTMLButtonElement>('[data-orb]')];
     const cap = root.querySelector<HTMLElement>('[data-cap]')!;
-    const select = (o: HTMLButtonElement | null) => {
-      orbs.forEach((b) => { const on = b === o; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on)); });
-      root.querySelector('.phi__venn')!.classList.toggle('has-active', !!o);
-      const src = o ?? orbs[0];
-      cap.innerHTML = '';
-      const b = document.createElement('b'); b.textContent = src.querySelector('.orb__k')!.textContent;
-      cap.append(b, ' ', src.querySelector('.orb__l')!.textContent ?? '');
+    const venn = root.querySelector<HTMLElement>('.phi__venn')!;
+    const show = (o: HTMLButtonElement | null, pressed = false) => {
+      spots.forEach((b) => { const on = b === o; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on && pressed)); });
+      venn.classList.toggle('has-active', !!o);
+      cap.replaceChildren();
+      const b = document.createElement('b');
+      if (o) { b.textContent = o.querySelector('.orb__k')!.textContent; cap.append(b, ' ', o.querySelector('.orb__l')!.textContent ?? ''); }
+      else { b.textContent = 'Tap a circle'; cap.append(b, ' to see each discipline’s role.'); }
     };
-    orbs.forEach((o) => o.addEventListener('click', () => select(o.classList.contains('is-active') ? null : o)));
-    root.addEventListener('keydown', (e) => { if (e.key === 'Escape') select(null); });
+    let pinned: HTMLButtonElement | null = null;
+    spots.forEach((o) => {
+      o.addEventListener('click', () => { pinned = pinned === o ? null : o; show(pinned, true); });
+      o.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') show(o, pinned === o); });
+      o.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') show(pinned, true); });
+      o.addEventListener('focus', () => show(o, pinned === o));
+    });
+    root.addEventListener('keydown', (e) => { if (e.key === 'Escape') { pinned = null; show(null); } });
 
     if (!reduce) {
       gsap.registerPlugin(ScrollTrigger);
@@ -107,34 +75,21 @@ const story =
         color: '#25243c', stagger: 0.04, ease: 'none',
         scrollTrigger: { trigger: '[data-words]', start: 'top 80%', end: 'bottom 45%', scrub: 0.6 },
       });
-      // The four disciplines start apart and converge into one shape.
-      const offsets = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-      const spread = matchMedia('(max-width: 767px)').matches ? 8 : 34;
-      orbs.forEach((o, i) => {
-        gsap.fromTo(o, { xPercent: offsets[i][0] * spread, yPercent: offsets[i][1] * spread, scale: 0.86 }, {
-          xPercent: 0, yPercent: 0, scale: 1, ease: 'none',
-          scrollTrigger: { trigger: '.phi__venn', start: 'top 85%', end: 'center 50%', scrub: 0.8 },
-        });
+      // Entrance: the artwork rises and settles into place.
+      gsap.from('.phi__live', {
+        opacity: 0, y: 40, scale: 0.94, rotateX: 8, duration: 1.3, ease: 'power3.out',
+        scrollTrigger: { trigger: '.phi__diagram', start: 'top 80%', toggleActions: 'play none none none' },
       });
-      // Icons and labels rise in once the shape forms.
-      gsap.from(root.querySelectorAll('.orb__c'), {
-        opacity: 0, y: 14, duration: 0.9, ease: 'power3.out', stagger: 0.1,
-        scrollTrigger: { trigger: '.phi__venn', start: 'top 70%', toggleActions: 'play none none none' },
+      // Each circle glimmers once in turn as it arrives.
+      gsap.from(spots, {
+        '--pulse': 1, duration: 1.2, ease: 'power2.out', stagger: 0.18, delay: 0.5,
+        scrollTrigger: { trigger: '.phi__diagram', start: 'top 70%', toggleActions: 'play none none none' },
       });
-      gsap.fromTo('[data-core]', { scale: 0 }, {
-        scale: 1, ease: 'back.out(2)',
-        scrollTrigger: { trigger: '.phi__venn', start: 'center 62%', end: 'center 45%', scrub: 0.6 },
-      });
-      // Continuous motion runs only while the diagram is on screen.
-      const venn = root.querySelector('.phi__venn')!;
-      new IntersectionObserver(([e]) => venn.classList.toggle('is-moving', e.isIntersecting)).observe(venn);
     }
   }
 </script>
 
 <style>
-  @property --phi-ang { syntax: '<angle>'; inherits: false; initial-value: 0deg; }
-
   .phi { overflow: hidden; }
   .phi__grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: clamp(2rem, 6vw, 6rem); align-items: center; }
   .phi__text { display: grid; gap: 1.6rem; }
@@ -142,112 +97,36 @@ const story =
   .phi__title em { text-transform: none; display: block; color: #5a3fc0; }
   .phi__story { font-size: var(--step-1); line-height: 1.5; max-width: 34ch; }
 
-  .phi__diagram { container-type: inline-size; display: grid; gap: 1.2rem; padding-block: 3%; justify-items: center; width: 100%; }
-  .phi__venn { position: relative; aspect-ratio: 1; width: min(100%, 560px); isolation: isolate; }
-  /* Soft reflection of the composition on the "floor". */
-  .phi__venn::after {
-    content: ''; position: absolute; z-index: -1; left: 8%; right: 8%; bottom: -7%; height: 14%; border-radius: 50%;
-    background: radial-gradient(closest-side, rgb(185 165 255 / 0.45), rgb(255 198 172 / 0.25) 55%, transparent);
-    filter: blur(14px);
-  }
+  .phi__diagram { display: grid; gap: 1.1rem; justify-items: center; width: 100%; }
+  .phi__diagram :global(.phi__live) { width: min(100%, 560px); border-radius: 28px; }
+  .phi__venn { position: relative; z-index: 0; border-radius: 28px; overflow: hidden; box-shadow: 0 50px 90px -60px rgb(90 63 192 / 0.6); }
+  .phi__art { display: block; width: 100%; height: auto; }
 
-  /* ── Glass orbs ─────────────────────────────────────────────── */
-  .orb {
-    position: absolute; width: 60%; aspect-ratio: 1; border-radius: 50%; padding: 0; border: 0; background: none;
-    color: inherit; font: inherit; cursor: pointer; -webkit-tap-highlight-color: transparent;
+  /* Hotspots over the four glass circles. */
+  .spot {
+    --pulse: 0;
+    position: absolute; z-index: 2; left: var(--x); top: var(--y); width: 27.5%; aspect-ratio: 1; translate: -50% -50%;
+    border-radius: 50%; border: 0; padding: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
-  .orb:nth-of-type(1) { top: 0; left: 0; } .orb:nth-of-type(2) { top: 0; right: 0; }
-  .orb:nth-of-type(3) { bottom: 0; left: 0; } .orb:nth-of-type(4) { bottom: 0; right: 0; }
-  .orb__glass {
-    position: absolute; inset: 0; border-radius: 50%;
-    background:
-      radial-gradient(60% 42% at 32% 24%, rgb(255 255 255 / 0.85), rgb(255 255 255 / 0) 70%),
-      radial-gradient(70% 70% at 70% 78%, color-mix(in srgb, var(--cd) 26%, transparent), transparent 70%),
-      radial-gradient(circle at 50% 50%, color-mix(in srgb, var(--c) 30%, transparent), color-mix(in srgb, var(--c) 62%, transparent) 70%, color-mix(in srgb, var(--cd) 68%, transparent));
-    box-shadow:
-      inset 0 2px 1px rgb(255 255 255 / 0.9), inset 0 -18px 40px -10px color-mix(in srgb, var(--cd) 60%, transparent), 0 0 24px -6px color-mix(in srgb, var(--cd) 55%, transparent),
-      inset 0 16px 34px -14px rgb(255 255 255 / 0.9), 0 34px 60px -38px color-mix(in srgb, var(--cd) 80%, rgb(37 36 60));
-    transition: scale 0.6s var(--ease-out), filter 0.6s var(--ease-out), opacity 0.6s;
+  .spot::before {
+    content: ''; position: absolute; inset: -14%; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 55%, transparent), transparent 75%);
+    opacity: calc(var(--pulse) * 0.9); mix-blend-mode: screen; transition: opacity 0.5s var(--ease-out), scale 0.6s var(--ease-out);
   }
-  /* Iridescent rim. */
-  .orb__glass::before {
-    content: ''; position: absolute; inset: 0; border-radius: 50%; padding: 3px;
-    background: conic-gradient(from var(--phi-ang), #ffffff, #e9a8ff, #7fdcff, #ffffff, #ffc29a, #b39cff, #ffffff);
-    -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0); -webkit-mask-composite: xor;
-    mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
-    opacity: 0.95;
+  .spot::after {
+    content: ''; position: absolute; inset: -10%; border-radius: 50%; pointer-events: none;
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.9), 0 0 24px 6px color-mix(in srgb, var(--c) 70%, transparent);
+    opacity: 0; scale: 0.94; transition: opacity 0.45s, scale 0.6s var(--ease-out);
   }
-  /* Specular crescent on the lower edge. */
-  .orb__glass::after {
-    content: ''; position: absolute; inset: 6%; border-radius: 50%;
-    background: radial-gradient(80% 50% at 60% 100%, rgb(255 255 255 / 0.55), transparent 60%);
-    mix-blend-mode: screen;
-  }
+  .spot.is-active::before { opacity: 0.95; scale: 1.06; }
+  .spot.is-active::after { opacity: 1; scale: 1; }
+  .spot:focus-visible { outline: none; }
+  .spot:focus-visible::after { opacity: 1; scale: 1; box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
+  .phi__venn::after { content: ''; position: absolute; inset: 0; background: rgb(248 247 255 / 0.28); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
 
-  .orb__c {
-    position: absolute; z-index: 1; width: 64%; display: grid; justify-items: center; text-align: center; gap: 0.35rem;
-    transition: scale 0.6s var(--ease-out);
-  }
-  .orb:nth-of-type(odd) .orb__c { left: 6%; } .orb:nth-of-type(even) .orb__c { right: 6%; }
-  .orb:nth-of-type(-n + 2) .orb__c { top: 15%; }
-  .orb:nth-of-type(n + 3) .orb__c { bottom: 15%; }
-  .orb__icon { width: 42%; height: auto; overflow: visible; filter: drop-shadow(0 6px 10px color-mix(in srgb, var(--cd) 55%, transparent)) drop-shadow(0 0 6px rgb(255 255 255 / 0.8)); }
-  .orb__k { font-family: var(--font-display); font-size: clamp(1rem, 0.72rem + 1.1vw, 1.9rem); line-height: 1.05; color: var(--ink); white-space: nowrap; }
-  .orb__l { font-size: 0.8rem; color: var(--ink-2); max-width: 15ch; line-height: 1.3; opacity: 0; transform: translateY(6px); transition: opacity 0.45s, transform 0.5s var(--ease-out); }
-  /* The role is revealed on hover, focus or tap (and in the caption on small diagrams). */
-  .orb:hover .orb__l, .orb:focus-visible .orb__l, .orb.is-active .orb__l { opacity: 1; transform: none; }
-
-  /* Four distinct materials. */
-  .orb__mat { position: absolute; inset: 0; border-radius: 50%; pointer-events: none; }
-  /* Creativity: iridescent pearl sheen. */
-  .orb--pearl .orb__mat { background: conic-gradient(from 210deg at 45% 40%, rgb(255 255 255 / 0), rgb(255 190 240 / 0.45), rgb(170 230 255 / 0.4), rgb(255 240 190 / 0.35), rgb(255 255 255 / 0)); mix-blend-mode: soft-light; }
-  /* Engineering: frosted crystal with a precise grid. */
-  .orb--crystal .orb__mat { background: repeating-linear-gradient(0deg, rgb(255 255 255 / 0.22) 0 1px, transparent 1px 18px), repeating-linear-gradient(90deg, rgb(255 255 255 / 0.22) 0 1px, transparent 1px 18px); -webkit-mask: radial-gradient(circle at 60% 45%, #000 20%, transparent 70%); mask: radial-gradient(circle at 60% 45%, #000 20%, transparent 70%); }
-  /* Intelligence: violet glass with a field of neural points. */
-  .orb--neural .orb__mat { background: radial-gradient(circle, rgb(255 255 255 / 0.85) 0 1.2px, transparent 1.6px) 0 0 / 22px 22px, radial-gradient(circle, rgb(255 255 255 / 0.55) 0 1px, transparent 1.4px) 11px 11px / 22px 22px; -webkit-mask: radial-gradient(circle at 40% 60%, #000 15%, transparent 68%); mask: radial-gradient(circle at 40% 60%, #000 15%, transparent 68%); }
-  /* Commerce: brushed rose-gold metal bands. */
-  .orb--rosegold .orb__mat { background: linear-gradient(115deg, transparent 30%, rgb(255 236 220 / 0.6) 42%, rgb(232 160 120 / 0.25) 50%, rgb(255 240 228 / 0.55) 58%, transparent 70%); mix-blend-mode: screen; }
-  .orb--rosegold .orb__glass { box-shadow: inset 0 0 0 1px rgb(222 160 118 / 0.6), inset 0 2px 1px rgb(255 255 255 / 0.9), inset 0 -18px 40px -10px color-mix(in srgb, var(--cd) 60%, transparent), 0 34px 60px -38px color-mix(in srgb, var(--cd) 80%, rgb(37 36 60)); }
-
-  /* Hover / focus / tap: the orb brightens and lifts; the others recede a little. */
-  .orb:hover .orb__glass, .orb:focus-visible .orb__glass, .orb.is-active .orb__glass { scale: 1.035; filter: saturate(1.25) brightness(1.04); }
-  .orb:hover .orb__c, .orb:focus-visible .orb__c, .orb.is-active .orb__c { scale: 1.06; }
-  .orb:hover, .orb:focus-visible, .orb.is-active { z-index: 1; }
-  .orb:focus-visible { outline: none; }
-  .orb:focus-visible .orb__glass { box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
-  .has-active .orb:not(.is-active) .orb__glass { opacity: 0.72; }
-
-  /* ── Core ───────────────────────────────────────────────────── */
-  .phi__core {
-    position: absolute; z-index: 2; inset: 33%; border-radius: 50%; display: grid; place-items: center; align-content: center; gap: 5%;
-    background: radial-gradient(circle at 50% 30%, #4a4270, #2a2746 55%, #1b1a2e);
-    box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.85), 0 0 0 8px rgb(255 255 255 / 0.4), 0 0 40px 4px rgb(201 182 255 / 0.55), 0 24px 50px -12px rgb(167 122 48 / 0.5);
-    pointer-events: none;
-  }
-  .phi__coreGlass { position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(70% 45% at 40% 18%, rgb(255 255 255 / 0.35), transparent 70%); }
-  .phi__core img { position: relative; width: 50%; height: auto; filter: drop-shadow(0 4px 10px rgb(216 184 117 / 0.45)); }
-  .phi__coreLabel { position: relative; color: #fff; font-size: clamp(0.56rem, 0.45rem + 0.45vw, 0.78rem); letter-spacing: 0.28em; text-transform: uppercase; padding-inline-start: 0.28em; }
-  .phi__rule { width: 34%; height: 1.5px; border-radius: 2px; background: var(--gold-line); }
-
-  .phi__cap { display: none; min-height: 3em; text-align: center; color: var(--ink-2); max-width: 34ch; }
-  .phi__cap :global(b) { font-family: var(--font-display); font-weight: 400; font-size: 1.15rem; color: var(--ink); display: block; }
-
-  /* Gentle continuous motion (only while on screen, never with reduced motion). */
-  .is-moving .orb__glass { animation: phi-float 7s var(--ease-in-out) infinite alternate; animation-delay: calc(var(--i) * -1.7s); }
-  .is-moving .orb__glass::before { animation: phi-spin 14s linear infinite; }
-  .is-moving .phi__core { animation: phi-glow 5s var(--ease-in-out) infinite alternate; }
-  @keyframes phi-float { from { translate: 0 0; } to { translate: 0 -2.2%; } }
-  @keyframes phi-spin { to { --phi-ang: 360deg; } }
-  @keyframes phi-glow { to { box-shadow: 0 0 0 1.5px rgb(255 255 255 / 0.95), 0 0 0 8px rgb(255 255 255 / 0.5), 0 0 56px 8px rgb(201 182 255 / 0.7), 0 24px 50px -12px rgb(167 122 48 / 0.55); } }
+  .phi__cap { min-height: 3.2em; text-align: center; color: var(--ink-2); max-width: 34ch; }
+  .phi__cap :global(b) { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; color: var(--ink); display: block; }
 
   @media (max-width: 900px) { .phi__grid { grid-template-columns: 1fr; } }
-  /* When the diagram is too small for the lines inside the circles, the
-     selected discipline's line is shown in the caption below instead. */
-  @container (max-width: 519px) {
-    .orb__l { display: none; }
-    .phi__cap { display: block; }
-  }
-  @media (prefers-reduced-motion: reduce) {
-    .orb__glass, .orb__c { transition: none; }
-  }
+  @media (prefers-reduced-motion: reduce) { .spot::before, .spot::after { transition: none; } }
 </style>

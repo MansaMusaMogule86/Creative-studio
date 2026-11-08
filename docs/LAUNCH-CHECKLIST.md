@@ -1,6 +1,6 @@
 # Launch checklist (A–Z)
 
-Saved on 2026-11-08 at the owner's request. **First full check: 2026-11-08** (lint, build, `pnpm qa`, `pnpm qa:mobile`, Lighthouse, `pnpm audit`, search/indexing audit). **Re-checked 2026-11-08 after the visual overhaul (live 3D showcase, services, One Team, header):** lint ✅, build ✅, `pnpm qa` 35/35 ✅, `pnpm qa:mobile` 51/51 ✅, overflow/tap-target audit at 320/375/390/430/768 on all 9 pages ✅, reduced motion ✅ (still frame, no CSS animation), Lighthouse home 98 mobile / 100 desktop, CLS 0.
+Saved on 2026-11-08 at the owner's request. **First full check: 2026-11-08** (lint, build, `pnpm qa`, `pnpm qa:mobile`, Lighthouse, `pnpm audit`, search/indexing audit). **Re-checked 2026-11-08 after switching to owner artwork with motion:** lint ✅, build ✅, `pnpm qa` 37/37 ✅, `pnpm qa:mobile` 51/51 ✅, overflow/tap-target audit 320–768 on all pages ✅, reduced motion ✅, Lighthouse home 95–97 mobile / 100 desktop, CLS 0.
 
 Legend: ✅ done and verified · ⚠ partial · ❌ missing, doable once unblocked · ⏳ needs owner, host, domain or legal input · n/a not applicable. Ticked boxes are ✅ or n/a.
 
@@ -187,11 +187,11 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] No misleading or unsupported rich-result markup — ✅ No reviews/ratings markup.
 
 ## P. Performance & Core Web Vitals
-- [x] LCP target at or below 2.5 seconds — ✅ Lighthouse after the visual overhaul: home 2.3 s mobile / 0.6 s desktop (lab, headless; the live 3D showcase loads only when scrolled near).
+- [ ] LCP target at or below 2.5 seconds — ⚠ Lab: home 2.5–2.8 s mobile / 0.6 s desktop. LCP is now the owner's hero artwork (33 KB); most of the time is simulated main-thread work before paint. Confirm with field data on a real device.
 - [ ] INP target at or below 200 milliseconds — ⚠ TBT 0–10 ms in lab; real INP needs field data.
 - [x] CLS target at or below 0.1 — ✅ CLS 0 (Lighthouse).
 - [ ] Real-user field data monitoring — ⏳ Needs analytics/RUM decision (D-07).
-- [x] PageSpeed Insights and Lighthouse review — ✅ Lighthouse 98–100 perf, 100 a11y/BP/SEO (home, re-run after the visual overhaul).
+- [x] PageSpeed Insights and Lighthouse review — ✅ Lighthouse 95–97 mobile / 100 desktop perf, 100 a11y/BP/SEO (home).
 - [x] Bundle size and third-party script budgets — ✅ Budgets in docs/creative-3d/PERFORMANCE-BUDGET.md; no third-party scripts.
 - [x] Critical CSS and resource priorities — ✅ Inlined CSS where small, font/emblem preload, hero fetchpriority.
 - [ ] Caching and CDN effectiveness — ⏳ Host.
@@ -201,7 +201,7 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 ## Q. Quality Assurance & Testing
 - [ ] Unit tests for critical logic — ❌ No unit runner; vitest planned with backend (needs approval).
 - [ ] Integration tests — ❌ Planned with /api/leads (mocked HighLevel).
-- [x] End-to-end browser tests — ✅ pnpm qa (35 checks: hero + showcase 3D animating, one shared canvas, no placeholder labels, owner artwork on all 5 division pages) + qa:mobile (51: header lockup and One Team layout/tap at 320–430).
+- [x] End-to-end browser tests — ✅ pnpm qa (37 checks: hero deck turns, artwork drifts in 3D, One Team hover, no generated canvases, reduced motion static, owner artwork on all division pages) + qa:mobile (51).
 - [ ] Responsive visual regression tests — ⚠ Screenshot review per phase; no pixel-diff baseline.
 - [ ] Accessibility automated and manual tests — ⚠ axe automated; manual ⏳.
 - [ ] Cross-browser compatibility — ⚠ Chromium only here.

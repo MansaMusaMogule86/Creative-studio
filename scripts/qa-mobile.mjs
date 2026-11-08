@@ -212,30 +212,26 @@ for (const w of [320, 375, 390, 430]) {
   await ctx.close();
 }
 
-// "One team" diagram: labels never overlap each other or the core, stay inside
-// their circle and on screen; tapping a circle selects it and updates the caption.
+// "One team": the owner's artwork fits the screen; tapping a circle selects it and shows its role.
 for (const w of [320, 375, 390, 430]) {
   const ctx = await browser.newContext({ viewport: { width: w, height: 800 }, isMobile: true, hasTouch: true });
   const p = await ctx.newPage();
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
-  await p.evaluate(() => document.querySelector('.phi__venn').scrollIntoView({ block: 'center', behavior: 'instant' }));
+  await p.evaluate(() => document.querySelector('.phi__diagram').scrollIntoView({ block: 'center', behavior: 'instant' }));
   await p.waitForTimeout(2200);
   const r = await p.evaluate(() => {
-    const rect = (e) => e.getBoundingClientRect();
-    const hit = (a, b) => a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom;
-    const t = [...document.querySelectorAll('.orb__k, .orb__icon')].map(rect);
-    const c = rect(document.querySelector('.phi__core')), cx = (c.left + c.right) / 2, cy = (c.top + c.bottom) / 2, cr = c.width / 2 + 2;
-    let bad = 0;
-    for (let i = 0; i < t.length; i++) { for (let j = i + 1; j < t.length; j++) if (hit(t[i], t[j])) bad++;
-      const nx = Math.max(t[i].left, Math.min(cx, t[i].right)), ny = Math.max(t[i].top, Math.min(cy, t[i].bottom)); if (Math.hypot(nx - cx, ny - cy) < cr || t[i].left < 0 || t[i].right > innerWidth) bad++; }
-    return { bad, hscroll: document.documentElement.scrollWidth > innerWidth, emblem: !!document.querySelector('.phi__core img[src*="emblem"]'), label: document.querySelector('.phi__coreLabel').textContent };
+    const art = document.querySelector('.phi__art'); const a = art.getBoundingClientRect();
+    const spots = [...document.querySelectorAll('.spot')].map((s) => s.getBoundingClientRect());
+    const hit = (x, y) => x.left < y.right && y.left < x.right && x.top < y.bottom && y.top < x.bottom;
+    let overlaps = 0; for (let i = 0; i < spots.length; i++) for (let j = i + 1; j < spots.length; j++) if (hit(spots[i], spots[j])) overlaps++;
+    return { overlaps, inside: a.left >= -2 && a.right <= innerWidth + 2, hscroll: document.documentElement.scrollWidth > innerWidth, minSpot: Math.min(...spots.map((s) => s.width)), loaded: art.naturalWidth > 0 };
   });
-  await p.tap('.orb:nth-of-type(3)');
+  await p.tap('.spot >> nth=2', { force: true });
   await p.waitForTimeout(300);
-  const t = await p.evaluate(() => ({ pressed: document.querySelector('.orb:nth-of-type(3)').getAttribute('aria-pressed'), cap: document.querySelector('[data-cap]').textContent }));
-  if (r.bad || r.hscroll || !r.emblem || !/one team/i.test(r.label)) fail(`${w}px one-team diagram layout: ${JSON.stringify(r)}`);
+  const t = await p.evaluate(() => ({ pressed: document.querySelectorAll('.spot')[2].getAttribute('aria-pressed'), cap: document.querySelector('[data-cap]').textContent }));
+  if (r.overlaps || !r.inside || r.hscroll || r.minSpot < 44 || !r.loaded) fail(`${w}px one-team layout: ${JSON.stringify(r)}`);
   else if (t.pressed !== 'true' || !t.cap.startsWith('Intelligence')) fail(`${w}px one-team tap: ${JSON.stringify(t)}`);
-  else ok(`${w}px: one-team diagram fits, labels clear of each other and the core; tap selects (Intelligence)`);
+  else ok(`${w}px: one-team artwork fits; four ${Math.round(r.minSpot)}px tap targets; tap shows Intelligence's role`);
   await ctx.close();
 }
 

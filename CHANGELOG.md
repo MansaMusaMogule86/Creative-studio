@@ -3,6 +3,27 @@
 All notable changes to the Mansas Moguls website. Newest first. Branch: `claude/affectionate-sagan-nrj1c8`.
 
 ## Unreleased
+- **Only the owner's artwork, and it all moves.** Generated art is removed: the code-built 3D sculptures (showcase), the white-ribbon hero sculpture and the ribbon contact background. The Showcase section and its nav item are gone.
+- **New motion layer (`ui/Living.astro` + `scripts/living.ts`):**
+  - Your images are never altered.
+  - The mouse tilts them in 3D; touch screens get a slow drift.
+  - They float, with a moving glass glare and a breathing shadow.
+  - One rAF loop runs only for on-screen pieces.
+  - Reduced motion keeps everything static.
+- **Hero:**
+  - A 3D deck of the five division artworks turns every 4.5 s.
+  - Pause button; pauses on hover, focus and off-screen.
+  - Hovering a division pill brings that division's artwork forward.
+- **One Team:** the owner's glass One Team image with a 3D entrance and drift. Four 44 px+ tap targets light each circle and reveal its role.
+- **Universe panels and division pages:** the owner's images now tilt, float and glint.
+- **Contact:** matches the owner's live design:
+  - the official crowned M floats in 3D with a floor reflection;
+  - frosted glass step cards with icons, step 3 reading "Move forward together";
+  - a glossy violet "Start a project" button.
+- **Glass styling:** primary buttons are glossy violet pills, secondary buttons frosted glass; service icon tiles and Method nodes are glass.
+- **Performance:** deck cards beyond the first three load only when they come forward.
+- **QA:** checks that the deck turns, the artwork drifts, One Team hover and tap work, there are no generated canvases, and reduced motion is static.
+
 - **Showcase replaces the placeholder "Selected work":**
   - The four "Placeholder · concept render" cards, all made from the same white ribbon, are gone.
   - In their place: five live 3D sculptures, each with its own geometry and materials, built in three.js with transmission glass, iridescence and PMREM reflections:

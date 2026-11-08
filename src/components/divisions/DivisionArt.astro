@@ -1,8 +1,9 @@
 ---
 // A division's artwork: the owner-supplied image, shown whole and unaltered
-// (no crop, overlay or motion). Masters: brand-source/division-art/*.png;
+// (no crop or overlay). <Living> adds tilt, float and glass glare around it. Masters: brand-source/division-art/*.png;
 // the served WebP copies are the same framing at 480–1536 px wide.
 import type { Division } from '../../data/divisions';
+import Living from '../ui/Living.astro';
 interface Props { division: Division; variant?: 'panel' | 'hero'; eager?: boolean }
 const { division: d, variant = 'panel', eager = false } = Astro.props;
 const src = (w: number) => `/art/division-${d.slug}-${w}.webp`;
@@ -16,12 +17,15 @@ const ALT: Record<Division['slug'], string> = {
 const sizes = variant === 'hero' ? '(max-width: 1023px) calc(100vw - 32px), 640px' : '(max-width: 1023px) calc(100vw - 64px), 440px';
 const WIDTHS = [480, 768, 1024, 1536];
 ---
+<Living class={`dart-live dart-live--${variant}`} tilt={variant === 'hero' ? 1 : 0.8}>
 <div class={`dart dart--${variant}`} data-division-art={d.slug}>
   <img src={src(1536)} srcset={WIDTHS.map((w) => `${src(w)} ${w}w`).join(', ')} {sizes}
     width="1536" height="1024" alt={ALT[d.slug]} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} />
 </div>
+</Living>
 
 <style>
+  .dart-live { border-radius: inherit; }
   .dart { position: relative; width: 100%; aspect-ratio: 3 / 2; overflow: hidden; border-radius: inherit; background: #f3f0fb; }
   .dart img { display: block; width: 100%; height: 100%; object-fit: contain; }
 </style>
