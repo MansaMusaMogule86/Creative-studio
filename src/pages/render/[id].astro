@@ -1,0 +1,20 @@
+---
+// Render harness for scripts/render-stills.mjs. Only generated when
+// RENDER_STILLS=1, so it never ships in a normal build.
+import { stills, type Still } from '../../data/stills';
+export function getStaticPaths() {
+  if (!process.env.RENDER_STILLS) return [];
+  return stills.map((s) => ({ params: { id: s.id }, props: { s } }));
+}
+const { s } = Astro.props as { s: Still };
+---
+<html lang="en"><head><meta charset="utf-8" /><meta name="robots" content="noindex" /><title>render {s.id}</title>
+<style>html,body{margin:0;background:#f8f7ff}canvas{display:block;width:100vw;height:100vh}</style></head>
+<body><canvas data-still={JSON.stringify(s)}></canvas>
+<script>
+  import { mountSculpture } from '../../scripts/sculpture';
+  const c = document.querySelector<HTMLCanvasElement>('canvas')!;
+  const s = JSON.parse(c.dataset.still!);
+  mountSculpture(c, { reduceMotion: true, mobile: false, palette: s.palette, still: s });
+  requestAnimationFrame(() => requestAnimationFrame(() => ((window as unknown as { __ready: boolean }).__ready = true)));
+</script></body></html>

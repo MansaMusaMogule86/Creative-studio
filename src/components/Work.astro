@@ -4,10 +4,10 @@
 // one-for-one. No clients, results or awards are implied.
 import { divisions } from '../data/divisions';
 const projects = [
-  { id: 'A', division: 'digital', title: 'A commerce platform', disciplines: ['Platform', 'UX/UI', 'E-commerce'], layout: 'wide' },
-  { id: 'B', division: 'ai', title: 'An intelligent concierge', disciplines: ['AI agents', 'Voice', 'CRM'], layout: 'tall' },
-  { id: 'C', division: 'creative', title: 'A brand world', disciplines: ['Identity', 'Motion', '3D'], layout: 'tall' },
-  { id: 'D', division: 'growth', title: 'A launch campaign', disciplines: ['SEO', 'Paid', 'Content'], layout: 'wide' },
+  { id: 'A', division: 'digital', title: 'A commerce platform', disciplines: ['Platform', 'UX/UI', 'E-commerce'], layout: 'wide', img: 'work-digital', w: 1400 },
+  { id: 'B', division: 'ai', title: 'An intelligent concierge', disciplines: ['AI agents', 'Voice', 'CRM'], layout: 'tall', img: 'work-ai', w: 1200 },
+  { id: 'C', division: 'creative', title: 'A brand world', disciplines: ['Identity', 'Motion', '3D'], layout: 'tall', img: 'work-creative', w: 1200 },
+  { id: 'D', division: 'growth', title: 'A launch campaign', disciplines: ['SEO', 'Paid', 'Content'], layout: 'wide', img: 'work-growth', w: 1400 },
 ].map((p) => ({ ...p, d: divisions.find((d) => d.slug === p.division)! }));
 ---
 <section id="work" class="section work" aria-labelledby="work-title">
@@ -27,9 +27,10 @@ const projects = [
         <li class={`case case--${p.layout}`} data-reveal style={`--d:${(i % 2) * 0.1}s;--a:${p.d.palette[0]};--b:${p.d.palette[1]};--c:${p.d.palette[2]};--ink-d:${p.d.ink}`}>
           <figure class="case__frame">
             <div class="case__visual" aria-hidden="true">
-              <span class="case__shape s1"></span><span class="case__shape s2"></span><span class="case__shape s3"></span>
+              <img src={`/renders/${p.img}-${p.w / 2}.webp`} srcset={`/renders/${p.img}-${p.w / 2}.webp ${p.w / 2}w, /renders/${p.img}-${p.w}.webp ${p.w}w`}
+                sizes="(max-width: 900px) 100vw, 55vw" alt="" width={p.w} height={p.w * 0.75} loading="lazy" decoding="async" />
             </div>
-            <span class="case__badge">Placeholder {p.id}</span>
+            <span class="case__badge">Placeholder {p.id} · concept render</span>
             <figcaption class="case__cap">
               <span class="case__div">{p.d.name}</span>
               <span class="case__title">{p.title}</span>
@@ -57,13 +58,8 @@ const projects = [
       radial-gradient(70% 70% at 10% 100%, color-mix(in srgb, var(--b) 55%, white), transparent 60%), var(--pearl);
     transition: transform 1.4s var(--ease-out);
   }
-  .case__shape { position: absolute; border-radius: 50%; mix-blend-mode: multiply; transition: transform 1.4s var(--ease-out), border-radius 1.4s var(--ease-out); }
-  .s1 { width: 46%; aspect-ratio: 1; top: 14%; left: 30%; background: linear-gradient(140deg, white, var(--a)); box-shadow: inset -20px -30px 60px rgb(255 255 255 / 0.9); }
-  .s2 { width: 26%; aspect-ratio: 1; top: 44%; left: 58%; background: linear-gradient(200deg, white, var(--b)); border-radius: 30%; }
-  .s3 { width: 64%; height: 2px; top: 76%; left: 18%; border-radius: 2px; background: var(--ink-d); opacity: 0.25; }
-  .case:hover .case__visual { transform: scale(1.04); }
-  .case:hover .s1 { transform: translate(-8%, 6%) scale(1.08); border-radius: 42% 58% 50% 50%; }
-  .case:hover .s2 { transform: translate(20%, -24%) rotate(45deg); }
+  .case__visual img { width: 100%; height: 100%; object-fit: cover; transition: transform 1.6s var(--ease-out); }
+  .case:hover .case__visual img { transform: scale(1.06) rotate(-1deg); }
   .case__badge { position: absolute; top: 18px; inset-inline-start: 18px; padding: 0.35rem 0.8rem; border-radius: 999px; font-size: 0.72rem; letter-spacing: 0.14em; text-transform: uppercase; font-weight: 560; background: rgb(255 255 255 / 0.85); border: 1px dashed var(--line-strong); }
   .case__cap { position: absolute; inset: auto 0 0; display: grid; gap: 0.25rem; padding: 1.4rem 1.6rem; background: linear-gradient(transparent, rgb(255 255 255 / 0.92) 40%); }
   .case__div { font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-d); font-weight: 560; }

@@ -7,7 +7,27 @@ import {
   WebGLRenderer, CanvasTexture,
 } from 'three';
 
-type Options = { reduceMotion: boolean; mobile: boolean };
+export type Palette = {
+  /** Three key light colours that tint the reflections. */
+  lights: [string, string, string];
+  /** Colour carried inside the glass (attenuation + sheen). */
+  tint: string;
+  /** Three soft fields painted on the backdrop. */
+  fields: [string, string, string];
+};
+type Options = {
+  reduceMotion: boolean;
+  mobile: boolean;
+  palette?: Palette;
+  /** Render one deterministic frame (used by scripts/render-stills.mjs). */
+  still?: { t: number; rx: number; ry: number; rz?: number; fit?: number };
+};
+
+export const DEFAULT_PALETTE: Palette = {
+  lights: ['#a58cff', '#5fd6d8', '#ffb08f'],
+  tint: '#b9a5ff',
+  fields: ['#ccbdff', '#a8eded', '#ffd6c2'],
+};
 
 const PATH: [number, number, number][] = [
   [-2.0, -1.3, 0.3], [-2.0, 0.9, 0.45], [-0.85, 2.05, 0.65], [0.3, 0.95, 0.35],
@@ -16,7 +36,8 @@ const PATH: [number, number, number][] = [
 ];
 
 export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
-  const renderer = new WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: false, powerPreference: 'high-performance' });
+  const pal = opts.palette ?? DEFAULT_PALETTE;
+  const renderer = new WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: !!opts.still });
   renderer.setPixelRatio(Math.min(devicePixelRatio, opts.mobile ? 1.5 : 2));
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = ACESFilmicToneMapping;
@@ -33,30 +54,34 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     const m = new Mesh(new PlaneGeometry(...s), new MeshBasicMaterial({ color: new Color(color).multiplyScalar(i), side: DoubleSide }));
     m.position.set(...pos); m.lookAt(0, 0, 0); env.add(m);
   };
-  card('#a58cff', [-9, 4, 4], [8, 10], 2.2);
-  card('#5fd6d8', [9, -2, 5], [7, 9], 2.0);
-  card('#ffb08f', [2, -9, 3], [10, 5], 2.0);
+  card(pal.lights[0], [-9, 4, 4], [8, 10], 2.2);
+  card(pal.lights[1], [9, -2, 5], [7, 9], 2.0);
+  card(pal.lights[2], [2, -9, 3], [10, 5], 2.0);
   card('#ffffff', [0, 9, 6], [12, 3], 3.2);
   card('#d9a8ff', [-4, -3, -9], [10, 8], 1.8);
   card('#ffd27a', [-8, -6, 2], [4, 6], 1.6);
   card('#7fb4ff', [7, 6, -6], [5, 7], 1.8);
   card('#ffffff', [4, 2, 10], [3, 8], 2.6);
+  // Thin ink strips give the glass defined, darker rims, as in a studio shot.
+  card('#25243c', [-6, 0, 8], [0.8, 14], 1);
+  card('#25243c', [10, 3, -2], [0.6, 12], 1);
+  card('#3a3460', [0, -10, -4], [14, 0.8], 1);
   const pmrem = new PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(env, 0.035).texture;
 
   // ── Backdrop: pearl with slowly drifting light fields ──
   const backdropMat = new ShaderMaterial({
-    uniforms: { uTime: { value: 0 }, uAspect: { value: 1 } },
+    uniforms: { uTime: { value: 0 }, uAspect: { value: 1 }, uC1: { value: new Color(pal.fields[0]) }, uC2: { value: new Color(pal.fields[1]) }, uC3: { value: new Color(pal.fields[2]) } },
     vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.9999, 1.0); }`,
     fragmentShader: `
-      varying vec2 vUv; uniform float uTime; uniform float uAspect;
+      varying vec2 vUv; uniform float uTime; uniform float uAspect; uniform vec3 uC1; uniform vec3 uC2; uniform vec3 uC3;
       float blob(vec2 p, vec2 c, float r){ return smoothstep(r, 0.0, length(p - c)); }
       void main(){
         vec2 p = vUv; p.x *= uAspect; float t = uTime * 0.05;
         vec3 col = vec3(0.973, 0.969, 1.0);
-        col = mix(col, vec3(0.80, 0.74, 1.0), 0.62 * blob(p, vec2(uAspect*(0.72 + 0.06*sin(t*3.0)), 0.70 + 0.05*cos(t*2.0)), 0.75));
-        col = mix(col, vec3(0.66, 0.93, 0.93), 0.55 * blob(p, vec2(uAspect*(0.92 + 0.05*cos(t*2.3)), 0.22 + 0.06*sin(t*1.7)), 0.7));
-        col = mix(col, vec3(1.0, 0.84, 0.76), 0.5 * blob(p, vec2(uAspect*(0.18 + 0.05*sin(t*1.9)), 0.12 + 0.04*cos(t*2.6)), 0.65));
+        col = mix(col, uC1, 0.62 * blob(p, vec2(uAspect*(0.72 + 0.06*sin(t*3.0)), 0.70 + 0.05*cos(t*2.0)), 0.75));
+        col = mix(col, uC2, 0.55 * blob(p, vec2(uAspect*(0.92 + 0.05*cos(t*2.3)), 0.22 + 0.06*sin(t*1.7)), 0.7));
+        col = mix(col, uC3, 0.5 * blob(p, vec2(uAspect*(0.18 + 0.05*sin(t*1.9)), 0.12 + 0.04*cos(t*2.6)), 0.65));
         col += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453) - 0.5) / 255.0;
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -119,9 +144,9 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     color: '#ffffff', metalness: 0.1, roughness: 0.08,
     transmission: 0.9, thickness: 1.6, ior: 1.45,
     iridescence: 1, iridescenceIOR: 1.6, iridescenceThicknessRange: [250, 950],
-    sheen: 1, sheenColor: new Color('#e8c8ff'), sheenRoughness: 0.35,
+    sheen: 0.6, sheenColor: new Color(pal.tint).lerp(new Color('#ffffff'), 0.4), sheenRoughness: 0.35,
     clearcoat: 1, clearcoatRoughness: 0.04, envMapIntensity: 2,
-    attenuationColor: new Color('#b9a5ff'), attenuationDistance: 1.4,
+    attenuationColor: new Color(pal.tint), attenuationDistance: 1.4,
     side: DoubleSide,
   });
   const ribbon = new Mesh(geo, glass);
@@ -154,7 +179,7 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     // The sculpture now lives inside the hero's bento card: centre it and fit
     // it to whichever side of the card is shorter.
     const visH = 2 * camera.position.z * Math.tan((camera.fov * Math.PI) / 360);
-    const s = Math.min((visH * (w / h)) / 6.0, visH / 5.8);
+    const s = Math.min((visH * (w / h)) / 6.0, visH / 5.8) * (opts.still?.fit ?? 1);
     group.scale.setScalar(s);
     group.position.set(0, 0.25 * s, 0);
     shadow.position.set(group.position.x, group.position.y - 2.6 * s, -1);
@@ -194,11 +219,17 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     if (running) raf = requestAnimationFrame(frame);
   };
   const start = () => {
-    if (running || opts.reduceMotion || !visible || document.hidden) return;
+    if (running || opts.reduceMotion || opts.still || !visible || document.hidden) return;
     running = true; last = performance.now(); raf = requestAnimationFrame(frame);
   };
   const stop = () => { running = false; cancelAnimationFrame(raf); };
-  const renderStatic = () => { build(0.8); group.rotation.set(0.12, -0.45, -0.05); renderer.render(scene, camera); };
+  const renderStatic = () => {
+    const st = opts.still ?? { t: 0.8, rx: 0.12, ry: -0.45, rz: -0.05 };
+    build(st.t);
+    group.rotation.set(st.rx, st.ry, st.rz ?? -0.05);
+    backdropMat.uniforms.uTime.value = st.t * 10;
+    renderer.render(scene, camera);
+  };
 
   const ro = new ResizeObserver(() => { resize(); if (!running) renderStatic(); });
   ro.observe(canvas);
@@ -207,7 +238,7 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; visible ? start() : stop(); });
   io.observe(canvas);
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
-  if (opts.reduceMotion) renderStatic(); else start();
+  if (opts.reduceMotion || opts.still) renderStatic(); else start();
 
   return () => { stop(); ro.disconnect(); io.disconnect(); removeEventListener('pointermove', onPointer); renderer.dispose(); };
 }

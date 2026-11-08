@@ -20,6 +20,7 @@ pnpm dev                     # http://localhost:4321
 pnpm check                   # TypeScript (tsc) over .ts/.tsx
 pnpm build && pnpm preview   # production build
 pnpm qa                      # with preview running: responsive, axe, links, flows, reduced motion
+pnpm render:stills           # re-render sculpture stills to public/renders (local, free)
 ```
 
 Set `SITE_URL` before a real build; canonical, Open Graph and sitemap URLs come from it. See `.env.example`.
@@ -36,6 +37,7 @@ Set `SITE_URL` before a real build; canonical, Open Graph and sitemap URLs come 
 | Contact details, social profiles | Not provided, so nothing is shown (`src/config/brand.ts`). |
 | Legal pages | Placeholders, set to noindex, awaiting legal copy. |
 | Localization | Locales `en/fr/ar/zh` are configured, the RTL direction helper exists and CSS uses logical properties. Only English is published. |
+| Imagery | The hero fallback and the four work frames are **local renders of the real 3D sculpture** (`pnpm render:stills`, config in `src/data/stills.ts`), in division palettes. There's no paid generation. Higgsfield is connected but the account has 0 credits. Hugging Face is not used yet.
 | Hugging Face | Not used yet. The public page uses local, code-generated visuals. Model or hosting costs have not been evaluated; see `docs/creative-directions.md`. |
 
 ## Structure
