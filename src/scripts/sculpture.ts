@@ -251,7 +251,7 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   ro.observe(canvas);
   resize();
 
-  const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; visible ? start() : stop(); });
+  const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible) start(); else stop(); });
   io.observe(canvas);
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
   if (opts.reduceMotion || opts.still) renderStatic(); else start();

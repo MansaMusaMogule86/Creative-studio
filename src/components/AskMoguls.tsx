@@ -276,7 +276,7 @@ function AskMoguls() {
                   <ul className="msg__services">
                     {m.result.services.map((s) => (
                       <li key={s.slug} style={{ ['--ink-d' as string]: s.ink }}>
-                        <a href={`/universe/${s.division}#${s.slug}`}><strong>{s.title}</strong><span>{s.divisionName}</span></a>
+                        <a href={`/universe/${s.division}/#${s.slug}`}><strong>{s.title}</strong><span>{s.divisionName}</span></a>
                       </li>
                     ))}
                   </ul>

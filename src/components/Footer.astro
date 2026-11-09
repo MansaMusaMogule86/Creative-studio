@@ -14,11 +14,11 @@ const year = new Date().getFullYear();
     </div>
     <nav aria-label="Divisions">
       <h2 class="ftr__h">Divisions</h2>
-      <ul>{divisions.map((d) => <li><a href={`/universe/${d.slug}`}>{d.name}</a></li>)}</ul>
+      <ul>{divisions.map((d) => <li><a href={`/universe/${d.slug}/`}>{d.name}</a></li>)}</ul>
     </nav>
     <nav aria-label="Featured services">
       <h2 class="ftr__h">Services</h2>
-      <ul>{featured.map((s) => <li><a href={`/universe/${s.division}#${s.slug}`}>{s.title}</a></li>)}</ul>
+      <ul>{featured.map((s) => <li><a href={`/universe/${s.division}/#${s.slug}`}>{s.title}</a></li>)}</ul>
     </nav>
     <div>
       <h2 class="ftr__h">Social</h2>
@@ -29,8 +29,8 @@ const year = new Date().getFullYear();
       )}
       <h2 class="ftr__h ftr__h--gap">Legal</h2>
       <ul>
-        <li><a href="/legal/privacy">Privacy policy</a></li>
-        <li><a href="/legal/terms">Terms of use</a></li>
+        <li><a href="/legal/privacy/">Privacy policy</a></li>
+        <li><a href="/legal/terms/">Terms of use</a></li>
       </ul>
     </div>
   </div>

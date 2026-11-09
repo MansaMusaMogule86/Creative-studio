@@ -29,9 +29,9 @@ import { divisions } from '../data/divisions';
               <p class="panel__tag">{d.tagline}</p>
               <p class="panel__intro">{d.intro}</p>
               <ul class="panel__list">
-                {d.services.slice(0, 4).map((s) => <li><a href={`/universe/${d.slug}#${s.slug}`}>{s.title}</a></li>)}
+                {d.services.slice(0, 4).map((s) => <li><a href={`/universe/${d.slug}/#${s.slug}`}>{s.title}</a></li>)}
               </ul>
-              <a class="panel__enter" href={`/universe/${d.slug}`}>Enter {d.name} <span aria-hidden="true">→</span></a>
+              <a class="panel__enter" href={`/universe/${d.slug}/`}>Enter {d.name} <span aria-hidden="true">→</span></a>
             </div>
             </div>
           </div>

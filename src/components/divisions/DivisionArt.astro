@@ -16,13 +16,31 @@ const ALT: Record<Division['slug'], string> = {
 };
 const sizes = variant === 'hero' ? '(max-width: 1023px) calc(100vw - 32px), 640px' : '(max-width: 1023px) calc(100vw - 64px), 440px';
 const WIDTHS = [480, 768, 1024, 1536];
+const srcset = WIDTHS.map((w) => `${src(w)} ${w}w`).join(', ');
 ---
 <Living class={`dart-live dart-live--${variant}`} tilt={variant === 'hero' ? 1 : 0.8}>
 <div class={`dart dart--${variant}`} data-division-art={d.slug}>
-  <img src={src(1536)} srcset={WIDTHS.map((w) => `${src(w)} ${w}w`).join(', ')} {sizes}
-    width="1536" height="1024" alt={ALT[d.slug]} loading={eager ? 'eager' : 'lazy'} decoding="async" fetchpriority={eager ? 'high' : 'auto'} />
+  {eager ? (
+    <img src={src(1536)} srcset={srcset} {sizes} width="1536" height="1024" alt={ALT[d.slug]} loading="eager" decoding="async" fetchpriority="high" />
+  ) : (
+    <>
+      {/* Fetched by script only when it nears the screen (keeps first load light). */}
+      <img data-src={src(1024)} data-srcset={srcset} {sizes} width="1536" height="1024" alt={ALT[d.slug]} loading="lazy" decoding="async" />
+      <noscript><img src={src(1024)} srcset={srcset} {sizes} width="1536" height="1024" alt={ALT[d.slug]} loading="lazy" decoding="async" /></noscript>
+    </>
+  )}
 </div>
 </Living>
+
+<script>
+  // Swap in the real source shortly before each artwork scrolls into view.
+  const imgs = [...document.querySelectorAll<HTMLImageElement>('.dart img[data-src]')];
+  const load = (img: HTMLImageElement) => { img.srcset = img.dataset.srcset!; img.src = img.dataset.src!; img.removeAttribute('data-src'); };
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); load(e.target as HTMLImageElement); } }), { rootMargin: '500px 0px' });
+    imgs.forEach((i) => io.observe(i));
+  } else imgs.forEach(load);
+</script>
 
 <style>
   .dart-live { border-radius: inherit; }

@@ -1,33 +1,43 @@
 import { useEffect, useId, useRef, useState, type FormEvent } from 'react';
 import { divisions } from '../data/divisions';
 import { withBoundary } from './IslandBoundary';
+import { BUDGETS, validateFields, type Attribution, type FieldErrors, type LeadFields, type LeadPayload } from '../lib/leads/schema';
 
-type Values = {
-  name: string; email: string; company: string; services: string[];
-  description: string; budget: string; contact: 'email' | 'phone' | 'video'; phone: string;
-};
-type Errors = Partial<Record<keyof Values, string>>;
+type Values = LeadFields;
+type Errors = FieldErrors;
 
-const BUDGETS = ['Prefer not to say', 'Under USD 10k', 'USD 10k–25k', 'USD 25k–75k', 'USD 75k–150k', 'Above USD 150k'];
-const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
-const ENDPOINT = import.meta.env.PUBLIC_INQUIRY_ENDPOINT as string | undefined;
+// Same-origin Vercel Function by default; PUBLIC_INQUIRY_ENDPOINT can override it.
+const ENDPOINT = (import.meta.env.PUBLIC_INQUIRY_ENDPOINT as string | undefined) || '/api/leads';
 
 const empty: Values = { name: '', email: '', company: '', services: [], description: '', budget: BUDGETS[0], contact: 'email', phone: '' };
+const validate = validateFields;
 
-function validate(v: Values): Errors {
-  const e: Errors = {};
-  if (v.name.trim().length < 2) e.name = 'Please enter your name.';
-  if (!EMAIL.test(v.email.trim())) e.email = 'Enter an email address like name@company.com.';
-  if (v.services.length === 0) e.services = 'Choose at least one area you are interested in.';
-  if (v.description.trim().length < 20) e.description = 'Tell us a little more: at least 20 characters.';
-  if (v.contact === 'phone' && !/^\+?[\d\s()-]{7,20}$/.test(v.phone.trim())) e.phone = 'Enter a phone number, including the country code.';
-  return e;
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : '10000000-1000-4000-8000-100000000000'.replace(/[018]/g, (c) => (+c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (+c / 4)))).toString(16)));
+
+/** First-touch attribution for this visit: UTM tags, landing path, external referrer origin. */
+function readAttribution(): Attribution {
+  try {
+    const saved = sessionStorage.getItem('mm_attr');
+    if (saved) return JSON.parse(saved) as Attribution;
+  } catch { /* storage blocked */ }
+  const a: Attribution = {};
+  const q = new URLSearchParams(location.search);
+  for (const k of ['utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content'] as const) { const v = q.get(k); if (v) a[k] = v.slice(0, 200); }
+  a.landing_path = location.pathname.slice(0, 200);
+  try { const r = document.referrer && new URL(document.referrer); if (r && r.origin !== location.origin) a.referrer_origin = r.origin; } catch { /* bad referrer */ }
+  try { sessionStorage.setItem('mm_attr', JSON.stringify(a)); } catch { /* storage blocked */ }
+  return a;
 }
 
 function InquiryForm() {
   const [v, setV] = useState<Values>(empty);
   const [errors, setErrors] = useState<Errors>({});
-  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'validated' | 'error'>('idle');
+  const [state, setState] = useState<'idle' | 'sending' | 'sent' | 'validated' | 'error' | 'limited'>('idle');
+  const submissionId = useRef(newId());
+  const startedAt = useRef(Date.now());
+  const honeypot = useRef<HTMLInputElement>(null);
+  const attribution = useRef<Attribution>({});
+  useEffect(() => { attribution.current = readAttribution(); }, []);
   const id = useId();
   const summaryRef = useRef<HTMLDivElement>(null);
   const doneRef = useRef<HTMLDivElement>(null);
@@ -66,16 +76,24 @@ function InquiryForm() {
       requestAnimationFrame(() => summaryRef.current?.focus());
       return;
     }
-    const payload = { ...v, submittedAt: new Date().toISOString(), source: 'website' };
-    if (!ENDPOINT) {
-      setState('validated');
-    } else {
-      setState('sending');
-      try {
-        const r = await fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        setState(r.ok ? 'sent' : 'error');
-      } catch { setState('error'); }
-    }
+    const payload: LeadPayload = {
+      ...v, submissionId: submissionId.current, startedAt: startedAt.current,
+      website: honeypot.current?.value ?? '', attribution: attribution.current,
+    };
+    setState('sending');
+    try {
+      const r = await fetch(ENDPOINT, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const body = (await r.json().catch(() => ({}))) as { code?: string; errors?: Errors };
+      if (r.ok) setState('sent');
+      else if (r.status === 422 && body.errors && Object.keys(body.errors).some((k) => k !== '_form')) {
+        setErrors(body.errors); setState('idle');
+        requestAnimationFrame(() => summaryRef.current?.focus());
+        return;
+      } else if (r.status === 429) setState('limited');
+      // No delivery backend here (local preview, or not configured yet): say so honestly.
+      else if (r.status === 404 || r.status === 405 || body.code === 'not_configured') setState('validated');
+      else setState('error');
+    } catch { setState('error'); }
     requestAnimationFrame(() => doneRef.current?.focus());
   };
 
@@ -93,7 +111,7 @@ function InquiryForm() {
         ) : (
           <p><strong>Prototype mode:</strong> everything checked out, but this preview isn’t connected to an inbox or CRM yet, so <strong>nothing was sent</strong>. Once an endpoint is configured, this form delivers inquiries to the team.</p>
         )}
-        <button type="button" className="btn btn--ghost" onClick={() => { setV(empty); setState('idle'); }}>Start another inquiry</button>
+        <button type="button" className="btn btn--ghost" onClick={() => { setV(empty); setState('idle'); submissionId.current = newId(); startedAt.current = Date.now(); }}>Start another inquiry</button>
       </div>
     );
   }
@@ -176,7 +194,13 @@ function InquiryForm() {
         </div>
       )}
 
-      {state === 'error' && <p className="f-err" role="alert">Something went wrong while sending. Please try again.</p>}
+      {/* Honeypot: hidden from people and assistive tech; bots tend to fill it in. */}
+      <div className="f-hp" aria-hidden="true">
+        <label htmlFor={`${id}-website`}>Website</label>
+        <input ref={honeypot} id={`${id}-website`} name="website" type="text" tabIndex={-1} autoComplete="off" defaultValue="" />
+      </div>
+      {state === 'error' && <p className="f-err" role="alert">Something went wrong while sending. Please try again in a moment.</p>}
+      {state === 'limited' && <p className="f-err" role="alert">Too many attempts in a short time. Please wait a minute, then send again.</p>}
       <div className="f-actions">
         <button type="submit" className="btn btn--gold" disabled={state === 'sending'}>{state === 'sending' ? 'Sending…' : 'Send inquiry'} <span className="arrow" aria-hidden="true">→</span></button>
         <p className="f-note"><span aria-hidden="true">*</span> Required. We only use these details to reply to you.</p>

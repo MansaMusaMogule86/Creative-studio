@@ -18,11 +18,11 @@ import ArrowRight from '@lucide/astro/icons/arrow-right';
     </div>
 
     <div class="svc__lists">
-      {divisions.map((d, i) => (
+      {divisions.map((d) => (
         <div class="svc__list" id={`list-${d.slug}`} role="tabpanel" aria-labelledby={`tab-${d.slug}`} data-list style={`--ink-d:${d.ink};--a:${d.palette[0]};--b:${d.palette[1]};--c:${d.palette[2]}`}>
           <h3 class="svc__division"><span>{d.index}</span> {d.name}<small>{d.tagline}</small></h3>
           <ol>
-            {d.services.map((s, j) => (
+            {d.services.map((s) => (
               <li>
                 <details class="row">
                   <summary>
@@ -34,7 +34,7 @@ import ArrowRight from '@lucide/astro/icons/arrow-right';
                     <p>{s.desc}</p>
                     <div class="row__ctas">
                       <a class="row__cta row__cta--primary" href={`/?service=${s.slug}#contact`} data-inquire={s.slug} aria-label={`Start a project: ${s.title}`}>Start a project <ArrowRight size={16} stroke-width={2} aria-hidden="true" /></a>
-                      <a class="row__cta" href={`/universe/${d.slug}#${s.slug}`} aria-label={`${s.title}: service details`}>Service details</a>
+                      <a class="row__cta" href={`/universe/${d.slug}/#${s.slug}`} aria-label={`${s.title}: service details`}>Service details</a>
                     </div>
                   </div>
                 </details>

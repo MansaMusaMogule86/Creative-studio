@@ -41,8 +41,7 @@ const story =
 </section>
 
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { whenNear } from '../scripts/lazy-gsap';
   const root = document.querySelector<HTMLElement>('[data-phi]');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
   if (root) {
@@ -67,8 +66,7 @@ const story =
     });
     root.addEventListener('keydown', (e) => { if (e.key === 'Escape') { pinned = null; show(null); } });
 
-    if (!reduce) {
-      gsap.registerPlugin(ScrollTrigger);
+    if (!reduce) whenNear(root, (gsap) => {
       const words = root.querySelectorAll('[data-words] span');
       // Colour, not opacity: even the 'unread' state keeps AA contrast.
       gsap.fromTo(words, { color: '#6a6880' }, {
@@ -85,7 +83,7 @@ const story =
         '--pulse': 1, duration: 1.2, ease: 'power2.out', stagger: 0.18, delay: 0.5,
         scrollTrigger: { trigger: '.phi__diagram', start: 'top 70%', toggleActions: 'play none none none' },
       });
-    }
+    });
   }
 </script>
 

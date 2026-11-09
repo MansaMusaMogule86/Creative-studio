@@ -68,6 +68,9 @@
 .f [aria-invalid='true'] { border-color: #b3261e !important; }
 .f-err { color: #b3261e; font-size: 0.9rem; font-weight: 500; }
 .f-err::before { content: '! '; font-weight: 700; }
+/* Honeypot field: off-screen, never focusable, ignored by screen readers. */
+.f-hp { position: absolute; left: -10000px; top: auto; width: 1px; height: 1px; overflow: hidden; }
+.f-hp input { width: 1px; height: 1px; }
 .f-summary { padding: 1rem 1.2rem; border-radius: 16px; border: 1px solid #b3261e; background: #fff5f4; }
 .f-summary:focus { outline: 2px solid #b3261e; outline-offset: 2px; }
 .f-summary p { font-weight: 560; }

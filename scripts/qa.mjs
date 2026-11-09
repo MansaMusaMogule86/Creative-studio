@@ -82,7 +82,7 @@ for (const w of WIDTHS) {
   if (await p.$eval('[data-panel]:nth-child(3) button', (b) => b.getAttribute('aria-expanded')) !== 'true') fail('hover did not open division 3');
   await p.focus('[data-panel]:nth-child(3) .panel__enter');
   await p.keyboard.press('Enter');
-  await p.waitForURL('**/universe/growth');
+  await p.waitForURL(/\/universe\/growth\/?(#.*)?$/);
   ok('division panel opens on hover and links to its world');
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
 
@@ -111,8 +111,51 @@ for (const w of WIDTHS) {
   await p.fill('.f input[type=email]', 'test@company.example');
   await p.fill('.f textarea', 'We would like to discuss a new platform for our team.');
   await p.click('.f button[type=submit]');
+  // No backend in local preview (/api/leads → 404): the form must say honestly that nothing was sent.
+  await p.waitForSelector('.f-done', { timeout: 8000 }).catch(() => {});
   if (!(await p.isVisible('.f-done'))) fail('valid submit showed no confirmation');
-  else ok(`confirmation: "${(await p.textContent('.f-done h3'))}"`);
+  else if (!/nothing was sent/i.test(await p.textContent('.f-done'))) fail('without a backend the form must say nothing was sent');
+  else ok(`no backend: "${(await p.textContent('.f-done h3'))}" and says nothing was sent`);
+
+  // With a backend (route mocked like the Vercel function): payload shape, success and server errors.
+  {
+    const q = await browser.newPage({ viewport: { width: 1280, height: 900 } });
+    let sent = null, mode = 'ok';
+    await q.route('**/api/leads', async (route) => {
+      sent = JSON.parse(route.request().postData() || '{}');
+      if (mode === 'ok') return route.fulfill({ status: 202, contentType: 'application/json', body: '{"ok":true}' });
+      if (mode === '422') return route.fulfill({ status: 422, contentType: 'application/json', body: JSON.stringify({ ok: false, code: 'invalid', errors: { email: 'Enter an email address like name@company.com.' } }) });
+      return route.fulfill({ status: 429, contentType: 'application/json', body: '{"ok":false,"code":"rate_limited"}' });
+    });
+    await q.goto(BASE + '/?service=premium-websites&utm_source=qa&utm_campaign=launch#contact', { waitUntil: 'networkidle' });
+    const fill = async () => {
+      await q.fill('.f input[autocomplete=name]', 'Test Person');
+      await q.fill('.f input[type=email]', 'test@company.example');
+      await q.fill('.f textarea', 'We would like to discuss a new platform for our team.');
+      if (!(await q.$('.f-chip input:checked'))) await q.evaluate(() => { const d = document.querySelector('.f-div'); d.open = true; d.querySelector('.f-chip input').click(); });
+    };
+    await fill();
+    await q.click('.f button[type=submit]');
+    await q.waitForSelector('.f-done', { timeout: 8000 }).catch(() => {});
+    const thanks = await q.textContent('.f-done h3').catch(() => '');
+    const okShape = sent && /^[0-9a-f-]{36}$/.test(sent.submissionId) && typeof sent.startedAt === 'number' && sent.website === ''
+      && sent.services.includes('premium-websites') && sent.attribution?.utm_source === 'qa' && sent.attribution?.utm_campaign === 'launch' && !('submittedAt' in sent);
+    if (!okShape) fail(`lead payload shape: ${JSON.stringify(sent)}`); else ok('form sends submissionId, timing, empty honeypot, services and UTM attribution');
+    if (!/Thank you, Test/.test(thanks || '')) fail(`backend success not confirmed (${thanks})`); else ok(`backend 202 → "${thanks}"`);
+    mode = '422';
+    await q.click('.f-done button');
+    await fill();
+    await q.click('.f button[type=submit]');
+    await q.waitForSelector('.f-summary', { timeout: 8000 }).catch(() => {});
+    if (!(await q.isVisible('.f [aria-invalid=true][type=email]'))) fail('server 422 field error not shown inline'); else ok('server-side field errors are shown inline');
+    mode = '429';
+    await q.click('.f button[type=submit]');
+    await q.waitForTimeout(800);
+    if (!/too many attempts/i.test(await q.textContent('.f'))) fail('rate-limit message missing'); else ok('rate-limited submit explains the wait');
+    const hp = await q.$eval('.f-hp input', (i) => ({ tab: i.tabIndex, hidden: i.closest('[aria-hidden=true]') !== null, offscreen: i.getBoundingClientRect().right <= 0 }));
+    if (hp.tab !== -1 || !hp.hidden || !hp.offscreen) fail(`honeypot is reachable: ${JSON.stringify(hp)}`); else ok('honeypot field is hidden from people and assistive tech');
+    await q.close();
+  }
 
   // Mobile menu.
   const m = await browser.newPage({ viewport: { width: 375, height: 800 } });

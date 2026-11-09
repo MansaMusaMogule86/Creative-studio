@@ -1,6 +1,25 @@
 # Operations runbook
 
-What can be done in the repository is done. Anything that needs a hosting platform, a domain or an owner decision is marked **⏳ host / owner**. Nothing here is deployed.
+Hosting: **Vercel** (static Astro site + one Vercel Function, `api/leads.ts`), lead storage in **Supabase**, domain DNS at **Hostinger**. Everything that can be done in the repository is done; steps that need the owner's accounts are marked **⏳ owner**.
+
+## 0. Go-live on Vercel (⏳ owner, about 15 minutes)
+1. **Supabase:** open the project → SQL editor → run `supabase/migrations/20261109120000_leads.sql` (creates `public.leads`, RLS on, no public access). Copy the project URL and the **service_role** key (Settings → API).
+2. **Vercel project:** Add New → Project → import `MansaMusaMogule86/Creative-studio`. Settings → Git → production branch `claude/affectionate-sagan-nrj1c8`. Build settings come from `vercel.json` (pnpm, `dist`).
+3. **Environment variables** (Settings → Environment Variables):
+
+   | Name | Production | Preview |
+   |---|---|---|
+   | `SITE_URL` | `https://mansasmoguls.com` | the preview host |
+   | `SITE_ENV` | `production` | `staging` (noindex) |
+   | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | from step 1 | same, or a separate project |
+   | `LEADS_IP_SALT` | a long random string | a different one |
+   | `HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN`, `HIGHLEVEL_LOCATION_ID`, `HIGHLEVEL_PIPELINE_ID`, `HIGHLEVEL_PIPELINE_STAGE_ID` | optional: CRM forwarding (confirm field names in a HighLevel sandbox first) | leave empty |
+
+   None of these may start with `PUBLIC_`. Redeploy after setting them.
+4. **Domain:** Settings → Domains → add `mansasmoguls.com` and `www.mansasmoguls.com`. In **Hostinger → Domains → DNS**, create exactly the records Vercel shows (normally an `A` record for `@` and a `CNAME` for `www` → `cname.vercel-dns.com`) and delete old A/CNAME records pointing at Hostinger hosting. `vercel.json` redirects www → apex.
+5. **Verify:** `GET https://mansasmoguls.com/api/leads` answers 405; send one real inquiry from the site and check the row in Supabase (`crm_status` shows `sent`, `skipped` or `failed`); run Lighthouse on the live URL; submit the sitemap in Search Console.
+
+Leads with `crm_status = 'failed'` were stored safely but not forwarded to HighLevel; fix the cause, then replay them (re-post, or set the status back after manual entry).
 
 ## 1. Environments
 | Environment | How | Indexing |

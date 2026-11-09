@@ -12,7 +12,7 @@ import { divisions } from '../data/divisions';
       <a class="btn btn--ghost" href="/#contact">Start a project</a>
     </div>
     <nav aria-label="Divisions" class="nf__nav">
-      <ul>{divisions.map((d) => <li><a href={`/universe/${d.slug}`}><span>{d.index}</span>{d.name}</a></li>)}</ul>
+      <ul>{divisions.map((d) => <li><a href={`/universe/${d.slug}/`}><span>{d.index}</span>{d.name}</a></li>)}</ul>
     </nav>
   </div></section>
 </Base>

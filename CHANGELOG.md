@@ -3,6 +3,25 @@
 All notable changes to the Mansas Moguls website. Newest first. Branch: `claude/affectionate-sagan-nrj1c8`.
 
 ## Unreleased
+- **Lead delivery backend** for the inquiry form (Vercel Function `api/leads.ts`, logic in `src/lib/leads/`):
+  - **Validation:** one strict schema, shared by the form and the server.
+  - **Abuse protection:** same-origin check, 16 KB body cap, honeypot, minimum fill time, and a per-IP rate limit (in memory and durable via Supabase).
+  - **No duplicates:** each submission carries a browser-generated `submissionId`.
+  - **Storage:** every lead is stored in Supabase (`supabase/migrations/20261109120000_leads.sql`; RLS on, salted IP hash only).
+  - **CRM:** optional HighLevel forwarding (contact upsert, opportunity, note) with timeouts and retries. If the CRM is down, the lead is kept and marked for replay.
+  - **Attribution:** first-touch UTM, landing path and referrer origin are captured with each lead.
+  - **Without keys:** the form still says honestly that nothing was sent.
+- **Tests:**
+  - `pnpm test` (vitest, 32 tests): schema, spam, rate limit, retries, config, the full handler, and Supabase/HighLevel contract checks.
+  - The browser QA adds a form test against a mocked API (payload shape, success, inline 422 errors, 429 message, hidden honeypot).
+- **Hosting:** `vercel.json` with build settings, HSTS and security headers, a report-only CSP, cache rules, trailing slashes and a www → apex redirect. Internal links now match the canonical trailing-slash URLs.
+- **Linting:** `pnpm lint` now runs strict tsc plus ESLint (JS, TypeScript, Astro); the code is lint-clean.
+- **Performance:**
+  - GSAP loads only when the Method and Philosophy sections approach.
+  - Universe artwork is fetched only near the viewport.
+  - Mobile LCP is now 2.2–2.4 s, down from 2.5–3.3 s.
+- **Docs:** a go-live runbook (`docs/OPERATIONS.md` §0); `.env.example` lists every variable; the launch checklist has no ❌ items left.
+
 - **Phones and tablets show every division's artwork without tapping.** Each Universe panel now has its artwork card above the title. Tapping the card or the title opens the copy and services. The first-load image budget is raised from 250 KB to 400 KB to allow for this.
 
 - **Only the owner's artwork, and it all moves.** Generated art is removed: the code-built 3D sculptures (showcase), the white-ribbon hero sculpture and the ribbon contact background. The Showcase section and its nav item are gone.

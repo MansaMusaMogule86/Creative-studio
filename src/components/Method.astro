@@ -51,8 +51,7 @@ const d = 'M80 437 C 180 420, 220 300, 290 291 S 420 380, 500 358 S 620 210, 710
 </section>
 
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { whenNear } from '../scripts/lazy-gsap';
   const root = document.querySelector<HTMLElement>('[data-method]')!;
   const btns = [...root.querySelectorAll<HTMLButtonElement>('[data-stage]')];
   const items = [...root.querySelectorAll<HTMLElement>('[data-detail-item]')];
@@ -69,15 +68,14 @@ const d = 'M80 437 C 180 420, 220 300, 290 291 S 420 380, 500 358 S 620 210, 710
     line.style.strokeDashoffset = '0';
     nodes.forEach((n) => n.classList.add('is-lit'));
   } else {
-    gsap.registerPlugin(ScrollTrigger);
     // Scrubbed with the user's own scroll; nothing is pinned or hijacked.
-    ScrollTrigger.create({
+    whenNear(root, (_gsap, ScrollTrigger) => ScrollTrigger.create({
       trigger: '.mth__stage', start: 'top 75%', end: 'bottom 55%', scrub: 0.6,
       onUpdate: (st) => {
         line.style.strokeDashoffset = String(1 - st.progress);
         nodes.forEach((n, i) => n.classList.toggle('is-lit', st.progress >= i / (nodes.length - 1) - 0.02));
       },
-    });
+    }));
   }
 </script>
 

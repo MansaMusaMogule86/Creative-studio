@@ -81,7 +81,7 @@ const facts = [
           <ul>
             {divisions.map((d, i) => (
               <li style={`--i:${i}`}>
-                <a href={`/universe/${d.slug}`} style={`--ink-d:${d.ink};--a:${d.palette[0]}`} data-deck-go={i}>
+                <a href={`/universe/${d.slug}/`} style={`--ink-d:${d.ink};--a:${d.palette[0]}`} data-deck-go={i}>
                   {d.short}<span aria-hidden="true">↘</span>
                 </a>
               </li>

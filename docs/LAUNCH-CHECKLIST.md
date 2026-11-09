@@ -1,10 +1,10 @@
 # Launch checklist (A–Z)
 
-Saved on 2026-11-08 at the owner's request. **First full check: 2026-11-08** (lint, build, `pnpm qa`, `pnpm qa:mobile`, Lighthouse, `pnpm audit`, search/indexing audit). **Re-checked 2026-11-08 after switching to owner artwork with motion:** lint ✅, build ✅, `pnpm qa` 37/37 ✅, `pnpm qa:mobile` 51/51 ✅, overflow/tap-target audit 320–768 on all pages ✅, reduced motion ✅, Lighthouse home 95–97 mobile / 100 desktop, CLS 0.
+Saved on 2026-11-08 at the owner's request. **First full check: 2026-11-08** (lint, build, `pnpm qa`, `pnpm qa:mobile`, Lighthouse, `pnpm audit`, search/indexing audit). **Re-checked 2026-11-09 after building the lead backend:** lint (tsc + ESLint) ✅, `pnpm test` 32/32 ✅, build ✅, `pnpm qa` 43/43 ✅, `pnpm qa:mobile` 51/51 ✅, overflow audit 320–768 ✅, `pnpm audit` clean ✅, Lighthouse mobile 96–99 (LCP 2.2–2.4 s) / desktop 100, CLS 0.
 
 Legend: ✅ done and verified · ⚠ partial · ❌ missing, doable once unblocked · ⏳ needs owner, host, domain or legal input · n/a not applicable. Ticked boxes are ✅ or n/a.
 
-Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ waits on one of two approvals: the **hosting decision (D-01)**, which unblocks lead delivery, server validation, spam/rate limiting and CRM integration, or **adding a test runner (vitest)**, which unblocks unit, integration and contract tests. The ⏳ items need owner input (domain, Search Console, legal copy, contact details, real case studies, analytics choice).
+Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is decided (Vercel + Supabase, DNS at Hostinger) and the lead backend, tests, headers and linting are built. What remains needs the owner: Vercel environment variables and DNS, Supabase migration, HighLevel token, Search Console, legal copy, contact details, real case studies, analytics choice and real-device testing.
 
 ## A. Architecture & Planning
 - [ ] Business goals and measurable KPIs — ⏳ Owner to define KPIs (leads/month, qualified rate…).
@@ -12,9 +12,9 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [ ] Competitor and market research — ⏳ Not done; needs owner scope (paid SEO tools need approval).
 - [ ] Website sitemap and information architecture — ⚠ Home + 5 division pages; About/Services/Work/Contact pages proposed in docs/full-site-audit.md.
 - [x] Page hierarchy and URL structure — ✅ /, /universe/{division}, /legal/*, descriptive slugs.
-- [ ] Technology stack and hosting architecture — ⚠ Stack verified (Astro 7, React islands, three, GSAP). Hosting ⏳ owner (D-01).
+- [x] Technology stack and hosting architecture — ✅ Astro static site on Vercel, one Vercel Function (`api/leads.ts`) for inquiries, Supabase for lead storage, domain DNS at Hostinger (`vercel.json`, docs/OPERATIONS.md §1).
 - [ ] Content management strategy — ⏳ Content lives in src/data + components; CMS decision needed.
-- [ ] Environment separation: local, staging, production — ⚠ SITE_ENV production/staging implemented (docs/OPERATIONS.md §1); hosts ⏳.
+- [ ] Environment separation: local, staging, production — ⚠ SITE_ENV production/staging implemented; Vercel Preview should set SITE_ENV=staging (⏳ owner in Vercel).
 - [x] Scalability, maintenance and technical documentation — ✅ README, CLAUDE.md, docs/OPERATIONS.md, docs/ghl-integration, docs/creative-3d, CHANGELOG.md.
 - [ ] Acceptance criteria and project scope — ⚠ Per-phase criteria in docs (12-IMPLEMENTATION-PLAN, 3D plan); overall scope sign-off ⏳ owner.
 
@@ -67,16 +67,16 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [ ] WCAG 2.2 AA assessment — ⚠ Automated 2.1 AA passes; full manual 2.2 audit ⏳.
 
 ## F. Forms & Functional QA
-- [ ] All forms submit successfully — ❌ Form validates but delivery needs /api/leads (blocked on hosting D-01).
-- [ ] Server-side validation — ❌ Blocked on hosting; spec in docs/ghl-integration/03.
+- [ ] All forms submit successfully — ⚠ Built: form → `/api/leads` → Supabase (+ HighLevel). Browser-tested against a mocked backend (qa); live once SUPABASE_* keys are set in Vercel (⏳ owner).
+- [x] Server-side validation — ✅ Shared schema (`src/lib/leads/schema.ts`): strict keys, normalisation, known service slugs, length caps; 32 unit tests.
 - [x] Required field and format checks — ✅ Client-side checks (InquiryForm.tsx:17-25).
-- [ ] Spam and abuse prevention — ❌ Server-side; blocked on hosting.
-- [ ] Rate limiting — ❌ Server-side; blocked on hosting.
+- [x] Spam and abuse prevention — ✅ Honeypot, ≥3 s fill time, stale-timestamp rejection, silent 202 for bots (tests). Turnstile optional (⏳ approval).
+- [x] Rate limiting — ✅ Per-IP (salted hash) limit: in-memory window + durable Supabase count; 429 with a clear message (tests + qa).
 - [x] Success and error feedback — ✅ Success/error/validation states (qa).
-- [ ] Duplicate submission protection — ⚠ Button disabled while sending; server idempotency specified, not built.
-- [ ] Email and CRM delivery verification — ❌ No CRM connection yet.
+- [x] Duplicate submission protection — ✅ Browser UUID `submissionId` + unique column → 202 duplicate; button disabled while sending (tests).
+- [ ] Email and CRM delivery verification — ⏳ Code ready (HighLevel upsert + opportunity + note, retries); needs PIT token and a sandbox check of field names (docs/ghl-integration/08).
 - [x] Broken link and button testing — ✅ qa: all internal links resolve.
-- [ ] End-to-end critical user journey tests — ⚠ qa + qa:mobile journeys pass; real submission journey awaits backend.
+- [ ] End-to-end critical user journey tests — ⚠ qa covers form → mocked API (success, 422 inline, 429); a real submission needs the deployed site with keys.
 
 ## G. Google Search & Indexing
 - [ ] Google Search Console setup — ⏳ Needs domain + owner Google account.
@@ -93,10 +93,10 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 ## H. Hosting & Infrastructure
 - [ ] Hosting platform selection — ⏳ D-01.
 - [ ] Production environment configuration — ⏳ Needs host.
-- [ ] Staging or preview deployments — ⚠ Build-side ready (SITE_ENV); host ⏳.
-- [ ] Secrets and environment variable management — ⚠ No secrets in repo (scan clean); templates only; host secret store ⏳.
-- [ ] Build and deployment reliability — ⚠ Builds reproducible locally from lockfile; no CI/host yet.
-- [ ] Caching and compression — ⚠ Hashed assets; cache policy documented (OPERATIONS §5); host ⏳.
+- [ ] Staging or preview deployments — ⚠ Vercel previews per push; set SITE_ENV=staging for the Preview environment (⏳ owner).
+- [ ] Secrets and environment variable management — ⚠ All keys server-only (no PUBLIC_), documented in `.env.example`; to be set in Vercel (⏳ owner).
+- [x] Build and deployment reliability — ✅ `vercel.json`: frozen-lockfile install, `pnpm build`, `dist` output.
+- [x] Caching and compression — ✅ `vercel.json`: immutable `/_astro/*`, 30-day art/brand, no-store API; Vercel compresses by default.
 - [ ] Regional availability and latency — ⏳ Host/CDN choice.
 - [ ] Resource limits and scaling — ⏳ Host choice.
 - [ ] Uptime and incident monitoring — ⏳ Needs host + tool.
@@ -116,7 +116,7 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 
 ## J. JavaScript & Frontend Quality
 - [x] TypeScript or equivalent type checks — ✅ pnpm lint (strict tsc) passes.
-- [ ] Linting and code formatting — ⚠ tsc only; ESLint/Prettier not configured (would add dev deps).
+- [x] Linting and code formatting — ✅ `pnpm lint` = strict tsc + ESLint (JS, TypeScript, Astro rules), clean.
 - [x] Avoid unnecessary client-side JavaScript — ✅ Static pages; islands only for chat/form; 3D lazy.
 - [x] Code splitting and lazy loading — ✅ three.js loads lazily for the hero sculpture only; division images lazy (collapsed mobile panels fetch on first open); client:visible/idle islands.
 - [x] Error boundaries where relevant — ✅ IslandBoundary on InquiryForm and AskMoguls.
@@ -187,7 +187,7 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] No misleading or unsupported rich-result markup — ✅ No reviews/ratings markup.
 
 ## P. Performance & Core Web Vitals
-- [ ] LCP target at or below 2.5 seconds — ⚠ Lab: home 2.5–2.8 s mobile / 0.6 s desktop. LCP is now the owner's hero artwork (33 KB); most of the time is simulated main-thread work before paint. Confirm with field data on a real device.
+- [x] LCP target at or below 2.5 seconds — ✅ Lighthouse mobile 2.2–2.4 s (3 runs), desktop 0.7 s: GSAP lazy-loaded, Universe artwork fetched near view.
 - [ ] INP target at or below 200 milliseconds — ⚠ TBT 0–10 ms in lab; real INP needs field data.
 - [x] CLS target at or below 0.1 — ✅ CLS 0 (Lighthouse).
 - [ ] Real-user field data monitoring — ⏳ Needs analytics/RUM decision (D-07).
@@ -196,17 +196,17 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] Critical CSS and resource priorities — ✅ Inlined CSS where small, font/emblem preload, hero fetchpriority.
 - [ ] Caching and CDN effectiveness — ⏳ Host.
 - [ ] Slow-network and low-end-device testing — ⚠ Lighthouse mobile throttling only; real low-end device ⏳.
-- [ ] Performance regression testing — ⚠ qa image budgets; Lighthouse run manually (no CI).
+- [ ] Performance regression testing — ⚠ qa image budgets + LCP re-measured manually; no CI (paused by owner).
 
 ## Q. Quality Assurance & Testing
-- [ ] Unit tests for critical logic — ❌ No unit runner; vitest planned with backend (needs approval).
-- [ ] Integration tests — ❌ Planned with /api/leads (mocked HighLevel).
+- [x] Unit tests for critical logic — ✅ `pnpm test` (vitest): 32 tests: schema, spam, rate limit, retries, config.
+- [x] Integration tests — ✅ Handler tests with mocked Supabase/HighLevel (accept, duplicate, rate limit, CRM down, store down) + browser form test with mocked API.
 - [x] End-to-end browser tests — ✅ pnpm qa (38 checks: division artworks visible without tapping at 320–1440, hero deck turns, artwork drifts in 3D, One Team hover, no generated canvases, reduced motion static, owner artwork on all division pages) + qa:mobile (51).
 - [ ] Responsive visual regression tests — ⚠ Screenshot review per phase; no pixel-diff baseline.
 - [ ] Accessibility automated and manual tests — ⚠ axe automated; manual ⏳.
 - [ ] Cross-browser compatibility — ⚠ Chromium only here.
 - [x] Broken link scans — ✅ qa.
-- [ ] Form and payment journey tests — ⚠ Form validation tested; no payments; delivery blocked.
+- [x] Form and payment journey tests — ✅ Form journey tested end to end against a mocked API (qa); no payments (n/a).
 - [x] Error state and empty state tests — ✅ Form errors, chat no-match, 404, island fallbacks.
 - [x] Release acceptance and regression checklist — ✅ docs/OPERATIONS.md §2 release checklist.
 
@@ -217,18 +217,18 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] 301/308 permanent redirects where appropriate — n/a No moved URLs yet.
 - [x] 404 and 410 responses used correctly — ✅ Unknown URL → 404 (qa).
 - [x] No redirect chains or loops — ✅ No redirects configured.
-- [ ] Canonicalization across URL variants — ⚠ Trailing-slash canonical set; www/http variants ⏳ host.
+- [ ] Canonicalization across URL variants — ⚠ Trailing slashes enforced (`vercel.json`, internal links match canonical); www → apex redirect configured; needs both domains on Vercel (⏳).
 - [x] Faceted URL and parameter controls — ✅ Only ?service= pre-fill; canonical ignores it.
 - [x] No soft 404 pages — ✅ 404 page served with 404 status.
 - [x] Server-rendered content available to crawlers — ✅ Static HTML for all content.
 
 ## S. Security & Privacy
 - [ ] TLS and HTTPS enforcement — ⏳ Host.
-- [ ] Security headers including CSP and HSTS — ⚠ Referrer policy meta; full header set documented (OPERATIONS §5); host ⏳.
+- [x] Security headers including CSP and HSTS — ✅ `vercel.json`: HSTS, nosniff, Referrer-Policy, Permissions-Policy, X-Frame-Options, CSP Report-Only (enforce after a clean report period).
 - [x] Authentication and authorization controls — n/a No accounts on the site.
-- [ ] Server-side input validation and output encoding — ❌ Blocked on backend; React escapes output.
+- [x] Server-side input validation and output encoding — ✅ Strict server parse; JSON responses only; React escapes output.
 - [x] CSRF protection where applicable — n/a No server endpoints yet; origin check specified.
-- [ ] XSS, injection and SSRF defenses — ⚠ No dangerouslySetInnerHTML with user data; server defences with backend.
+- [x] XSS, injection and SSRF defenses — ✅ No user HTML rendered; parameterised PostgREST filters; fixed upstream hosts (no user-controlled URLs); CSP report-only.
 - [ ] Secrets management and key rotation — ⚠ No secrets in repo (scan); 90-day PIT rotation scheduled.
 - [x] Dependency and supply-chain scanning — ✅ pnpm audit clean; lockfile committed.
 - [ ] Access logging, monitoring and incident response — ⏳ Host/monitoring.
@@ -275,23 +275,23 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [ ] Search Console integration — ⏳ Domain.
 - [ ] Conversion event tracking — ⚠ Event plan in docs/ghl-integration/10; not implemented.
 - [ ] Tag management governance — ⏳ After provider choice.
-- [ ] CRM lead capture integration — ❌ Blocked on hosting; fully specified.
+- [ ] CRM lead capture integration — ⚠ Built (`src/lib/leads/highlevel.ts`), off until HIGHLEVEL_* keys are set; field names need a sandbox check.
 - [ ] Workflow and notification automation — ⏳ GHL setup (Prompt 2).
-- [ ] Attribution and UTM tracking — ⚠ Specified; capture built with form v2.
+- [x] Attribution and UTM tracking — ✅ First-touch UTM, landing path and referrer origin captured and stored with each lead (qa).
 - [ ] Consent-aware tracking behavior — ⏳ Legal + provider.
 - [ ] Error and funnel dashboards — ⏳ After analytics.
 - [ ] Lead delivery and automation failure alerts — ⏳ Backend + monitoring.
 
 ## X. XML, APIs & Integrations
 - [x] XML sitemap and feed validation — ✅ Sitemap valid and canonical-only.
-- [ ] API authentication and authorization — ⚠ PIT server-only design; not built.
-- [ ] API input/output schema validation — ❌ With backend.
-- [ ] Rate limits and abuse controls — ❌ With backend.
+- [x] API authentication and authorization — ✅ HighLevel PIT and Supabase service key server-side only; same-origin check on `/api/leads`; table RLS on with no public policies.
+- [x] API input/output schema validation — ✅ Strict request schema; typed JSON responses (202/400/403/413/415/422/429/503).
+- [x] Rate limits and abuse controls — ✅ See Rate limiting; body capped at 16 KB.
 - [x] Webhook signature verification — n/a No webhooks at launch (documented).
-- [ ] Idempotent webhook and payment handling — ⚠ Lead idempotency specified; no payments.
-- [ ] Timeouts, retries and backoff — ⚠ Specified (08); with backend.
-- [ ] Third-party API error handling — ⚠ Specified; with backend.
-- [ ] Integration contract tests — ❌ With backend (mocked client).
+- [x] Idempotent webhook and payment handling — ✅ Lead idempotency via `submissionId`; no payments or webhooks yet.
+- [x] Timeouts, retries and backoff — ✅ 8 s timeout, 3 retries on 429/5xx with jitter, honours Retry-After (tests).
+- [x] Third-party API error handling — ✅ CRM down → lead kept and marked `failed` for replay; store down → 503 retry message; no upstream details leaked.
+- [x] Integration contract tests — ✅ Request shape/headers asserted for Supabase REST and HighLevel upsert/opportunity (tests).
 - [ ] API versioning and deprecation monitoring — ⚠ Version header + webhook header deprecation tracked in api-requirements.json.
 
 ## Y. Year-Round Maintenance
@@ -308,11 +308,11 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 
 ## Z. Zero-Defect Launch Gate
 - [x] No known critical security vulnerabilities — ✅ pnpm audit clean; secret scan clean.
-- [ ] No broken critical user journeys — ⚠ All UI journeys pass; lead delivery not live.
+- [ ] No broken critical user journeys — ⚠ All journeys pass; live delivery starts when keys are set on Vercel.
 - [x] No accidental production indexing blocks — ✅ qa: indexable pages/sitemap/robots verified; staging guard.
 - [x] No exposed secrets — ✅ Scan clean; only placeholder templates.
 - [ ] Verified backups and rollback path — ⚠ Rollback documented; backups ⏳ host.
-- [ ] Verified form, CRM and notification delivery — ❌ Blocked on hosting + CRM.
+- [ ] Verified form, CRM and notification delivery — ⏳ Needs Supabase keys (and optional HighLevel token) on Vercel, then one real test submission.
 - [x] Core Web Vitals and accessibility reviewed — ✅ Lighthouse + axe (lab).
 - [ ] Legal notices and consent reviewed — ⏳ Legal copy needed.
 - [ ] Monitoring and ownership assigned — ⏳ Assign in OPERATIONS §7.
