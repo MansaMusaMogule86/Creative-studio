@@ -218,6 +218,28 @@ ok('artwork never overlaps navigation, headings or buttons (6 pages × 6 widths)
   await ctx.close();
 }
 
+const divisionSlugs = ['digital', 'ai', 'growth', 'creative', 'strategy'];
+// 7b. Every division artwork is visible without tapping, at every width (owner requirement).
+{
+  for (const w of [320, 375, 390, 430, 768, 1024, 1440]) {
+    const ctx = await browser.newContext({ viewport: { width: w, height: 900 }, isMobile: w < 768, hasTouch: w < 1024 });
+    const p = await ctx.newPage();
+    for (const path of ['/', ...divisionSlugs.map((s) => `/universe/${s}`)]) {
+      await p.goto(BASE + path, { waitUntil: 'networkidle' });
+      const shown = await p.evaluate(async () => {
+        for (let y = 0; y < document.body.scrollHeight; y += 500) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 50)); }
+        await new Promise((r) => setTimeout(r, 700));
+        const vis = (el) => { const r = el.getBoundingClientRect(); if (r.width < 40 || r.height < 30) return false; for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false; } return true; };
+        return ['digital', 'ai', 'growth', 'creative', 'strategy'].filter((s) => [...document.querySelectorAll(`img[src*="division-${s}-"], img[srcset*="division-${s}-"]`)].some((i) => vis(i) && i.complete && i.naturalWidth > 0));
+      });
+      const need = path === '/' ? 5 : 1;
+      if (shown.length < need) fail(`${path} @${w}: only ${shown.length}/${need} division artworks visible without tapping (${shown.join(', ')})`);
+    }
+    await ctx.close();
+  }
+  ok('division artworks visible without tapping on the homepage and every division page (320–1440)');
+}
+
 // 8. Brand consistency: official emblem everywhere, icons and metadata resolve.
 {
   const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });

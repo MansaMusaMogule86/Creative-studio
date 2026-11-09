@@ -201,7 +201,7 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 ## Q. Quality Assurance & Testing
 - [ ] Unit tests for critical logic — ❌ No unit runner; vitest planned with backend (needs approval).
 - [ ] Integration tests — ❌ Planned with /api/leads (mocked HighLevel).
-- [x] End-to-end browser tests — ✅ pnpm qa (37 checks: hero deck turns, artwork drifts in 3D, One Team hover, no generated canvases, reduced motion static, owner artwork on all division pages) + qa:mobile (51).
+- [x] End-to-end browser tests — ✅ pnpm qa (38 checks: division artworks visible without tapping at 320–1440, hero deck turns, artwork drifts in 3D, One Team hover, no generated canvases, reduced motion static, owner artwork on all division pages) + qa:mobile (51).
 - [ ] Responsive visual regression tests — ⚠ Screenshot review per phase; no pixel-diff baseline.
 - [ ] Accessibility automated and manual tests — ⚠ axe automated; manual ⏳.
 - [ ] Cross-browser compatibility — ⚠ Chromium only here.
