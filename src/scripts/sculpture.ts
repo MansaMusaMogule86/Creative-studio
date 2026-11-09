@@ -19,6 +19,8 @@ type Options = {
   reduceMotion: boolean;
   mobile: boolean;
   palette?: Palette;
+  /** No painted backdrop: the canvas is see-through so the page's own light field shows behind the glass. */
+  transparent?: boolean;
   /** Render one deterministic frame (used by scripts/render-stills.mjs). */
   still?: { t: number; rx: number; ry: number; rz?: number; fit?: number; x?: number; y?: number };
 };
@@ -37,7 +39,8 @@ const PATH: [number, number, number][] = [
 
 export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const pal = opts.palette ?? DEFAULT_PALETTE;
-  const renderer = new WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: false, powerPreference: 'high-performance', preserveDrawingBuffer: !!opts.still });
+  const renderer = new WebGLRenderer({ canvas, antialias: !opts.mobile, alpha: !!opts.transparent, powerPreference: 'high-performance', preserveDrawingBuffer: !!opts.still });
+  if (opts.transparent) renderer.setClearColor(0x000000, 0);
   renderer.setPixelRatio(Math.min(devicePixelRatio, opts.mobile ? 1.5 : 2));
   renderer.outputColorSpace = SRGBColorSpace;
   renderer.toneMapping = ACESFilmicToneMapping;
@@ -51,12 +54,18 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const env = new Scene();
   env.add(new Mesh(new SphereGeometry(20, 32, 16), new MeshBasicMaterial({ color: new Color('#f6f3ff').multiplyScalar(1.7), side: BackSide })));
   const card = (color: string, pos: [number, number, number], s: [number, number], i = 1) => {
-    const m = new Mesh(new PlaneGeometry(...s), new MeshBasicMaterial({ color: new Color(color).multiplyScalar(i), side: DoubleSide }));
+    const mat = new MeshBasicMaterial({ color: new Color(color).multiplyScalar(i), side: DoubleSide });
+    const m = new Mesh(new PlaneGeometry(...s), mat);
     m.position.set(...pos); m.lookAt(0, 0, 0); env.add(m);
+    return mat;
   };
-  card(pal.lights[0], [-9, 4, 4], [8, 10], 2.2);
-  card(pal.lights[1], [9, -2, 5], [7, 9], 2.0);
-  card(pal.lights[2], [2, -9, 3], [10, 5], 2.0);
+  // The three palette cards (and their intensities) can be relit by setPalette().
+  const lightCards = [
+    card(pal.lights[0], [-9, 4, 4], [8, 10], 2.2),
+    card(pal.lights[1], [9, -2, 5], [7, 9], 2.0),
+    card(pal.lights[2], [2, -9, 3], [10, 5], 2.0),
+  ];
+  const LIGHT_I = [2.2, 2.0, 2.0];
   card('#ffffff', [0, 9, 6], [12, 3], 3.2);
   card('#d9a8ff', [-4, -3, -9], [10, 8], 1.8);
   card('#ffd27a', [-8, -6, 2], [4, 6], 1.6);
@@ -67,7 +76,9 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   card('#25243c', [10, 3, -2], [0.6, 12], 1);
   card('#3a3460', [0, -10, -4], [14, 0.8], 1);
   const pmrem = new PMREMGenerator(renderer);
-  scene.environment = pmrem.fromScene(env, 0.035).texture;
+  let envRT = pmrem.fromScene(env, 0.035);
+  scene.environment = envRT.texture;
+  const rebakeEnv = () => { const old = envRT; envRT = pmrem.fromScene(env, 0.035); scene.environment = envRT.texture; old.dispose(); };
 
   // ── Backdrop: pearl with slowly drifting light fields ──
   const backdropMat = new ShaderMaterial({
@@ -90,7 +101,7 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const backdrop = new Mesh(new PlaneGeometry(2, 2), backdropMat);
   backdrop.frustumCulled = false;
   backdrop.renderOrder = -1;
-  scene.add(backdrop);
+  if (!opts.transparent) scene.add(backdrop);
 
   // ── Ribbon geometry, rebuilt on the CPU each frame for the liquid motion ──
   const curve = new CatmullRomCurve3(PATH.map((p) => new Vector3(...p)), true, 'centripetal', 0.5);
@@ -200,6 +211,22 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   };
   if (!opts.reduceMotion) addEventListener('pointermove', onPointer, { passive: true });
 
+  // ── Palette + pose transitions (division showcase) ──
+  type Look = { c: Color[]; rx: number; ry: number };
+  const look = (p: Palette, rx = 0, ry = 0): Look => ({ c: [...p.lights, p.tint, ...p.fields].map((s) => new Color(s)), rx, ry });
+  let now_: Look = look(pal);
+  let tween: { from: Look; to: Look; t: number } | null = null;
+  const tmp = new Color();
+  const applyLook = (l: Look) => {
+    lightCards.forEach((m, i) => m.color.copy(l.c[i]).multiplyScalar(LIGHT_I[i]));
+    glass.attenuationColor.copy(l.c[3]);
+    glass.sheenColor.copy(l.c[3]).lerp(tmp.set('#ffffff'), 0.4);
+    backdropMat.uniforms.uC1.value.copy(l.c[4]); backdropMat.uniforms.uC2.value.copy(l.c[5]); backdropMat.uniforms.uC3.value.copy(l.c[6]);
+    rebakeEnv();
+  };
+  const mix = (a: Look, b: Look, k: number): Look => ({ c: a.c.map((c, i) => c.clone().lerp(b.c[i], k)), rx: a.rx + (b.rx - a.rx) * k, ry: a.ry + (b.ry - a.ry) * k });
+  const TWEEN_S = 0.55;
+
   let visible = true;
   let running = false, raf = 0, last = performance.now(), time = 0;
   const intro = { v: opts.reduceMotion ? 1 : 0 };
@@ -208,11 +235,17 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     time += dt;
     intro.v = Math.min(1, intro.v + dt / 2.2);
     const e = 1 - Math.pow(1 - intro.v, 4);
+    if (tween) {
+      tween.t = Math.min(1, tween.t + dt / TWEEN_S);
+      now_ = mix(tween.from, tween.to, 1 - Math.pow(1 - tween.t, 3));
+      applyLook(now_);
+      if (tween.t === 1) tween = null;
+    }
     build(time);
     cur.x += (target.x - cur.x) * 0.04;
     cur.y += (target.y - cur.y) * 0.04;
-    group.rotation.y = -0.22 + Math.sin(time * 0.25) * 0.35 + cur.x * 0.35 + (1 - e) * 1.2;
-    group.rotation.x = 0.12 + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
+    group.rotation.y = -0.22 + now_.ry + Math.sin(time * 0.25) * 0.35 + cur.x * 0.35 + (1 - e) * 1.2;
+    group.rotation.x = 0.12 + now_.rx + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
     group.rotation.z = -0.05 + Math.sin(time * 0.17) * 0.05;
     ribbon.position.y = Math.sin(time * 0.7) * 0.08 - (1 - e) * 0.6;
     ribbon.scale.setScalar(0.86 + 0.14 * e);
@@ -229,7 +262,7 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const renderStatic = () => {
     const st = opts.still ?? { t: 0.8, rx: 0.12, ry: -0.45, rz: -0.05 };
     build(st.t);
-    group.rotation.set(st.rx, st.ry, st.rz ?? -0.05);
+    group.rotation.set(st.rx + now_.rx, st.ry + now_.ry, st.rz ?? -0.05);
     backdropMat.uniforms.uTime.value = st.t * 10;
     renderer.render(scene, camera);
   };
@@ -243,5 +276,13 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
   if (opts.reduceMotion || opts.still) renderStatic(); else start();
 
-  return () => { stop(); ro.disconnect(); io.disconnect(); removeEventListener('pointermove', onPointer); renderer.dispose(); };
+  return {
+    /** Relight the glass and turn it to a new pose: tweened while animating, instant otherwise. */
+    setPalette(p: Palette, pose: { rx?: number; ry?: number } = {}) {
+      const to = look(p, pose.rx, pose.ry);
+      if (running) { tween = { from: now_, to, t: 0 }; return; }
+      tween = null; now_ = to; applyLook(to); renderStatic();
+    },
+    destroy() { stop(); ro.disconnect(); io.disconnect(); removeEventListener('pointermove', onPointer); renderer.dispose(); },
+  };
 }

@@ -13,6 +13,7 @@ const { s } = Astro.props as { s: Still };
 <html lang="en"><head><meta charset="utf-8" /><meta name="robots" content="noindex" /><title>render {s.id}</title>
 <style>
   html, body { margin: 0; background: #f8f7ff; overflow: hidden; }
+  html.cut, html.cut body { background: transparent; }
   canvas { display: block; width: 100vw; height: 100vh; }
   .og { position: fixed; inset: 0; padding: 56px 60px; display: grid; align-content: space-between; color: var(--ink); }
   .og__brand { display: flex; align-items: center; gap: 14px; font-family: var(--font-sans); font-weight: 560; font-size: 20px; letter-spacing: 0.26em; text-transform: uppercase; }
@@ -37,7 +38,8 @@ const { s } = Astro.props as { s: Still };
     import { mountSculpture } from '../../scripts/sculpture';
     const c = document.querySelector<HTMLCanvasElement>('canvas')!;
     const s = JSON.parse(c.dataset.still!);
-    mountSculpture(c, { reduceMotion: true, mobile: false, palette: s.palette, still: s });
+    if (s.transparent) document.documentElement.classList.add('cut');
+    mountSculpture(c, { reduceMotion: true, mobile: false, palette: s.palette, still: s, transparent: s.transparent });
     document.fonts.ready.then(() => requestAnimationFrame(() => requestAnimationFrame(() => ((window as unknown as { __ready: boolean }).__ready = true))));
   </script>
 </body></html>

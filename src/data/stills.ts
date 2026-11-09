@@ -10,6 +10,8 @@ export type Still = {
   palette?: Palette;
   /** Render the Open Graph layout (headline over the sculpture) instead of a bare frame. */
   og?: boolean;
+  /** No backdrop: an alpha cutout that sits on the page's own light field. */
+  transparent?: boolean;
   /** Output widths; defaults to full and half. */
   widths?: number[];
 };
@@ -35,6 +37,8 @@ const DIV_ANGLES: Record<Division['slug'], Pick<Still, 't' | 'rx' | 'ry' | 'rz'>
 const divisionStills: Still[] = (Object.keys(DIV_ANGLES) as Division['slug'][]).flatMap((slug) => [
   { id: `division-${slug}`, width: 1040, height: 1040, fit: 1.05, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1040, 520] },
   { id: `division-${slug}-wide`, width: 1200, height: 760, fit: 1.0, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1200, 600] },
+  // Transparent cutout for the homepage division showcase (no baked backdrop or frame).
+  { id: `division-${slug}-cut`, width: 1100, height: 900, fit: 1.0, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1100, 550], transparent: true },
 ]);
 
 export const stills: Still[] = [
