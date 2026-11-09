@@ -41,7 +41,7 @@ Caveat: with no GPU the live 3D is skipped by design, so **real-GPU frame cost h
 | LCP (mobile, 4G) | ≤ 2.5 s |
 | CLS | ≤ 0.05 |
 | TBT | ≤ 200 ms |
-| First-load images per page | ≤ 250 KB (QA-enforced) |
+| First-load images per page | ≤ 400 KB (QA-enforced; raised from 250 KB so phones show every division artwork without tapping) |
 | Off-screen behaviour | Render loop paused (current: IntersectionObserver + `visibilitychange`) |
 
 ## Guards already in place (keep them)

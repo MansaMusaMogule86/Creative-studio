@@ -107,7 +107,7 @@ Totals: ✅ 119 · ⚠ 52 · ❌ 13 · ⏳ 65 · n/a 11 (of 260). Every ❌ wait
 - [x] Responsive image sizes and srcset — ✅ srcset/sizes on renders and emblem.
 - [x] Lazy loading below-the-fold media — ✅ qa: below-fold renders not loaded eagerly.
 - [x] Hero image loading priority — ✅ fetchpriority=high on hero/division stills.
-- [x] Image compression and dimension attributes — ✅ All imgs have width/height; homepage first-load images ≈190 KB desktop / 94 KB mobile (qa budget 250 KB).
+- [x] Image compression and dimension attributes — ✅ All imgs have width/height; homepage first-load images 205 KB desktop / 363 KB mobile (qa budget 400 KB; phones show all five division artworks).
 - [x] Optimized fonts and font loading — ✅ Self-hosted, preloaded, CLS 0.
 - [x] Video compression and poster images — n/a No video.
 - [x] 3D fallback images — ✅ Division art is now the owner's static images (no WebGL needed); the hero sculpture keeps its rendered still fallback (qa).

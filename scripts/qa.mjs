@@ -180,7 +180,9 @@ ok('artwork never overlaps navigation, headings or buttons (6 pages × 6 widths)
       const first = await p.evaluate(() => performance.getEntriesByType('resource').filter((r) => /\.(webp|png|jpe?g|avif)$/.test(r.name)).map((r) => ({ n: r.name.split('/').pop(), b: r.transferSize || r.encodedBodySize })));
       const kb = Math.round(first.reduce((a, r) => a + r.b, 0) / 1024);
       if (path === '/' && (await p.$$eval('.phi__art, .panel .dart img, .ct__emblem img', (imgs) => imgs.filter((i) => i.loading !== 'lazy').length))) fail(`${path} ${label}: below-the-fold artwork is not lazy-loaded`);
-      if (kb > 250) fail(`${path} ${label}: ${kb} KB of images on first load (budget 250 KB)`);
+      // Budget 400 KB: the owner's artwork is the content (hero deck + five Universe cards on phones,
+      // which the browser prefetches as they are close to the screen).
+      if (kb > 400) fail(`${path} ${label}: ${kb} KB of images on first load (budget 400 KB)`);
       const wrongVariant = first.filter((r) => (label === 'mobile' ? /-1536\.webp$/.test(r.n) : false));
       if (wrongVariant.length) fail(`${path} ${label}: wrong art direction served: ${wrongVariant.map((r) => r.n).join(', ')}`);
       if (path === '/') {

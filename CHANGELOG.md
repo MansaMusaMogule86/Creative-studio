@@ -3,6 +3,8 @@
 All notable changes to the Mansas Moguls website. Newest first. Branch: `claude/affectionate-sagan-nrj1c8`.
 
 ## Unreleased
+- **Phones and tablets show every division's artwork without tapping.** Each Universe panel now has its artwork card above the title. Tapping the card or the title opens the copy and services. The first-load image budget is raised from 250 KB to 400 KB to allow for this.
+
 - **Only the owner's artwork, and it all moves.** Generated art is removed: the code-built 3D sculptures (showcase), the white-ribbon hero sculpture and the ribbon contact background. The Showcase section and its nav item are gone.
 - **New motion layer (`ui/Living.astro` + `scripts/living.ts`):**
   - Your images are never altered.
