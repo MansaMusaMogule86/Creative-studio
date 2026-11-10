@@ -21,6 +21,8 @@ type Options = {
   palette?: Palette;
   /** No painted backdrop: the canvas is see-through so the page's own light field shows behind the glass. */
   transparent?: boolean;
+  /** Scale relative to the default fit (still.fit wins for stills). */
+  fit?: number;
   /** Render one deterministic frame (used by scripts/render-stills.mjs). */
   still?: { t: number; rx: number; ry: number; rz?: number; fit?: number; x?: number; y?: number };
 };
@@ -101,7 +103,10 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const backdrop = new Mesh(new PlaneGeometry(2, 2), backdropMat);
   backdrop.frustumCulled = false;
   backdrop.renderOrder = -1;
-  if (!opts.transparent) scene.add(backdrop);
+  scene.add(backdrop);
+  // Transparent mode: the glass still refracts the light field (it is drawn into the
+  // transmission target), but it is never painted onto the see-through canvas.
+  if (opts.transparent) backdrop.onBeforeRender = (r) => { backdropMat.colorWrite = r.getRenderTarget() !== null; };
 
   // ── Ribbon geometry, rebuilt on the CPU each frame for the liquid motion ──
   const curve = new CatmullRomCurve3(PATH.map((p) => new Vector3(...p)), true, 'centripetal', 0.5);
@@ -190,7 +195,7 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     // The sculpture now lives inside the hero's bento card: centre it and fit
     // it to whichever side of the card is shorter.
     const visH = 2 * camera.position.z * Math.tan((camera.fov * Math.PI) / 360);
-    const s = Math.min((visH * (w / h)) / 6.0, visH / 5.8) * (opts.still?.fit ?? 1);
+    const s = Math.min((visH * (w / h)) / 6.0, visH / 5.8) * (opts.still?.fit ?? opts.fit ?? 1);
     group.scale.setScalar(s);
     // Optional offsets (fractions of the visible frame) let still renders
     // place the sculpture beside text instead of centring it.

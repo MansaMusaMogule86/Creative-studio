@@ -40,6 +40,15 @@ export default function AskMoguls() {
     on(); addEventListener('scroll', on, { passive: true });
     return () => removeEventListener('scroll', on);
   }, []);
+  // Step aside while a [data-ask-avoid] block passes under the launcher (the viewport's bottom band).
+  const [avoid, setAvoid] = useState(false);
+  useEffect(() => {
+    const el = document.querySelector('[data-ask-avoid]');
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setAvoid(e.isIntersecting), { rootMargin: '-85% 0px 0px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
   useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }); }, [msgs]);
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && open) { setOpen(false); launcherRef.current?.focus(); } };
@@ -61,7 +70,7 @@ export default function AskMoguls() {
   };
 
   return (
-    <div className="ask" data-open={open} data-shown={shown || open}>
+    <div className="ask" data-open={open} data-shown={shown || open} data-avoid={avoid}>
       <button ref={launcherRef} type="button" className="ask__launch" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}>
         <span className="ask__dot" aria-hidden="true" />
         <span className="ask__label">{open ? 'Close' : 'Ask Moguls'}</span>

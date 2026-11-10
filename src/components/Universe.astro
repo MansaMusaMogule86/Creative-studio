@@ -1,6 +1,20 @@
 ---
-import DivisionArt from './divisions/DivisionArt.astro';
+// The five divisions as a tabbed showcase: one full-width panel, one shared stage.
+// Artwork: transparent cutouts of the real sculpture (pnpm render:stills cut), upgraded
+// on capable desktops to ONE live WebGL scene that relights per division.
 import { divisions } from '../data/divisions';
+import { PALETTES } from '../data/stills';
+const first = divisions[0];
+const cutSrc = (slug: string) => ({
+  src: `/renders/division-${slug}-cut-550.webp`,
+  srcset: `/renders/division-${slug}-cut-550.webp 550w, /renders/division-${slug}-cut-1100.webp 1100w`,
+});
+// Stage colours: the same fields the glass refracts, plus a stronger accent glow.
+const look = (d: (typeof divisions)[number]) => {
+  const p = PALETTES[d.slug];
+  return { a: p.fields[0], b: p.fields[1], c: p.lights[0], ink: d.ink };
+};
+const l0 = look(first);
 ---
 <section id="universe" class="section uni" aria-labelledby="uni-title">
   <div class="wrap">
@@ -10,122 +24,270 @@ import { divisions } from '../data/divisions';
       <p class="lede" data-reveal style="--d:.16s">Each world has its own craft and character. Together they cover the full path from idea to growth.</p>
     </header>
 
-    <div class="uni__panels" data-universe>
-      {divisions.map((d, i) => (
-        <article class:list={['panel', { 'is-active': i === 0 }]} style={`--a:${d.palette[0]};--b:${d.palette[1]};--ink-d:${d.ink}`} data-panel>
-          <h3 class="panel__h">
-            <button type="button" class="panel__btn" aria-expanded={i === 0 ? 'true' : 'false'} aria-controls={`panel-${d.slug}`}>
-              <span class="panel__idx">{d.index}</span>
-              <span class="panel__name">{d.name}</span>
-              <span class="panel__plus" aria-hidden="true"></span>
+    <div class="sc" data-showcase data-reveal style={`--d:.2s;--sc-a:${l0.a};--sc-b:${l0.b};--sc-c:${l0.c};--sc-ink:${l0.ink}`}>
+      <div class="sc__tabs" role="tablist" aria-label="Divisions">
+        {divisions.map((d, i) => {
+          const l = look(d);
+          return (
+            <button type="button" role="tab" class="sc__tab" id={`uni-tab-${d.slug}`} aria-controls={`uni-${d.slug}`}
+              aria-selected={i === 0 ? 'true' : 'false'} tabindex={i === 0 ? 0 : -1}
+              data-slug={d.slug} data-a={l.a} data-b={l.b} data-c={l.c} data-ink={l.ink} style={`--t-c:${l.c};--t-ink:${l.ink}`}>
+              <span class="sc__dot" aria-hidden="true"></span>
+              <span class="sc__num">{d.index}</span>
+              <span class="sc__label">{d.short}</span>
             </button>
-          </h3>
-          <div class="panel__body" id={`panel-${d.slug}`}>
-            <div class="panel__art"><DivisionArt division={d} /></div>
-            <div class="panel__copy">
-              <p class="panel__tag">{d.tagline}</p>
-              <p class="panel__intro">{d.intro}</p>
-              <ul class="panel__list">
-                {d.services.slice(0, 4).map((s) => <li><a href={`/universe/${d.slug}#${s.slug}`}>{s.title}</a></li>)}
-              </ul>
-              <a class="panel__enter" href={`/universe/${d.slug}`}>Enter {d.name} <span aria-hidden="true">→</span></a>
+          );
+        })}
+      </div>
+
+      <div class="sc__card" data-ask-avoid>
+        <div class="sc__stage" aria-hidden="true">
+          <div class="sc__par">
+            <div class="sc__float">
+              <img class="sc__cut is-on" data-slug={first.slug} {...cutSrc(first.slug)} sizes="(min-width: 1024px) 50vw, 100vw"
+                width="1100" height="900" alt="" loading="lazy" decoding="async" />
             </div>
           </div>
-        </article>
-      ))}
+          <canvas class="sc__canvas"></canvas>
+        </div>
+
+        <div class="sc__panels">
+          {divisions.map((d, i) => {
+            const [lead, ...rest] = d.name.split(' ');
+            const more = d.services.length - 4;
+            return (
+              <div role="tabpanel" class:list={['sc__panel', { 'is-active': i === 0 }]} id={`uni-${d.slug}`} aria-labelledby={`uni-tab-${d.slug}`}>
+                <p class="sc__kicker"><span>{d.index}</span>{d.tagline}</p>
+                <h3 class="sc__title">{lead} <em>{rest.join(' ')}</em></h3>
+                <p class="sc__intro">{d.intro}</p>
+                <ul class="sc__chips" aria-label={`${d.name} services`}>
+                  {d.services.slice(0, 4).map((s) => <li><a href={`/universe/${d.slug}#${s.slug}`}>{s.title}</a></li>)}
+                  {more > 0 && <li><a class="sc__more" href={`/universe/${d.slug}#services-list`}>+{more} more<span class="sr-only"> {d.name} services</span></a></li>}
+                </ul>
+                <a class="btn sc__cta" href={`/universe/${d.slug}`}>Enter {d.name} <span class="arrow" aria-hidden="true">→</span></a>
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <script>
-  const root = document.querySelector<HTMLElement>('[data-universe]');
+  import { PALETTES } from '../data/stills';
+  import type { Division } from '../data/divisions';
+
+  const root = document.querySelector<HTMLElement>('[data-showcase]');
   if (root) {
-    const panels = [...root.querySelectorAll<HTMLElement>('[data-panel]')];
-    const desktop = matchMedia('(min-width: 1024px)');
-    const activate = (p: HTMLElement, toggle = false) => {
-      const open = toggle && !desktop.matches ? !p.classList.contains('is-active') : true;
-      panels.forEach((q) => {
-        const on = q === p ? open : false;
-        q.classList.toggle('is-active', on);
-        q.querySelector('button')!.setAttribute('aria-expanded', String(on));
-      });
+    const tabs = [...root.querySelectorAll<HTMLButtonElement>('[role=tab]')];
+    const panels = [...root.querySelectorAll<HTMLElement>('[role=tabpanel]')];
+    const stage = root.querySelector<HTMLElement>('.sc__stage')!;
+    const float = root.querySelector<HTMLElement>('.sc__float')!;
+    const canvas = root.querySelector<HTMLCanvasElement>('.sc__canvas')!;
+    const slugOf = (i: number) => tabs[i].dataset.slug as Division['slug'];
+    const pose = (i: number) => ({ ry: (i - 2) * 0.35 }); // a gentle, controlled turn per division
+    const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let active = 0;
+    let scene: { setPalette: (p: (typeof PALETTES)[Division['slug']], pose: { ry: number }) => void } | null = null;
+
+    // Cutouts beyond the first are created on demand (tab hover/focus preloads them).
+    const cuts = new Map<string, HTMLImageElement>([[slugOf(0), float.querySelector('img')!]]);
+    const cut = (i: number) => {
+      const slug = slugOf(i);
+      if (!cuts.has(slug)) {
+        const img = cuts.get(slugOf(0))!.cloneNode() as HTMLImageElement;
+        img.classList.remove('is-on');
+        img.dataset.slug = slug;
+        img.loading = 'eager';
+        img.srcset = img.srcset.replaceAll(slugOf(0), slug);
+        img.src = img.src.replace(slugOf(0), slug);
+        float.append(img);
+        cuts.set(slug, img);
+      }
+      return cuts.get(slug)!;
     };
-    panels.forEach((p) => {
-      p.querySelector('button')!.addEventListener('click', () => activate(p, true));
-      p.addEventListener('pointerenter', (e) => { if (desktop.matches && e.pointerType === 'mouse') activate(p); });
-      p.addEventListener('focusin', () => { if (desktop.matches) activate(p); });
+
+    const select = (i: number) => {
+      if (i === active) return;
+      active = i;
+      const t = tabs[i];
+      tabs.forEach((x, k) => { x.setAttribute('aria-selected', String(k === i)); x.tabIndex = k === i ? 0 : -1; });
+      panels.forEach((p, k) => p.classList.toggle('is-active', k === i));
+      const img = cut(i);
+      cuts.forEach((c) => c.classList.toggle('is-on', c === img));
+      for (const k of ['a', 'b', 'c', 'ink']) root.style.setProperty(`--sc-${k}`, t.dataset[k]!);
+      scene?.setPalette(PALETTES[slugOf(i)], pose(i));
+      // Keep the chosen tab visible in the scrollable mobile row without moving the page.
+      const list = t.parentElement!;
+      if (list.scrollWidth > list.clientWidth) list.scrollTo({ left: t.offsetLeft - (list.clientWidth - t.offsetWidth) / 2, behavior: reduce ? 'auto' : 'smooth' });
+    };
+
+    tabs.forEach((t, i) => {
+      t.addEventListener('click', () => select(i));
+      t.addEventListener('pointerenter', () => cut(i), { once: true });
+      t.addEventListener('focus', () => cut(i), { once: true });
     });
-    // Desktop always keeps one world open.
-    desktop.addEventListener('change', () => { if (!panels.some((p) => p.classList.contains('is-active'))) activate(panels[0]); });
+    // Manual activation: arrows move focus only; Enter/Space (native click) selects.
+    root.querySelector('[role=tablist]')!.addEventListener('keydown', (e) => {
+      const k = (e as KeyboardEvent).key;
+      const cur = tabs.indexOf(document.activeElement as HTMLButtonElement);
+      if (cur < 0) return;
+      const rtl = getComputedStyle(root).direction === 'rtl';
+      const step = { ArrowRight: rtl ? -1 : 1, ArrowLeft: rtl ? 1 : -1 }[k];
+      const next = step ? (cur + step + tabs.length) % tabs.length : k === 'Home' ? 0 : k === 'End' ? tabs.length - 1 : -1;
+      if (next < 0) return;
+      e.preventDefault();
+      tabs[next].focus();
+    });
+
+    // Desktop with a mouse: gentle pointer parallax on the cutout, and one live WebGL scene.
+    const desktop = matchMedia('(min-width: 1024px) and (pointer: fine)');
+    if (!reduce && desktop.matches) {
+      let raf = 0;
+      stage.addEventListener('pointermove', (e) => {
+        if (e.pointerType !== 'mouse') return;
+        cancelAnimationFrame(raf);
+        raf = requestAnimationFrame(() => {
+          const r = stage.getBoundingClientRect();
+          stage.style.setProperty('--px', (((e.clientX - r.left) / r.width) * 2 - 1).toFixed(3));
+          stage.style.setProperty('--py', (((e.clientY - r.top) / r.height) * 2 - 1).toFixed(3));
+        });
+      });
+      stage.addEventListener('pointerleave', () => { stage.style.setProperty('--px', '0'); stage.style.setProperty('--py', '0'); });
+
+      const gl = (() => { try { return !!document.createElement('canvas').getContext('webgl2'); } catch { return false; } })();
+      if (gl) {
+        const io = new IntersectionObserver(async ([en]) => {
+          if (!en.isIntersecting) return;
+          io.disconnect();
+          const { mountSculpture } = await import('../scripts/sculpture');
+          scene = mountSculpture(canvas, { reduceMotion: false, mobile: false, transparent: true, fit: 1.15, palette: PALETTES[slugOf(active)] });
+          scene.setPalette(PALETTES[slugOf(active)], pose(active));
+          requestAnimationFrame(() => stage.classList.add('is-live'));
+        }, { rootMargin: '300px 0px' });
+        io.observe(root);
+      }
+    }
   }
 </script>
 
 <style>
-  .uni__head { display: grid; gap: 1.2rem; max-width: 920px; margin-bottom: clamp(2.5rem, 5vw, 4.5rem); }
+  /* Registered so the light field and accents cross-fade between divisions. */
+  @property --sc-a { syntax: '<color>'; inherits: true; initial-value: #c4e8ff; }
+  @property --sc-b { syntax: '<color>'; inherits: true; initial-value: #a8eded; }
+  @property --sc-c { syntax: '<color>'; inherits: true; initial-value: #7fb4ff; }
+  @property --sc-ink { syntax: '<color>'; inherits: true; initial-value: #0f5f6b; }
 
-  .uni__panels { display: flex; gap: 12px; height: min(78vh, 720px); min-height: 600px; }
-  .panel {
-    position: relative; flex: 1 1 0; min-width: 0; border-radius: var(--radius); overflow: hidden;
-    background: linear-gradient(170deg, var(--white) 0%, color-mix(in srgb, var(--a) 16%, var(--white)) 100%);
-    border: 1px solid var(--line); transition: flex-grow 0.9s var(--ease-out), background 0.9s, box-shadow 0.9s;
-    display: flex; flex-direction: column;
-  }
-  .panel.is-active {
-    flex-grow: 4.2;
-    background: linear-gradient(160deg, var(--white) 0%, color-mix(in srgb, var(--a) 38%, var(--white)) 55%, color-mix(in srgb, var(--b) 30%, var(--white)) 100%);
-    box-shadow: 0 40px 80px -50px color-mix(in srgb, var(--ink-d) 60%, transparent);
-  }
-  .panel__h { font: inherit; }
-  .panel__btn {
-    width: 100%; display: flex; align-items: center; gap: 0.9rem; padding: 1.5rem 1.6rem;
-    background: none; border: 0; cursor: pointer; text-align: start;
-  }
-  .panel__idx { font-size: 0.78rem; letter-spacing: 0.14em; color: var(--ink-d); font-weight: 600; }
-  .panel__name { font-family: var(--font-display); font-size: clamp(1.4rem, 1.1rem + 0.8vw, 2.1rem); line-height: 1; white-space: nowrap; }
-  .panel__plus { margin-inline-start: auto; width: 14px; height: 14px; position: relative; flex-shrink: 0; }
-  .panel__plus::before, .panel__plus::after { content: ''; position: absolute; inset: 6px 0; background: currentColor; transition: transform 0.5s var(--ease-out); }
-  .panel__plus::after { transform: rotate(90deg); }
-  .panel.is-active .panel__plus::after { transform: rotate(0); }
+  .uni__head { display: grid; gap: 1.2rem; max-width: 920px; margin-bottom: clamp(2.2rem, 4vw, 3.5rem); }
 
-  .panel__body { flex: 1; display: grid; grid-template-rows: 1fr auto; padding: 0 1.6rem 1.6rem; min-height: 0; }
-  .panel__art { display: grid; place-items: center; min-height: 0; }
-  .panel__art { width: 100%; height: 100%; }
-  .panel__art :global(.art) { width: min(100%, 420px); height: auto; margin-inline: auto; }
-  .panel__copy { display: grid; gap: 0.8rem; align-content: end; }
-  .panel__tag { font-size: 0.8rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 560; color: var(--ink-d); }
-  .panel__intro { color: var(--ink-2); max-width: 46ch; }
-  .panel__list { display: flex; flex-wrap: wrap; gap: 0.45rem; }
-  .panel__list a {
-    display: inline-block; padding: 0.4rem 0.85rem; border-radius: 999px; font-size: 0.86rem; text-decoration: none;
-    background: rgb(255 255 255 / 0.7); border: 1px solid var(--line); transition: background-color 0.3s, border-color 0.3s;
-  }
-  .panel__list a:hover { background: var(--white); border-color: var(--line-strong); }
-  .panel__enter {
-    justify-self: start; margin-top: 0.4rem; font-weight: 560; font-size: 0.86rem; letter-spacing: 0.14em; text-transform: uppercase;
-    text-decoration: none; padding-block: 0.6rem; border-bottom: 1px solid currentColor; color: var(--ink-d);
-  }
-  .panel__enter span { display: inline-block; transition: transform 0.4s var(--ease-out); }
-  .panel__enter:hover span { transform: translateX(5px); }
+  .sc { display: grid; gap: 14px; transition: --sc-a 0.6s var(--ease-out), --sc-b 0.6s var(--ease-out), --sc-c 0.6s var(--ease-out), --sc-ink 0.6s var(--ease-out); }
 
-  /* Desktop: collapsed panels show a vertical label and only the artwork. */
+  /* ── Tabs ── */
+  .sc__tabs {
+    display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; padding: 6px;
+    border-radius: 999px; background: rgb(255 255 255 / 0.6); border: 1px solid var(--line);
+    backdrop-filter: blur(14px);
+  }
+  .sc__tab {
+    display: inline-flex; align-items: center; justify-content: center; gap: 0.6rem; min-height: 52px; padding: 0 1.1rem;
+    border: 0; border-radius: 999px; background: transparent; color: var(--ink-2); cursor: pointer; white-space: nowrap;
+    font: inherit; font-size: 0.95rem; font-weight: 500;
+    transition: background-color 0.35s, color 0.35s, box-shadow 0.45s var(--ease-out);
+  }
+  .sc__tab:hover { background: rgb(255 255 255 / 0.75); color: var(--ink); }
+  .sc__tab[aria-selected='true'] {
+    background: var(--white); color: var(--ink);
+    box-shadow: 0 10px 26px -14px color-mix(in srgb, var(--t-ink) 70%, transparent), inset 0 0 0 1px color-mix(in srgb, var(--t-c) 45%, transparent);
+  }
+  .sc__tab:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .sc__dot {
+    width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0;
+    background: radial-gradient(circle at 35% 30%, #fff, var(--t-c) 70%); box-shadow: 0 0 0 1px color-mix(in srgb, var(--t-ink) 25%, transparent);
+    transition: box-shadow 0.45s var(--ease-out);
+  }
+  .sc__tab:hover .sc__dot, .sc__tab[aria-selected='true'] .sc__dot { box-shadow: 0 0 0 1px color-mix(in srgb, var(--t-ink) 30%, transparent), 0 0 12px var(--t-c); }
+  .sc__num { font-size: 0.72rem; letter-spacing: 0.14em; font-weight: 600; color: var(--t-ink); }
+
+  /* ── Card: one full-bleed light field behind both artwork and copy ── */
+  .sc__card {
+    position: relative; display: grid; grid-template-columns: 55fr 45fr; min-height: clamp(540px, 66vh, 660px);
+    border-radius: var(--radius); overflow: hidden; isolation: isolate; border: 1px solid rgb(255 255 255 / 0.9);
+    background:
+      radial-gradient(48% 64% at 30% 46%, color-mix(in srgb, var(--sc-c) 34%, transparent), transparent 72%),
+      radial-gradient(60% 70% at 22% 30%, var(--sc-a), transparent 70%),
+      radial-gradient(50% 60% at 48% 92%, var(--sc-b), transparent 72%),
+      linear-gradient(160deg, var(--white), color-mix(in srgb, var(--sc-a) 40%, var(--white)));
+    box-shadow: 0 50px 90px -60px color-mix(in srgb, var(--sc-ink) 55%, transparent), 0 0 0 1px var(--line);
+  }
+  /* A soft pearl veil under the copy keeps text contrast high without boxing it in. */
+  .sc__card::after {
+    content: ''; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+    background: linear-gradient(90deg, transparent 38%, rgb(255 255 255 / 0.62) 62%, rgb(255 255 255 / 0.78));
+  }
+
+  .sc__stage { position: relative; min-height: 0; perspective: 1200px; }
+  .sc__par, .sc__float, .sc__canvas { position: absolute; inset: 0; }
+  .sc__par {
+    transform: translate3d(calc(var(--px, 0) * 12px), calc(var(--py, 0) * 9px), 0) rotateY(calc(var(--px, 0) * 4deg)) rotateX(calc(var(--py, 0) * -3deg));
+    transition: transform 0.9s var(--ease-out);
+  }
+  .sc__float { animation: sc-float 9s var(--ease-in-out) infinite; }
+  @keyframes sc-float { 50% { transform: translateY(-10px) rotate(-1.2deg); } }
+  .sc__cut {
+    position: absolute; inset: 8% 3% 0; width: 94%; height: 92%; object-fit: contain;
+    opacity: 0; transform: scale(0.97) translateY(8px);
+    transition: opacity 0.45s var(--ease-out), transform 0.6s var(--ease-out);
+  }
+  .sc__cut.is-on { opacity: 1; transform: none; transition-delay: 0.08s; }
+  .sc__canvas { width: 100%; height: 100%; opacity: 0; transition: opacity 0.9s var(--ease-out); pointer-events: none; }
   @media (min-width: 1024px) {
-    .panel:not(.is-active) .panel__btn { flex-direction: column; align-items: flex-start; height: 100%; }
-    .panel:not(.is-active) .panel__name { writing-mode: vertical-rl; rotate: 180deg; margin-top: auto; }
-    .panel:not(.is-active) .panel__plus { position: absolute; top: 1.6rem; inset-inline-end: 1.4rem; }
-    .panel:not(.is-active) .panel__body { position: absolute; inset: auto 0 4%; padding: 0 8%; opacity: 0.9; pointer-events: none; }
-    .panel:not(.is-active) .panel__copy { display: none; }
-    .panel.is-active .panel__body { grid-template-columns: 1.05fr 1fr; grid-template-rows: 1fr; gap: 1.5rem; align-items: end; animation: panel-in 0.9s var(--ease-out) both; }
-    .panel.is-active .panel__art { align-self: center; }
+    .sc__stage.is-live .sc__canvas { opacity: 1; }
+    .sc__stage.is-live .sc__par { opacity: 0; transition: opacity 0.9s var(--ease-out); }
   }
-  @keyframes panel-in { from { opacity: 0; transform: translateY(14px); } }
+  @media (max-width: 1023px) { .sc__canvas { display: none; } }
 
-  /* Mobile & tablet: accessible tap accordion, one world at a time. */
+  /* ── Panels: stacked in one cell so switching never changes the card's size ── */
+  .sc__panels { display: grid; align-items: center; padding: clamp(2rem, 4vw, 4rem) clamp(1.8rem, 4vw, 4.2rem) clamp(2rem, 4vw, 4rem) clamp(0.5rem, 1.5vw, 1.5rem); }
+  .sc__panel { display: grid; gap: 1.15rem; justify-items: start; }
+  :global(.js) .sc__panel { grid-area: 1 / 1; }
+  :global(.js) .sc__panel:not(.is-active) {
+    visibility: hidden; opacity: 0; transform: translateY(10px);
+    transition: opacity 0.3s, transform 0.3s, visibility 0s 0.3s;
+  }
+  :global(.js) .sc__panel.is-active { transition: opacity 0.5s 0.1s var(--ease-out), transform 0.6s 0.1s var(--ease-out); }
+
+  .sc__kicker { display: flex; gap: 0.75rem; align-items: baseline; font-size: 0.76rem; letter-spacing: 0.16em; text-transform: uppercase; font-weight: 600; color: var(--sc-ink); }
+  .sc__title { font-family: var(--font-display); font-weight: 400; font-size: clamp(2.6rem, 1.4rem + 2.6vw, 4.4rem); line-height: 0.95; letter-spacing: -0.015em; }
+  .sc__title em { color: var(--sc-ink); }
+  .sc__intro { color: var(--ink-2); font-size: var(--step-0); line-height: 1.55; max-width: 42ch; }
+  .sc__chips { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-block: 0.2rem 0.5rem; }
+  .sc__chips a {
+    display: inline-flex; align-items: center; min-height: 40px; padding: 0 1rem; border-radius: 999px; font-size: 0.88rem; text-decoration: none;
+    background: rgb(255 255 255 / 0.78); border: 1px solid var(--line); transition: background-color 0.3s, border-color 0.3s;
+  }
+  .sc__chips a:hover { background: var(--white); border-color: color-mix(in srgb, var(--sc-ink) 40%, transparent); }
+  .sc__chips .sc__more { color: var(--sc-ink); font-weight: 560; background: transparent; border-style: dashed; }
+
+  /* ── Tablet and mobile: scrollable tabs, artwork above the copy ── */
   @media (max-width: 1023px) {
-    .uni__panels { flex-direction: column; height: auto; min-height: 0; gap: 10px; }
-    .panel, .panel.is-active { flex: none; }
-    .panel__body { display: none; }
-    .panel.is-active .panel__body { display: grid; grid-template-rows: auto auto; animation: panel-in 0.6s var(--ease-out) both; }
-    .panel__art :global(.art) { width: min(64vw, 300px); height: auto; margin-block: 0.4rem 1rem; }
-    .panel__name { white-space: normal; }
+    .sc__tabs {
+      display: flex; overflow-x: auto; scroll-snap-type: x proximity; scrollbar-width: none; overscroll-behavior-x: contain;
+      border-radius: 999px; scroll-padding-inline: 6px;
+    }
+    .sc__tabs::-webkit-scrollbar { display: none; }
+    .sc__tab { flex: 0 0 auto; scroll-snap-align: start; min-height: 46px; padding: 0 1rem; }
+    .sc__card { grid-template-columns: 1fr; min-height: 0; }
+    .sc__card::after { background: linear-gradient(180deg, transparent 30%, rgb(255 255 255 / 0.6) 55%, rgb(255 255 255 / 0.75)); }
+    .sc__stage { aspect-ratio: 4 / 3; max-height: 460px; width: 100%; }
+    .sc__panels { padding: 0.5rem clamp(1.25rem, 4vw, 2.5rem) clamp(1.5rem, 4vw, 2.5rem); align-items: start; }
+    .sc__panel { gap: 0.9rem; }
+    .sc__title { font-size: clamp(2.2rem, 1.6rem + 3vw, 3.2rem); }
+  }
+  @media (max-width: 640px) {
+    .sc__stage { aspect-ratio: 11 / 9; }
+    .sc__kicker { font-size: 0.7rem; letter-spacing: 0.12em; }
+    .sc__chips a { font-size: 0.84rem; min-height: 38px; padding: 0 0.85rem; }
+    .sc__cta { width: 100%; }
   }
 </style>

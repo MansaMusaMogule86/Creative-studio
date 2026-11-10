@@ -77,13 +77,29 @@ for (const w of WIDTHS) {
   const p = await browser.newPage({ viewport: { width: 1440, height: 900 } });
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
 
-  // Division explorer: hover opens a world, link opens its page.
-  await p.hover('[data-panel]:nth-child(3)');
-  if (await p.$eval('[data-panel]:nth-child(3) button', (b) => b.getAttribute('aria-expanded')) !== 'true') fail('hover did not open division 3');
-  await p.focus('[data-panel]:nth-child(3) .panel__enter');
+  // Division showcase: click selects, hover/arrow focus never change the selection, size is stable.
+  const selected = () => p.$eval('[data-showcase] [aria-selected=true]', (t) => t.id);
+  const cardH = () => p.$eval('.sc__card', (c) => Math.round(c.getBoundingClientRect().height));
+  await p.$eval('#universe', (e) => e.scrollIntoView());
+  const h0 = await cardH();
+  await p.hover('#uni-tab-creative');
+  if ((await selected()) !== 'uni-tab-digital') fail('hovering a division tab changed the selection');
+  await p.click('#uni-tab-growth');
+  if ((await selected()) !== 'uni-tab-growth' || !(await p.isVisible('#uni-growth .sc__cta')) || (await p.isVisible('#uni-digital .sc__cta'))) fail('clicking a division tab did not switch panels');
+  await p.focus('#uni-tab-growth');
+  await p.keyboard.press('ArrowRight');
+  if ((await p.evaluate(() => document.activeElement.id)) !== 'uni-tab-creative' || (await selected()) !== 'uni-tab-growth') fail('arrow key should move focus without selecting');
+  await p.keyboard.press('Enter');
+  if ((await selected()) !== 'uni-tab-creative') fail('Enter did not select the focused division tab');
+  const heights = [];
+  for (const s of ['digital', 'ai', 'growth', 'creative', 'strategy']) { await p.click(`#uni-tab-${s}`); await p.waitForTimeout(650); heights.push(await cardH()); }
+  if (new Set([h0, ...heights]).size > 1) fail(`division card changes size between divisions: ${[h0, ...heights].join(', ')}`);
+  await p.click('#uni-tab-growth');
+  await p.waitForTimeout(650);
+  await p.focus('#uni-growth .sc__cta');
   await p.keyboard.press('Enter');
   await p.waitForURL('**/universe/growth');
-  ok('division panel opens on hover and links to its world');
+  ok('division tabs: click/Enter select, hover/arrows do not, card size is stable, CTA opens its world');
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
 
   // Services tabs.
@@ -92,7 +108,12 @@ for (const w of WIDTHS) {
   else ok('services explorer tabs switch');
 
   // Ask Moguls → prefill inquiry.
-  await p.evaluate(() => scrollTo(0, innerHeight));
+  // The launcher also steps aside while the division card passes under it; check that, then use it below.
+  await p.$eval('.sc__card', (c) => scrollTo(0, c.getBoundingClientRect().top + scrollY - innerHeight * 0.8));
+  await p.waitForTimeout(700);
+  if (await p.isVisible('.ask__launch')) fail('Ask Moguls launcher overlaps the division card');
+  await p.$eval('#services', (e) => e.scrollIntoView());
+  await p.waitForTimeout(700);
   await p.click('.ask__launch');
   await p.click('.ask__examples button >> nth=0');
   const firstService = await p.textContent('.msg__services li strong');
@@ -121,9 +142,16 @@ for (const w of WIDTHS) {
   if (!(await m.isVisible('#mobile-menu'))) fail('mobile menu did not open');
   await m.keyboard.press('Escape');
   if (await m.isVisible('#mobile-menu')) fail('Escape did not close mobile menu'); else ok('mobile menu opens and closes');
-  // Tap accordion on mobile.
-  await m.click('[data-panel]:nth-child(2) button');
-  if (await m.$eval('[data-panel]:nth-child(2) button', (b) => b.getAttribute('aria-expanded')) !== 'true') fail('tap did not open division on mobile'); else ok('mobile division tap control works');
+  // Division tabs on mobile: tap selects, artwork sits above the copy, no WebGL scene.
+  await m.$eval('#universe', (e) => e.scrollIntoView());
+  await m.click('#uni-tab-ai');
+  await m.waitForTimeout(400);
+  const mob = await m.evaluate(() => ({
+    sel: document.querySelector('[data-showcase] [aria-selected=true]').id,
+    artAbove: document.querySelector('.sc__stage').getBoundingClientRect().bottom <= document.querySelector('#uni-ai .sc__title').getBoundingClientRect().top,
+    live: !!document.querySelector('.sc__stage.is-live'),
+  }));
+  if (mob.sel !== 'uni-tab-ai' || !mob.artAbove || mob.live) fail(`mobile division tabs: ${JSON.stringify(mob)}`); else ok('mobile division tabs: tap selects, artwork above copy, no WebGL');
   await m.close();
   await p.close();
 }
@@ -135,6 +163,10 @@ for (const w of WIDTHS) {
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
   const hidden = await p.$$eval('[data-reveal]', (els) => els.filter((e) => getComputedStyle(e).opacity === '0').length);
   if (hidden) fail(`reduced motion: ${hidden} reveal element(s) still hidden`); else ok('reduced motion: all content visible without animation');
+  await p.$eval('#universe', (e) => e.scrollIntoView());
+  await p.waitForTimeout(800);
+  if (await p.$('.sc__stage.is-live')) fail('reduced motion: division showcase started a live WebGL scene');
+  else ok('reduced motion: division showcase stays on the still cutout');
   await ctx.close();
 }
 
