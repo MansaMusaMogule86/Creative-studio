@@ -23,7 +23,23 @@ if (reduce || !('IntersectionObserver' in window)) {
 // Header state: frosted floating bar once the hero is scrolled past.
 const header = document.querySelector<HTMLElement>('[data-header]');
 if (header) {
-  const onScroll = () => header.classList.toggle('is-floating', scrollY > 40);
+  // While a dialog or the menu pins the page (scroll-lock), scrollY reads 0;
+  // keep the header state instead of flickering back to the hero style.
+  // Below 1024px the bar hides while scrolling down and returns on scroll up,
+  // so it never sits over headings while reading.
+  const small = matchMedia('(max-width: 1023px)');
+  let lastY = scrollY;
+  const onScroll = () => {
+    if (document.documentElement.classList.contains('scroll-locked')) return;
+    const y = scrollY;
+    header.classList.toggle('is-floating', y > 40);
+    const menuOpen = document.documentElement.classList.contains('menu-open');
+    if (!small.matches || menuOpen || y < 120 || header.contains(document.activeElement)) header.classList.remove('is-tucked');
+    else if (y > lastY + 6) header.classList.add('is-tucked');
+    else if (y < lastY - 6) header.classList.remove('is-tucked');
+    lastY = y;
+  };
+  header.addEventListener('focusin', () => header.classList.remove('is-tucked'));
   onScroll();
   addEventListener('scroll', onScroll, { passive: true });
 }

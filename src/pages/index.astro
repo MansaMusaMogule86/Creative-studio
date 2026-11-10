@@ -4,19 +4,22 @@ import Hero from '../components/Hero.astro';
 import Universe from '../components/Universe.astro';
 import Services from '../components/Services.astro';
 import Philosophy from '../components/Philosophy.astro';
-import Work from '../components/Work.astro';
 import Method from '../components/Method.astro';
 import Contact from '../components/Contact.astro';
 import AskMoguls from '../components/AskMoguls';
 import '../styles/islands.css';
+import { brand } from '../config/brand';
+const website = {
+  '@context': 'https://schema.org', '@type': 'WebSite', name: brand.name,
+  url: new URL('/', Astro.site).href, inLanguage: 'en',
+};
 ---
-<Base>
+<Base jsonLd={[website]}>
   <Hero />
   <Universe />
   <Services />
   <Philosophy />
   <Method />
-  <Work />
   <Contact />
   <AskMoguls client:idle />
 </Base>

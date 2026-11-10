@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { divisions, type Division } from '../../data/divisions';
 import { brand } from '../../config/brand';
+import DivisionArt from '../../components/divisions/DivisionArt.astro';
 
 export function getStaticPaths() {
   return divisions.map((d) => ({ params: { division: d.slug }, props: { d } }));
@@ -15,9 +16,19 @@ const jsonLd = [{
     '@type': 'ListItem', position: n + 1,
     item: { '@type': 'Service', name: s.title, description: s.desc, provider: { '@type': 'Organization', name: brand.name } },
   })),
+}, {
+  // Mirrors the visible breadcrumb (Home / Universe / {division}).
+  '@context': 'https://schema.org', '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: new URL('/', Astro.site).href },
+    { '@type': 'ListItem', position: 2, name: 'Universe', item: new URL('/#universe', Astro.site).href },
+    { '@type': 'ListItem', position: 3, name: d.short, item: new URL(`/universe/${d.slug}/`, Astro.site).href },
+  ],
 }];
+// Meta description: the division intro alone stays within ~160 characters.
+const metaDescription = d.intro.length <= 158 ? d.intro : `${d.intro.slice(0, 155).trimEnd()}…`;
 ---
-<Base title={`${d.name}: ${d.tagline}`} description={`${d.intro} Services: ${d.services.map((s) => s.title).join(', ')}.`} jsonLd={jsonLd}>
+<Base title={`${d.name}: ${d.tagline}`} description={metaDescription} jsonLd={jsonLd}>
   <article class="dv" style={`--a:${d.palette[0]};--b:${d.palette[1]};--c:${d.palette[2]};--ink-d:${d.ink}`}>
     <header class="dv__hero">
       <div class="wrap dv__heroGrid">
@@ -32,12 +43,7 @@ const jsonLd = [{
           </div>
         </div>
         <figure class="dv__art">
-          <picture>
-            <source media="(max-width: 900px)" srcset={`/renders/division-${d.slug}-wide-600.webp 600w, /renders/division-${d.slug}-wide-1200.webp 1200w`} sizes="100vw" width="1200" height="760" />
-            <img src={`/renders/division-${d.slug}-520.webp`} srcset={`/renders/division-${d.slug}-520.webp 520w, /renders/division-${d.slug}-1040.webp 1040w`}
-              sizes="(max-width: 1440px) 40vw, 560px" width="1040" height="1040" alt="" decoding="async" fetchpriority="high" />
-          </picture>
-          <figcaption><span>{d.index}</span> Twin Arch study · {d.short} palette</figcaption>
+          <DivisionArt division={d} variant="hero" eager />
         </figure>
       </div>
     </header>
@@ -59,7 +65,7 @@ const jsonLd = [{
     </section>
 
     <nav class="dv__next" aria-label="Next division">
-      <a href={`/universe/${next.slug}`} class="wrap" style={`--na:${next.palette[0]}`}>
+      <a href={`/universe/${next.slug}/`} class="wrap" style={`--na:${next.palette[0]}`}>
         <span class="eyebrow">Next world · {next.index}</span>
         <span class="dv__nextName">{next.name} <span aria-hidden="true">→</span></span>
       </a>
@@ -75,21 +81,19 @@ const jsonLd = [{
   .dv__crumb a { color: var(--ink-2); }
   .dv .eyebrow { color: var(--ink-d); }
   .dv__ctas { display: flex; flex-wrap: wrap; gap: 0.8rem; }
-  .dv__art { position: relative; justify-self: end; width: min(100%, 560px); margin: 0; border-radius: 34px; overflow: hidden; border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 50px 90px -50px color-mix(in srgb, var(--ink-d) 55%, transparent); background: color-mix(in srgb, var(--a) 30%, white); }
-  .dv__art img { display: block; width: 100%; height: auto; aspect-ratio: 1; object-fit: cover; animation: dv-float 9s var(--ease-in-out) infinite alternate; }
-  @keyframes dv-float { from { transform: scale(1.02) translateY(0); } to { transform: scale(1.05) translateY(-1.5%); } }
-  .dv__art figcaption { position: absolute; inset-inline-start: 16px; bottom: 16px; display: inline-flex; gap: 0.6rem; align-items: center; min-height: 34px; padding: 0 0.9rem; border-radius: 999px; font-size: 0.78rem; background: rgb(255 255 255 / 0.86); backdrop-filter: blur(10px); }
-  .dv__art figcaption span { color: var(--ink-d); font-weight: 600; letter-spacing: 0.1em; }
+  .dv__art { position: relative; justify-self: end; width: min(100%, 640px); margin: 0; border-radius: 28px; }
+  .dv__art :global(.dart-live) { border-radius: 28px; }
+  .dv__art :global(.dart) { border: 1px solid rgb(255 255 255 / 0.95); box-shadow: 0 0 0 1px rgb(216 184 117 / 0.45), 0 50px 90px -50px color-mix(in srgb, var(--ink-d) 55%, transparent); }
   .dv__list ol { list-style: none; padding: 0; margin: 2.5rem 0 0; display: grid; grid-template-columns: repeat(2, 1fr); gap: 0 clamp(1.5rem, 4vw, 4rem); }
   .dv__svc { display: grid; grid-template-columns: 3rem 1fr; column-gap: 1rem; row-gap: 0.4rem; padding-block: 1.8rem; border-top: 1px solid var(--line); scroll-margin-top: 110px; }
   .dv__svc:target { background: linear-gradient(90deg, color-mix(in srgb, var(--a) 22%, transparent), transparent); border-radius: 12px; }
   .dv__n { font-size: 0.78rem; letter-spacing: 0.12em; color: var(--ink-d); padding-top: 0.5rem; grid-row: span 3; }
   .dv__svc h3 { font-family: var(--font-display); font-size: var(--step-2); }
   .dv__svc p { color: var(--ink-2); }
-  .dv__svc a { justify-self: start; color: var(--ink-d); font-weight: 560; font-size: 0.92rem; text-underline-offset: 4px; }
+  .dv__svc a { justify-self: start; display: inline-flex; align-items: center; min-height: 44px; color: var(--ink-d); font-weight: 560; font-size: 0.92rem; text-underline-offset: 4px; }
   .dv__next { border-top: 1px solid var(--line); background: var(--white); }
   .dv__next a { display: grid; gap: 0.6rem; padding-block: clamp(3rem, 6vw, 5rem); text-decoration: none; }
   .dv__nextName { font-family: var(--font-display); font-size: var(--step-4); line-height: 1; transition: color 0.4s; }
   .dv__next a:hover .dv__nextName { color: var(--ink-d); }
-  @media (max-width: 900px) { .dv__heroGrid { grid-template-columns: 1fr; } .dv__art { order: -1; justify-self: stretch; width: 100%; border-radius: 26px; } .dv__art img { aspect-ratio: 1200 / 760; } .dv__list ol { grid-template-columns: 1fr; } .dv__hero { padding-top: 110px; } }
+  @media (max-width: 1023px) { .dv__heroGrid { grid-template-columns: 1fr; } .dv__art { order: -1; justify-self: stretch; width: 100%; border-radius: 26px; } .dv__list ol { grid-template-columns: 1fr; } .dv__hero { padding-top: 110px; } }
 </style>

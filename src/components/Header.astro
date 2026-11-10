@@ -7,14 +7,13 @@ const links = [
   { href: '/', label: d.nav.home, spy: 'top' },
   { href: '/#universe', label: d.nav.universe, spy: 'universe' },
   { href: '/#services', label: d.nav.services, spy: 'services' },
-  { href: '/#work', label: d.nav.work, spy: 'work' },
   { href: '/#philosophy', label: d.nav.about, spy: 'philosophy' },
   { href: '/#contact', label: d.nav.contact, spy: 'contact' },
 ];
 ---
 <header class="hdr" data-header>
   <div class="hdr__bar">
-    <a href="/" class="hdr__brand" aria-label="Mansas Moguls, home"><Logo size={30} /></a>
+    <a href="/" class="hdr__brand" aria-label="Mansas Moguls, home"><Logo size={40} eager /></a>
     <nav aria-label="Primary" class="hdr__nav">
       <ul>{links.map((l) => <li><a href={l.href} data-spy={l.spy} class:list={[{ 'is-current': l.spy === 'top' && Astro.url.pathname === '/' }]}>{l.label}</a></li>)}</ul>
     </nav>
@@ -32,21 +31,40 @@ const links = [
         ))}
       </ol>
     </nav>
-    <a href="/#contact" class="btn mnav__cta" data-menu-link>{d.cta.create} <span class="arrow" aria-hidden="true">→</span></a>
+    <div class="mnav__foot">
+      <a href="/#contact" class="btn btn--gold mnav__cta" data-menu-link>{d.cta.create} <span class="arrow" aria-hidden="true">→</span></a>
+      <button type="button" class="btn btn--ghost mnav__ask" data-menu-ask>Ask Moguls · service finder</button>
+      <div class="mnav__brand"><Logo size={56} tagline /></div>
+    </div>
   </div>
 </header>
 
 <script>
+  import { lockScroll, unlockScroll } from '../scripts/scroll-lock';
   const btn = document.querySelector<HTMLButtonElement>('[data-menu-toggle]')!;
   const menu = document.querySelector<HTMLElement>('[data-menu]')!;
+  const background = [document.querySelector('main'), document.querySelector('footer')].filter(Boolean) as HTMLElement[];
+  let isOpen = false;
   const set = (open: boolean) => {
+    if (open === isOpen) return;
+    isOpen = open;
     btn.setAttribute('aria-expanded', String(open));
     menu.hidden = !open;
     document.documentElement.classList.toggle('menu-open', open);
-    if (open) menu.querySelector<HTMLAnchorElement>('a')?.focus();
+    // iOS-safe lock that restores the exact scroll position on close;
+    // page content behind the menu is made non-interactive.
+    if (open) lockScroll(); else unlockScroll();
+    background.forEach((el) => (el.inert = open));
+    if (open) menu.querySelector<HTMLAnchorElement>('a')?.focus({ preventScroll: true });
   };
   btn.addEventListener('click', () => set(btn.getAttribute('aria-expanded') !== 'true'));
   menu.querySelectorAll('[data-menu-link]').forEach((a) => a.addEventListener('click', () => set(false)));
+  // The assistant is always reachable from the menu, even when its floating
+  // launcher steps aside so it doesn't cover page controls.
+  menu.querySelector('[data-menu-ask]')?.addEventListener('click', () => {
+    set(false);
+    requestAnimationFrame(() => dispatchEvent(new CustomEvent('moguls:ask-open', { detail: { opener: btn } })));
+  });
   addEventListener('keydown', (e) => {
     if (e.key === 'Escape' && !menu.hidden) { set(false); btn.focus(); }
   });
@@ -70,7 +88,9 @@ const links = [
 </script>
 
 <style>
-  .hdr { position: fixed; inset-inline: 0; top: 0; z-index: 50; padding: 14px var(--gutter); pointer-events: none; }
+  .hdr { position: fixed; inset-inline: 0; top: 0; z-index: 50; padding: max(14px, env(safe-area-inset-top)) var(--gutter) 14px; pointer-events: none; transition: transform 0.45s var(--ease-out); }
+  .hdr:global(.is-tucked) { transform: translateY(-110%); }
+  @media (prefers-reduced-motion: reduce) { .hdr { transition: none; } }
   .hdr__bar {
     pointer-events: auto; margin-inline: auto; max-width: var(--max);
     display: flex; align-items: center; gap: 1.5rem; padding: 10px 10px 10px 20px;
@@ -81,7 +101,7 @@ const links = [
     max-width: 1180px; background: rgb(255 255 255 / 0.72); backdrop-filter: blur(18px) saturate(1.4);
     border-color: rgb(255 255 255 / 0.9); box-shadow: 0 12px 40px -18px rgb(37 36 60 / 0.25);
   }
-  .hdr__brand { text-decoration: none; flex-shrink: 0; }
+  .hdr__brand { text-decoration: none; flex-shrink: 0; display: inline-flex; align-items: center; min-height: 44px; }
   .hdr__nav { margin-inline-start: auto; }
   .hdr__nav ul { display: flex; gap: 2px; padding: 4px; border-radius: 999px; background: rgb(37 36 60 / 0.05); border: 1px solid rgb(255 255 255 / 0.8); }
   .hdr__nav a {
@@ -90,7 +110,11 @@ const links = [
     transition: background-color 0.3s;
   }
   .hdr__nav a:hover { background: rgb(255 255 255 / 0.8); }
-  .hdr__nav a.is-current { background: #6a4ce0; color: #fff; box-shadow: 0 8px 20px -8px rgb(106 76 224 / 0.7); }
+  .hdr__nav a { position: relative; }
+  /* Active section: white pill with a fine gold underline. */
+  .hdr__nav a::after { content: ''; position: absolute; left: 22%; right: 22%; bottom: 5px; height: 1.5px; border-radius: 2px; background: var(--gold-line); transform: scaleX(0); transition: transform 0.6s var(--ease-out); }
+  .hdr__nav a.is-current { background: #fff; color: var(--ink); box-shadow: 0 6px 16px -10px rgb(167 122 48 / 0.55), inset 0 0 0 1px rgb(216 184 117 / 0.35); }
+  .hdr__nav a.is-current::after { transform: scaleX(1); }
   .hdr__cta { min-height: 44px; padding: 0 1.2rem; font-size: 0.76rem; }
   .hdr__toggle {
     display: none; margin-inline-start: auto; width: 48px; height: 48px; border-radius: 50%;
@@ -115,14 +139,23 @@ const links = [
     font-family: var(--font-display); font-size: clamp(2rem, 9vw, 3rem); line-height: 1.1;
   }
   .mnav li a span { font-family: var(--font-sans); font-size: 0.75rem; color: var(--ink-3); letter-spacing: 0.1em; }
-  .mnav__cta { margin-top: 2rem; width: 100%; }
+  .mnav__foot { display: grid; gap: 1.6rem; margin-top: 2rem; }
+  .mnav__cta, .mnav__ask { width: 100%; }
+  .mnav__brand { display: flex; justify-content: center; padding-top: 1.4rem; border-top: 1px solid transparent; border-image: var(--gold-line) 1; }
   @keyframes mnav-in { from { opacity: 0; transform: translateY(16px); } }
-  :global(.menu-open) body { overflow: hidden; }
 
   @media (max-width: 1023px) {
     .hdr__nav, .hdr__cta { display: none; }
     .hdr__toggle { display: grid; }
     .hdr__bar { padding: 6px 6px 6px 16px; }
   }
-  @media (max-width: 360px) { .hdr__brand :global(.logo__word) { font-size: 0.78rem; letter-spacing: 0.18em; } }
+  /* Mobile: the official crowned M, a fine divider and MANSAS MOGULS on one
+     line (never the tagline). Emblem, type and spacing scale with the
+     viewport so the name always fits beside the menu button without wrapping. */
+  @media (max-width: 1023px) {
+    .hdr__brand :global(.logo) { --lh: clamp(34px, 6px + 8.5vw, 44px) !important; gap: clamp(10px, 1px + 2.8vw, 14px); }
+    .hdr__brand :global(.logo__text) { display: flex; align-items: center; height: calc(var(--lh) * 0.72); padding-inline-start: clamp(10px, 1px + 2.8vw, 14px); border-inline-start: 1px solid rgb(37 36 60 / 0.22); }
+    .hdr__brand :global(.logo__word) { font-size: clamp(0.78rem, 0.48rem + 1.5vw, 0.95rem); font-weight: 500; letter-spacing: 0.2em; line-height: 1.2; }
+  }
+  @media (max-width: 360px) { .hdr__brand :global(.logo__word) { letter-spacing: 0.16em; } }
 </style>

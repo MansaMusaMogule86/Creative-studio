@@ -70,7 +70,10 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const LIGHT_I = [2.2, 2.0, 2.0];
   card('#ffffff', [0, 9, 6], [12, 3], 3.2);
   card('#d9a8ff', [-4, -3, -9], [10, 8], 1.8);
-  card('#ffd27a', [-8, -6, 2], [4, 6], 1.6);
+  // Champagne-gold light cards: warm highlights on the glass edges.
+  card('#e8c98a', [-8, -6, 2], [4, 6], 1.9);
+  card('#f5e5ba', [7, 8, 3], [2.2, 9], 2.4);
+  card('#d4a43b', [-2, 10, -6], [9, 1.2], 1.4);
   card('#7fb4ff', [7, 6, -6], [5, 7], 1.8);
   card('#ffffff', [4, 2, 10], [3, 8], 2.6);
   // Thin ink strips give the glass defined, darker rims, as in a studio shot.
@@ -95,6 +98,8 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
         col = mix(col, uC1, 0.62 * blob(p, vec2(uAspect*(0.72 + 0.06*sin(t*3.0)), 0.70 + 0.05*cos(t*2.0)), 0.75));
         col = mix(col, uC2, 0.55 * blob(p, vec2(uAspect*(0.92 + 0.05*cos(t*2.3)), 0.22 + 0.06*sin(t*1.7)), 0.7));
         col = mix(col, uC3, 0.5 * blob(p, vec2(uAspect*(0.18 + 0.05*sin(t*1.9)), 0.12 + 0.04*cos(t*2.6)), 0.65));
+        // Very subtle champagne ambient behind the sculpture's centre.
+        col = mix(col, vec3(0.97, 0.90, 0.74), 0.22 * blob(p, vec2(uAspect*0.5, 0.52), 0.42));
         col += (fract(sin(dot(gl_FragCoord.xy, vec2(12.9898,78.233))) * 43758.5453) - 0.5) / 255.0;
         gl_FragColor = vec4(col, 1.0);
       }`,
@@ -180,9 +185,12 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   const shadow = new Mesh(new PlaneGeometry(6, 1.2), new MeshBasicMaterial({ map: new CanvasTexture(sc), transparent: true, depthWrite: false, opacity: 0.35 }));
   scene.add(shadow);
 
-  const key = new DirectionalLight('#ffffff', 1.4);
+  const key = new DirectionalLight('#fff4de', 1.4);
   key.position.set(3, 5, 6);
   scene.add(key);
+  const rim = new DirectionalLight('#e8c98a', 0.9); // warm gold rim from behind-left
+  rim.position.set(-5, 2, -4);
+  scene.add(rim);
 
   // ── Layout: sculpture right of the headline on wide screens, above it on narrow ──
   const resize = () => {
@@ -208,8 +216,10 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   // ── Interaction ──
   const target = { x: 0, y: 0 };
   const cur = { x: 0, y: 0 };
+  let hasMouse = false;
   const onPointer = (e: PointerEvent) => {
     if (e.pointerType !== 'mouse') return;
+    hasMouse = true;
     const r = canvas.getBoundingClientRect();
     target.x = Math.max(-1.5, Math.min(1.5, ((e.clientX - r.left) / r.width - 0.5) * 2));
     target.y = Math.max(-1.5, Math.min(1.5, ((e.clientY - r.top) / r.height - 0.5) * 2));
@@ -247,12 +257,20 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
       if (tween.t === 1) tween = null;
     }
     build(time);
+    // Touch devices have no hover: drift as if a pointer were gently circling.
+    if (!hasMouse) { target.x = Math.sin(time * 0.33) * 0.75; target.y = Math.cos(time * 0.27) * 0.35; }
     cur.x += (target.x - cur.x) * 0.04;
     cur.y += (target.y - cur.y) * 0.04;
+<<<<<<< HEAD
     group.rotation.y = -0.22 + now_.ry + Math.sin(time * 0.25) * 0.35 + cur.x * 0.35 + (1 - e) * 1.2;
     group.rotation.x = 0.12 + now_.rx + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
+=======
+    // Continuous, clearly visible motion: a slow sway plus pointer response.
+    group.rotation.y = -0.22 + Math.sin(time * 0.31) * 0.55 + cur.x * 0.4 + (1 - e) * 1.2;
+    group.rotation.x = 0.12 + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
+>>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
     group.rotation.z = -0.05 + Math.sin(time * 0.17) * 0.05;
-    ribbon.position.y = Math.sin(time * 0.7) * 0.08 - (1 - e) * 0.6;
+    ribbon.position.y = Math.sin(time * 0.7) * 0.14 - (1 - e) * 0.6;
     ribbon.scale.setScalar(0.86 + 0.14 * e);
     (shadow.material as MeshBasicMaterial).opacity = 0.32 * e - Math.sin(time * 0.7) * 0.04;
     backdropMat.uniforms.uTime.value = time;
@@ -276,7 +294,7 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
   ro.observe(canvas);
   resize();
 
-  const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; visible ? start() : stop(); });
+  const io = new IntersectionObserver(([en]) => { visible = en.isIntersecting; if (visible) start(); else stop(); });
   io.observe(canvas);
   document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
   if (opts.reduceMotion || opts.still) renderStatic(); else start();

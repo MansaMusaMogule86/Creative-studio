@@ -7,16 +7,20 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "tsc -p tsconfig.check.json",
+    "check": "tsc -p tsconfig.check.json && vitest run",
     "qa": "node scripts/qa.mjs",
     "render:stills": "node scripts/render-stills.mjs",
-    "lint": "tsc -p tsconfig.check.json"
+    "lint": "tsc -p tsconfig.check.json && eslint .",
+    "brand:assets": "node scripts/build-brand-assets.mjs",
+    "qa:mobile": "node scripts/qa-mobile.mjs",
+    "test": "vitest run"
   },
   "dependencies": {
     "@astrojs/react": "^7.1.4",
     "@astrojs/sitemap": "^3.7.4",
     "@fontsource-variable/outfit": "^5.3.0",
     "@fontsource/instrument-serif": "^5.3.0",
+    "@lucide/astro": "^1.70.0",
     "astro": "^7.4.7",
     "gsap": "^3.15.1",
     "react": "^19.3.1",
@@ -25,11 +29,19 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "^4.14.0",
+    "@eslint/js": "^10.0.1",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
+<<<<<<< HEAD
     "playwright": "1.65.0",
+=======
+    "eslint": "^10.14.0",
+    "eslint-plugin-astro": "^3.2.1",
+>>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
     "sharp": "0.35.5",
-    "typescript": "^6"
+    "typescript": "^6",
+    "typescript-eslint": "^8.72.2",
+    "vitest": "^5.1.0"
   }
 }

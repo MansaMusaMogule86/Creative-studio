@@ -1,12 +1,26 @@
 ---
 import Base from '../layouts/Base.astro';
+import { divisions } from '../data/divisions';
 ---
-<Base title="Page not found" noindex>
+<Base title="Page not found" description="This page doesn’t exist. Return to the Mansas Moguls homepage or choose one of the five divisions." noindex>
   <section class="section nf"><div class="wrap">
     <p class="eyebrow">404</p>
     <h1 class="display">Lost in <em>the universe.</em></h1>
     <p class="lede">This page doesn’t exist. Head back home or pick a division.</p>
-    <a class="btn" href="/">Back to home <span class="arrow" aria-hidden="true">→</span></a>
+    <div class="nf__actions">
+      <a class="btn" href="/">Back to home <span class="arrow" aria-hidden="true">→</span></a>
+      <a class="btn btn--ghost" href="/#contact">Start a project</a>
+    </div>
+    <nav aria-label="Divisions" class="nf__nav">
+      <ul>{divisions.map((d) => <li><a href={`/universe/${d.slug}/`}><span>{d.index}</span>{d.name}</a></li>)}</ul>
+    </nav>
   </div></section>
 </Base>
-<style>.nf { padding-top: 180px; min-height: 80vh; } .nf .wrap { display: grid; gap: 1.4rem; justify-items: start; }</style>
+<style>
+  .nf { padding-top: 180px; min-height: 80vh; }
+  .nf .wrap { display: grid; gap: 1.4rem; justify-items: start; }
+  .nf__actions { display: flex; flex-wrap: wrap; gap: 0.7rem; }
+  .nf__nav ul { list-style: none; margin: 1rem 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 8px; }
+  .nf__nav a { display: inline-flex; align-items: center; gap: 0.5rem; min-height: 44px; padding: 0 1rem; border-radius: 999px; border: 1px solid var(--line-strong); background: var(--white); text-decoration: none; }
+  .nf__nav span { font-size: 0.75rem; color: var(--gold-text); letter-spacing: 0.1em; }
+</style>

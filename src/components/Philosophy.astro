@@ -1,10 +1,13 @@
 ---
+import Living from './ui/Living.astro';
+// Hotspots sit over the four circles of the owner's One Team artwork
+// (brand-source/division-art/one-team.png, 1199×1312): centre x/y and colour.
 const pillars = [
-  { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8C8FF' },
-  { key: 'Engineering', line: 'Built to last and to scale', color: '#8EE7E8' },
-  { key: 'Intelligence', line: 'Systems that learn and assist', color: '#B9A5FF' },
-  { key: 'Commerce', line: 'Every decision tied to value', color: '#FFC6AC' },
-];
+  { key: 'Creativity', line: 'Ideas with a point of view', color: '#E8A8FF', x: 27.5, y: 27.4 },
+  { key: 'Engineering', line: 'Built to last and to scale', color: '#7FDCF0', x: 72.6, y: 27.4 },
+  { key: 'Intelligence', line: 'Systems that learn and assist', color: '#A58CFF', x: 27.5, y: 65.5 },
+  { key: 'Commerce', line: 'Every decision tied to value', color: '#FFB48E', x: 72.1, y: 65.5 },
+] as const;
 const story =
   'Most projects are split between people who never meet: designers, engineers, data specialists and marketers each optimising their own piece. We work the other way round. One team holds the whole picture, so the brand, the product, the intelligence behind it and the plan to grow it are designed as a single system from the first conversation.';
 ---
@@ -18,42 +21,68 @@ const story =
       <p class="phi__story" data-words>{story.split(' ').map((w) => <span>{w} </span>)}</p>
     </div>
 
-    <div class="phi__venn" aria-label="Four disciplines, one team" role="img">
-      {pillars.map((p, i) => (
-        <div class="orb" style={`--c:${p.color};--i:${i}`} data-orb>
-          <span class="orb__k">{p.key}</span>
-          <span class="orb__l">{p.line}</span>
+    <div class="phi__diagram">
+      <Living class="phi__live" tilt={0.7}>
+        <div class="phi__venn" role="group" aria-label="Four disciplines, one team">
+          <img class="phi__art" src="/art/one-team-800.webp" srcset="/art/one-team-560.webp 560w, /art/one-team-800.webp 800w, /art/one-team-1199.webp 1199w"
+            sizes="(max-width: 900px) calc(100vw - 32px), 560px" width="1199" height="1312" loading="lazy" decoding="async"
+            alt="Four glass circles labelled Creativity, Engineering, Intelligence and Commerce overlap around the crowned Mansas Moguls M, with ONE TEAM beneath it." />
+          {pillars.map((p, i) => (
+            <button type="button" class="spot" style={`--c:${p.color};--x:${p.x}%;--y:${p.y}%;--i:${i}`} data-orb aria-pressed="false" aria-describedby={`phi-l-${i}`}>
+              <span class="sr-only orb__k">{p.key}</span>
+              <span class="sr-only orb__l" id={`phi-l-${i}`}>{p.line}</span>
+            </button>
+          ))}
         </div>
-      ))}
-      <div class="phi__core" data-core><span>One team</span></div>
+      </Living>
+      <p class="phi__cap" aria-live="polite" data-cap><b>Tap a circle</b> to see each discipline’s role.</p>
     </div>
   </div>
 </section>
 
 <script>
-  import { gsap } from 'gsap';
-  import { ScrollTrigger } from 'gsap/ScrollTrigger';
+  import { whenNear } from '../scripts/lazy-gsap';
   const root = document.querySelector<HTMLElement>('[data-phi]');
   const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  if (root && !reduce) {
-    gsap.registerPlugin(ScrollTrigger);
-    const words = root.querySelectorAll('[data-words] span');
-    // Colour, not opacity: even the 'unread' state keeps AA contrast.
-    gsap.fromTo(words, { color: '#6a6880' }, {
-      color: '#25243c', stagger: 0.04, ease: 'none',
-      scrollTrigger: { trigger: '[data-words]', start: 'top 80%', end: 'bottom 45%', scrub: 0.6 },
+  if (root) {
+    // Hover, focus or tap lights one discipline and shows its role below.
+    const spots = [...root.querySelectorAll<HTMLButtonElement>('[data-orb]')];
+    const cap = root.querySelector<HTMLElement>('[data-cap]')!;
+    const venn = root.querySelector<HTMLElement>('.phi__venn')!;
+    const show = (o: HTMLButtonElement | null, pressed = false) => {
+      spots.forEach((b) => { const on = b === o; b.classList.toggle('is-active', on); b.setAttribute('aria-pressed', String(on && pressed)); });
+      venn.classList.toggle('has-active', !!o);
+      cap.replaceChildren();
+      const b = document.createElement('b');
+      if (o) { b.textContent = o.querySelector('.orb__k')!.textContent; cap.append(b, ' ', o.querySelector('.orb__l')!.textContent ?? ''); }
+      else { b.textContent = 'Tap a circle'; cap.append(b, ' to see each discipline’s role.'); }
+    };
+    let pinned: HTMLButtonElement | null = null;
+    spots.forEach((o) => {
+      o.addEventListener('click', () => { pinned = pinned === o ? null : o; show(pinned, true); });
+      o.addEventListener('pointerenter', (e) => { if (e.pointerType === 'mouse') show(o, pinned === o); });
+      o.addEventListener('pointerleave', (e) => { if (e.pointerType === 'mouse') show(pinned, true); });
+      o.addEventListener('focus', () => show(o, pinned === o));
     });
-    // The four disciplines start apart and converge into one shape.
-    const offsets = [[-1, -1], [1, -1], [-1, 1], [1, 1]];
-    root.querySelectorAll<HTMLElement>('[data-orb]').forEach((o, i) => {
-      gsap.fromTo(o, { xPercent: offsets[i][0] * 38, yPercent: offsets[i][1] * 38, scale: 0.86 }, {
-        xPercent: 0, yPercent: 0, scale: 1, ease: 'none',
-        scrollTrigger: { trigger: '.phi__venn', start: 'top 85%', end: 'center 50%', scrub: 0.8 },
+    root.addEventListener('keydown', (e) => { if (e.key === 'Escape') { pinned = null; show(null); } });
+
+    if (!reduce) whenNear(root, (gsap) => {
+      const words = root.querySelectorAll('[data-words] span');
+      // Colour, not opacity: even the 'unread' state keeps AA contrast.
+      gsap.fromTo(words, { color: '#6a6880' }, {
+        color: '#25243c', stagger: 0.04, ease: 'none',
+        scrollTrigger: { trigger: '[data-words]', start: 'top 80%', end: 'bottom 45%', scrub: 0.6 },
       });
-    });
-    gsap.fromTo('[data-core]', { scale: 0 }, {
-      scale: 1, ease: 'back.out(2)',
-      scrollTrigger: { trigger: '.phi__venn', start: 'center 62%', end: 'center 45%', scrub: 0.6 },
+      // Entrance: the artwork rises and settles into place.
+      gsap.from('.phi__live', {
+        opacity: 0, y: 40, scale: 0.94, rotateX: 8, duration: 1.3, ease: 'power3.out',
+        scrollTrigger: { trigger: '.phi__diagram', start: 'top 80%', toggleActions: 'play none none none' },
+      });
+      // Each circle glimmers once in turn as it arrives.
+      gsap.from(spots, {
+        '--pulse': 1, duration: 1.2, ease: 'power2.out', stagger: 0.18, delay: 0.5,
+        scrollTrigger: { trigger: '.phi__diagram', start: 'top 70%', toggleActions: 'play none none none' },
+      });
     });
   }
 </script>
@@ -66,30 +95,36 @@ const story =
   .phi__title em { text-transform: none; display: block; color: #5a3fc0; }
   .phi__story { font-size: var(--step-1); line-height: 1.5; max-width: 34ch; }
 
-  .phi__venn { position: relative; aspect-ratio: 1; width: min(100%, 560px); justify-self: center; }
-  .orb {
-    position: absolute; width: 58%; aspect-ratio: 1; border-radius: 50%;
-    display: grid; align-content: center; justify-items: center; text-align: center; padding: 14%;
-    background: radial-gradient(circle at 35% 30%, rgb(255 255 255 / 0.95), color-mix(in srgb, var(--c) 70%, transparent) 70%);
-    border: 1px solid rgb(255 255 255 / 0.9); mix-blend-mode: multiply;
-    box-shadow: 0 30px 60px -40px rgb(37 36 60 / 0.5);
-  }
-  .orb:nth-child(1) { top: 0; left: 0; } .orb:nth-child(2) { top: 0; right: 0; }
-  .orb:nth-child(3) { bottom: 0; left: 0; } .orb:nth-child(4) { bottom: 0; right: 0; }
-  .orb__k { font-family: var(--font-display); font-size: clamp(1.2rem, 0.9rem + 1.2vw, 2rem); }
-  .orb__l { font-size: 0.82rem; color: var(--ink-2); max-width: 14ch; line-height: 1.3; margin-top: 0.3rem; }
-  .orb:nth-child(1) { align-content: start; padding-top: 22%; } .orb:nth-child(2) { align-content: start; padding-top: 22%; }
-  .orb:nth-child(3) { align-content: end; padding-bottom: 22%; } .orb:nth-child(4) { align-content: end; padding-bottom: 22%; }
-  .orb:nth-child(odd) { justify-items: start; text-align: start; padding-left: 18%; }
-  .orb:nth-child(even) { justify-items: end; text-align: end; padding-right: 18%; }
-  .phi__core {
-    position: absolute; inset: 39%; border-radius: 50%; display: grid; place-items: center;
-    background: var(--ink); color: var(--white); font-size: 0.74rem; letter-spacing: 0.16em; text-transform: uppercase; text-align: center;
-    box-shadow: 0 0 0 10px rgb(255 255 255 / 0.6), 0 20px 50px -10px rgb(90 63 192 / 0.6);
-  }
+  .phi__diagram { display: grid; gap: 1.1rem; justify-items: center; width: 100%; }
+  .phi__diagram :global(.phi__live) { width: min(100%, 560px); border-radius: 28px; }
+  .phi__venn { position: relative; z-index: 0; border-radius: 28px; overflow: hidden; box-shadow: 0 50px 90px -60px rgb(90 63 192 / 0.6); }
+  .phi__art { display: block; width: 100%; height: auto; }
 
-  @media (max-width: 900px) {
-    .phi__grid { grid-template-columns: 1fr; }
-    .orb__l { display: none; }
+  /* Hotspots over the four glass circles. */
+  .spot {
+    --pulse: 0;
+    position: absolute; z-index: 2; left: var(--x); top: var(--y); width: 27.5%; aspect-ratio: 1; translate: -50% -50%;
+    border-radius: 50%; border: 0; padding: 0; background: none; cursor: pointer; -webkit-tap-highlight-color: transparent;
   }
+  .spot::before {
+    content: ''; position: absolute; inset: -14%; border-radius: 50%; pointer-events: none;
+    background: radial-gradient(closest-side, color-mix(in srgb, var(--c) 55%, transparent), transparent 75%);
+    opacity: calc(var(--pulse) * 0.9); mix-blend-mode: screen; transition: opacity 0.5s var(--ease-out), scale 0.6s var(--ease-out);
+  }
+  .spot::after {
+    content: ''; position: absolute; inset: -10%; border-radius: 50%; pointer-events: none;
+    box-shadow: 0 0 0 2px rgb(255 255 255 / 0.9), 0 0 24px 6px color-mix(in srgb, var(--c) 70%, transparent);
+    opacity: 0; scale: 0.94; transition: opacity 0.45s, scale 0.6s var(--ease-out);
+  }
+  .spot.is-active::before { opacity: 0.95; scale: 1.06; }
+  .spot.is-active::after { opacity: 1; scale: 1; }
+  .spot:focus-visible { outline: none; }
+  .spot:focus-visible::after { opacity: 1; scale: 1; box-shadow: 0 0 0 3px #fff, 0 0 0 5px var(--ink); }
+  .phi__venn::after { content: ''; position: absolute; inset: 0; background: rgb(248 247 255 / 0.28); opacity: 0; transition: opacity 0.5s; pointer-events: none; }
+
+  .phi__cap { min-height: 3.2em; text-align: center; color: var(--ink-2); max-width: 34ch; }
+  .phi__cap :global(b) { font-family: var(--font-display); font-weight: 400; font-size: 1.2rem; color: var(--ink); display: block; }
+
+  @media (max-width: 900px) { .phi__grid { grid-template-columns: 1fr; } }
+  @media (prefers-reduced-motion: reduce) { .spot::before, .spot::after { transition: none; } }
 </style>

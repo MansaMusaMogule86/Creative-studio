@@ -1,3 +1,5 @@
+> **Update:** the owner has since supplied and approved the **golden crowned M** as the official master emblem. The Twin Arch monogram proposed below is superseded and has been removed from the site. The Liquid Pearl visual direction and its sculpture remain in use.
+
 # Mansas Moguls: three creative directions
 
 All three stay inside the brief: predominantly light, built on the approved palette (Pearl `#F8F7FF`, White, Electric lavender `#B9A5FF`, Digital aqua `#8EE7E8`, Soft peach `#FFC6AC`, Deep ink `#25243C`), with no black-and-gold, no cyberpunk darkness and no generic SaaS gradients.

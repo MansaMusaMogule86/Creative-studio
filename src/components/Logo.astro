@@ -1,33 +1,47 @@
 ---
-// Proposed "Twin Arch" monogram: two interlocking arches form the M.
-// Architecture (the arch), connection (the shared centre pillar) and
-// progress (the second arch rising past the first).
-interface Props { variant?: 'holo' | 'ink' | 'white'; wordmark?: boolean; size?: number; class?: string }
-const { variant = 'holo', wordmark = true, size = 34, class: cls = '' } = Astro.props;
-const id = `mm-${Math.random().toString(36).slice(2, 8)}`;
-const stroke = variant === 'holo' ? `url(#${id})` : variant === 'ink' ? '#25243C' : '#FFFFFF';
+// Official lockup: [golden crowned M] MANSAS MOGULS.
+// The emblem is a raster (it is photographic 3D art, not vector geometry),
+// served at 1×/2×/3× of the rendered height so the header stays light.
+import { brand } from '../config/brand';
+interface Props {
+  /** Rendered emblem height in px. */
+  size?: number;
+  wordmark?: boolean;
+  /** Background the lockup sits on: picks emblem variant and text colour. */
+  on?: 'light' | 'dark';
+  tagline?: boolean;
+  class?: string;
+  eager?: boolean;
+}
+const { size = 40, wordmark = true, on = 'light', tagline = false, class: cls = '', eager = false } = Astro.props;
+const L = brand.emblem.light, D = brand.emblem.dark;
+const src = on === 'dark'
+  ? { src: D[160], srcset: `${D[160]} 160w, ${D[320]} 320w, ${D[720]} 720w` }
+  : size <= 48
+    ? { src: L[44], srcset: `${L[44]} 1x, ${L[88]} 2x, ${L[132]} 3x` }
+    : { src: L[160], srcset: `${L[160]} 160w, ${L[320]} 320w, ${L[720]} 720w` };
+const w = Math.round(size * brand.emblem.ratio);
 ---
-<span class={`logo ${cls}`}>
-  <svg width={size} height={size} viewBox="0 0 64 64" aria-hidden="true" focusable="false">
-    <defs>
-      <linearGradient id={id} x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
-        <stop offset="0" stop-color="#7B5CF0" />
-        <stop offset="0.5" stop-color="#2AA9B4" />
-        <stop offset="1" stop-color="#E07A55" />
-      </linearGradient>
-    </defs>
-    <g fill="none" stroke={stroke} stroke-width="5.5" stroke-linecap="round">
-      <path d="M8 56V28a14 14 0 0 1 28 0v28" />
-      <path d="M28 56V28a14 14 0 0 1 28 0v28" opacity="0.92" />
-    </g>
-  </svg>
-  {wordmark && <span class="logo__word">Mansas&nbsp;Moguls</span>}
+<span class={`logo logo--${on} ${cls}`} style={`--lh:${size}px`}>
+  <img class="logo__mark" src={src.src} srcset={src.srcset} sizes={src.srcset.includes('w,') ? `${w}px` : undefined}
+    width={w} height={size} alt={wordmark ? '' : brand.name} loading={eager ? 'eager' : 'lazy'} decoding="async" />
+  {wordmark && (
+    <span class="logo__text">
+      <span class="logo__word">{brand.nameDisplay}</span>
+      {tagline && <span class="logo__tag">{brand.taglineDisplay}</span>}
+    </span>
+  )}
 </span>
 
 <style>
-  .logo { display: inline-flex; align-items: center; gap: 0.7rem; }
+  .logo { display: inline-flex; align-items: center; gap: calc(var(--lh) * 0.28); }
+  .logo__mark { height: var(--lh); width: auto; flex-shrink: 0; filter: drop-shadow(0 4px 10px rgb(167 122 48 / 0.22)); }
+  .logo__text { display: grid; gap: 0.3em; }
   .logo__word {
-    font-family: var(--font-sans); font-weight: 560; font-size: 0.92rem;
-    letter-spacing: 0.24em; text-transform: uppercase; white-space: nowrap;
+    font-family: var(--font-sans); font-weight: 600; font-size: max(0.86rem, calc(var(--lh) * 0.32));
+    letter-spacing: 0.24em; text-transform: uppercase; white-space: nowrap; color: var(--ink);
   }
+  .logo__tag { font-size: 0.68rem; letter-spacing: 0.28em; text-transform: uppercase; color: var(--gold-text); white-space: nowrap; }
+  .logo--dark .logo__word { color: var(--warm-white); }
+  .logo--dark .logo__tag { color: var(--gold-light); }
 </style>

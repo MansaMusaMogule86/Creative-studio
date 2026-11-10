@@ -1,0 +1,80 @@
+{
+  "$comment": "Mansas Moguls conversion inventory. status: VERIFIED (from code), PROPOSED, NEEDS CONFIRMATION, BLOCKED. Line numbers re-verified against branch claude/affectionate-sagan-nrj1c8 on 2026-11-08 (after commit 6c40065).",
+  "generatedAt": "2026-11-08",
+  "repositoryCommit": "b3060af",
+  "existing": [
+    {
+      "id": "FORM-INQUIRY",
+      "status": "VERIFIED",
+      "type": "form",
+      "name": "Project inquiry form",
+      "page": "/",
+      "anchor": "#contact",
+      "component": "InquiryForm (React island, client:visible)",
+      "files": [
+        { "path": "src/components/InquiryForm.tsx", "lines": "1-193" },
+        { "path": "src/components/Contact.astro", "lines": "21" }
+      ],
+      "fields": [
+        { "key": "name", "type": "text", "required": true, "clientValidation": "trimmed length >= 2", "ref": "src/components/InquiryForm.tsx:19,113" },
+        { "key": "email", "type": "email", "required": true, "clientValidation": "regex ^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$", "ref": "src/components/InquiryForm.tsx:12,20,118" },
+        { "key": "company", "type": "text", "required": false, "clientValidation": "none", "ref": "src/components/InquiryForm.tsx:124" },
+        { "key": "services", "type": "multi-select (checkbox chips, 52 service slugs in 5 divisions)", "required": true, "clientValidation": ">= 1 selected; prefill accepts only known slugs", "ref": "src/components/InquiryForm.tsx:21,38-53" },
+        { "key": "description", "type": "textarea", "required": true, "clientValidation": "trimmed length >= 20, maxLength 4000", "ref": "src/components/InquiryForm.tsx:22,150" },
+        { "key": "budget", "type": "select", "required": false, "options": ["Prefer not to say", "Under USD 10k", "USD 10k–25k", "USD 25k–75k", "USD 75k–150k", "Above USD 150k"], "default": "Prefer not to say", "ref": "src/components/InquiryForm.tsx:11,15" },
+        { "key": "contact", "type": "radio", "required": true, "options": ["email", "phone", "video"], "default": "email", "ref": "src/components/InquiryForm.tsx:7,15,165" },
+        { "key": "phone", "type": "tel", "required": "only when contact = phone", "clientValidation": "regex ^\\+?[\\d\\s()-]{7,20}$", "ref": "src/components/InquiryForm.tsx:23,171-175" }
+      ],
+      "payloadAddedByClient": ["submittedAt (ISO timestamp)", "source: 'website'"],
+      "serverValidation": "NONE (no server exists)",
+      "destination": "If PUBLIC_INQUIRY_ENDPOINT is set: browser fetch POST JSON to that URL. Otherwise nothing is sent and the UI says so (src/components/InquiryForm.tsx:69-76,94). .env.example leaves it empty.",
+      "successStates": ["sent (2xx from endpoint)", "validated (no endpoint configured; 'nothing was sent')"],
+      "failureStates": ["client validation error summary with links", "error (non-2xx or network failure)"],
+      "spamProtection": "NONE",
+      "consentCapture": "NONE",
+      "analyticsEvents": "NONE",
+      "works": "Validation and UI: yes (pnpm qa). Delivery: NO, no endpoint is configured.",
+      "needsHighLevel": true,
+      "recommendedCrmAction": "Server route /api/leads → upsert contact → create or append opportunity in Sales pipeline 'New Lead' → add note with description → add tags → GHL workflow notifies owner."
+    },
+    {
+      "id": "WIDGET-ASK-MOGULS",
+      "status": "VERIFIED",
+      "type": "interactive widget (keyword service finder)",
+      "page": "/ (floating launcher) and hero tile button",
+      "files": [
+        { "path": "src/components/AskMoguls.tsx", "lines": "21-25 (prefill), 201 (match), 237 (honesty notice), 262-267 (CTAs)" },
+        { "path": "src/lib/intent.ts", "lines": "1-77" },
+        { "path": "src/components/Hero.astro", "lines": "53, 113-115 (opens widget)" }
+      ],
+      "fields": [{ "key": "query", "type": "free text", "transmitted": false }],
+      "destination": "None. Free text stays in the browser; the result only pre-fills services on FORM-INQUIRY.",
+      "needsHighLevel": false,
+      "recommendedCrmAction": "None directly. PROPOSED: pass lead_source_detail = 'ask-moguls' and the matched service slugs as a hidden attribution value when the visitor continues to FORM-INQUIRY. Never send the free text."
+    }
+  ],
+  "ctas": [
+    { "id": "CTA-HEADER-CREATE", "label": "Let’s create", "target": "/#contact", "ref": "src/components/Header.astro:21", "status": "VERIFIED" },
+    { "id": "CTA-NAV-CONTACT", "label": "Contact (nav)", "target": "/#contact", "ref": "src/components/Header.astro:12", "status": "VERIFIED" },
+    { "id": "CTA-MOBILE-CREATE", "label": "Let’s create (mobile menu)", "target": "/#contact", "ref": "src/components/Header.astro:36", "status": "VERIFIED" },
+    { "id": "CTA-HERO-START", "label": "Start a project", "target": "#contact", "ref": "src/components/Hero.astro:32", "status": "VERIFIED" },
+    { "id": "CTA-HERO-ASK", "label": "Ask Moguls (hero tile)", "target": "opens WIDGET-ASK-MOGULS", "ref": "src/components/Hero.astro:53", "status": "VERIFIED" },
+    { "id": "CTA-SERVICES-INQUIRE", "label": "Inquire about {service}", "target": "/?service={slug}#contact (pre-fills service)", "ref": "src/components/Services.astro:37", "status": "VERIFIED", "count": 52 },
+    { "id": "CTA-DIVISION-START", "label": "Start a/an {division} project", "target": "/?service={first service slug}#contact", "ref": "src/pages/universe/[division].astro:31", "status": "VERIFIED", "count": 5 },
+    { "id": "CTA-DIVISION-SERVICE-INQUIRE", "label": "Inquire", "target": "/?service={slug}#contact", "ref": "src/pages/universe/[division].astro:55", "status": "VERIFIED", "count": 52 },
+    { "id": "CTA-FOOTER-START", "label": "Start a project", "target": "/#contact", "ref": "src/components/Footer.astro:13", "status": "VERIFIED" },
+    { "id": "CTA-ASK-CONTINUE", "label": "Start a project with these / Go to the inquiry form", "target": "scrolls to #contact and pre-fills services", "ref": "src/components/AskMoguls.tsx:262,267", "status": "VERIFIED" }
+  ],
+  "absent": {
+    "status": "VERIFIED",
+    "note": "Searched src/ for mailto:, tel:, wa.me, whatsapp, calendly, booking, newsletter, subscribe, gtag, dataLayer, analytics, cookie, consent. No matches outside copy text. brand.email is empty and brand.social is [] (src/config/brand.ts:22-23).",
+    "items": ["consultation booking", "quotation or proposal request form", "newsletter or updates", "WhatsApp", "email link", "phone link", "lead magnet download", "partnership application", "support request", "client onboarding", "analytics", "consent or cookie banner"]
+  },
+  "proposed": [
+    { "id": "FORM-INQUIRY-v2", "status": "PROPOSED", "summary": "Same design and fields as FORM-INQUIRY, plus: first and last name split, optional website, country, preferred language, optional timeline, a consent checkbox for marketing (separate, unticked), a privacy notice link, honeypot, hidden attribution fields. Submits to /api/leads." },
+    { "id": "BOOKING-DISCOVERY", "status": "NEEDS CONFIRMATION", "summary": "A 'Book a discovery call' step after a successful inquiry, using a GoHighLevel calendar booking widget or link. Needs a calendar configured in GHL first." },
+    { "id": "CONTACT-EMAIL-LINK", "status": "NEEDS CONFIRMATION", "summary": "A mailto link in the footer and contact section once a public address is supplied." },
+    { "id": "WHATSAPP-LINK", "status": "NEEDS CONFIRMATION", "summary": "Optional click-to-chat link, if the business wants WhatsApp as a channel and supplies the number." },
+    { "id": "NEWSLETTER", "status": "NEEDS CONFIRMATION", "summary": "Not recommended for launch. Only with explicit opt-in consent." }
+  ]
+}

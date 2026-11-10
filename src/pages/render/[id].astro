@@ -16,7 +16,12 @@ const { s } = Astro.props as { s: Still };
   html.cut, html.cut body { background: transparent; }
   canvas { display: block; width: 100vw; height: 100vh; }
   .og { position: fixed; inset: 0; padding: 56px 60px; display: grid; align-content: space-between; color: var(--ink); }
-  .og__brand { display: flex; align-items: center; gap: 14px; font-family: var(--font-sans); font-weight: 560; font-size: 20px; letter-spacing: 0.26em; text-transform: uppercase; }
+  .og__brand { display: flex; align-items: center; gap: 16px; font-family: var(--font-sans); text-transform: uppercase; }
+  .og__brand img { height: 96px; width: auto; filter: drop-shadow(0 6px 12px rgb(167 122 48 / 0.3)); }
+  .og__brand span { display: grid; gap: 6px; }
+  .og__brand b { font-weight: 600; font-size: 22px; letter-spacing: 0.26em; }
+  .og__brand small { font-size: 12px; letter-spacing: 0.3em; color: var(--gold-text); }
+  .og__rule { width: 120px; height: 1px; background: var(--gold-line); margin-bottom: 18px; }
   .og__title { font-family: var(--font-display); font-size: 112px; line-height: 0.88; letter-spacing: -0.025em; text-transform: uppercase; }
   .og__title em { display: block; text-transform: none; font-size: 1.04em; }
   .og__foot { display: flex; gap: 28px; font-size: 19px; color: var(--ink-2); }
@@ -27,11 +32,11 @@ const { s } = Astro.props as { s: Still };
   {s.og && (
     <div class="og">
       <div class="og__brand">
-        <svg width="40" height="40" viewBox="0 0 64 64" aria-hidden="true"><defs><linearGradient id="g" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#7B5CF0"/><stop offset=".5" stop-color="#2AA9B4"/><stop offset="1" stop-color="#E07A55"/></linearGradient></defs><g fill="none" stroke="url(#g)" stroke-width="5.5" stroke-linecap="round"><path d="M8 56V28a14 14 0 0 1 28 0v28"/><path d="M28 56V28a14 14 0 0 1 28 0v28"/></g></svg>
-        {brand.nameDisplay}
+        <img src="/brand/emblem-320.webp" width="102" height="96" alt="" />
+        <span><b>{brand.nameDisplay}</b><small>{brand.taglineDisplay}</small></span>
       </div>
       <h1 class="og__title">We architect<em class="holo-text">what’s next.</em></h1>
-      <p class="og__foot"><b>{brand.city}</b><span>Digital · AI · Growth · Creative · Strategy</span></p>
+      <div><div class="og__rule"></div><p class="og__foot"><b>{brand.city}</b><span>Digital · AI · Growth · Creative · Strategy</span></p></div>
     </div>
   )}
   <script>
