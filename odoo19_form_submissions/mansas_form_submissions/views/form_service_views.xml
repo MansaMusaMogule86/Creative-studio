@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_form_service_list" model="ir.ui.view">
+        <field name="name">mansas.form.service.list</field>
+        <field name="model">mansas.form.service</field>
+        <field name="arch" type="xml">
+            <list string="Services" editable="bottom">
+                <field name="sequence" widget="handle"/>
+                <field name="name"/>
+                <field name="slug"/>
+                <field name="division"/>
+                <field name="color" widget="color_picker" optional="hide"/>
+                <field name="active" widget="boolean_toggle" optional="show"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_form_service_search" model="ir.ui.view">
+        <field name="name">mansas.form.service.search</field>
+        <field name="model">mansas.form.service</field>
+        <field name="arch" type="xml">
+            <search>
+                <field name="name"/>
+                <field name="slug"/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter string="Division" name="group_division" context="{'group_by': 'division'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_form_service" model="ir.actions.act_window">
+        <field name="name">Services</field>
+        <field name="res_model">mansas.form.service</field>
+        <field name="view_mode">list</field>
+        <field name="context">{'search_default_group_division': 1}</field>
+    </record>
+</odoo>

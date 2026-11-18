@@ -1,0 +1,7 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_form_submission_user,form.submission.user,model_mansas_form_submission,group_form_submission_user,1,1,0,0
+access_form_submission_manager,form.submission.manager,model_mansas_form_submission,group_form_submission_manager,1,1,1,1
+access_form_service_user,form.service.user,model_mansas_form_service,group_form_submission_user,1,0,0,0
+access_form_service_manager,form.service.manager,model_mansas_form_service,group_form_submission_manager,1,1,1,1
+access_form_api_key_manager,form.api.key.manager,model_mansas_form_api_key,group_form_submission_manager,1,1,1,1
+access_form_api_key_show_manager,form.api.key.show.manager,model_mansas_form_api_key_show,group_form_submission_manager,1,0,1,0

@@ -1,0 +1,169 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_form_submission_list" model="ir.ui.view">
+        <field name="name">mansas.form.submission.list</field>
+        <field name="model">mansas.form.submission</field>
+        <field name="arch" type="xml">
+            <list string="Form Submissions" create="false" sample="1"
+                  decoration-bf="state == 'new'" decoration-muted="state in ('closed', 'spam')">
+                <field name="name" readonly="1"/>
+                <field name="submitted_at"/>
+                <field name="contact_name"/>
+                <field name="email"/>
+                <field name="company" optional="show"/>
+                <field name="service_ids" widget="many2many_tags" options="{'color_field': 'color'}" optional="show"/>
+                <field name="budget" optional="show"/>
+                <field name="preferred_contact" optional="hide"/>
+                <field name="source_website" optional="hide"/>
+                <field name="utm_source" optional="hide"/>
+                <field name="user_id" widget="many2one_avatar_user" optional="show"/>
+                <field name="company_id" groups="base.group_multi_company" optional="hide"/>
+                <field name="state" widget="badge"
+                       decoration-info="state == 'new'" decoration-warning="state == 'in_progress'"
+                       decoration-success="state == 'replied'" decoration-danger="state == 'spam'"/>
+                <field name="activity_ids" widget="list_activity" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_form_submission_form" model="ir.ui.view">
+        <field name="name">mansas.form.submission.form</field>
+        <field name="model">mansas.form.submission</field>
+        <field name="arch" type="xml">
+            <form string="Form Submission" create="false">
+                <header>
+                    <button name="action_start" type="object" string="Start" class="btn-primary"
+                            invisible="state != 'new'"/>
+                    <button name="action_mark_replied" type="object" string="Mark as Replied" class="btn-primary"
+                            invisible="state != 'in_progress'"/>
+                    <button name="action_close" type="object" string="Close"
+                            invisible="state in ('closed', 'spam')"/>
+                    <button name="action_mark_spam" type="object" string="Mark as Spam"
+                            invisible="state in ('spam', 'closed')"/>
+                    <button name="action_reset" type="object" string="Reopen"
+                            invisible="state not in ('closed', 'spam')"/>
+                    <field name="state" widget="statusbar" statusbar_visible="new,in_progress,replied,closed"/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <widget name="web_ribbon" title="Spam" bg_color="text-bg-warning" invisible="state != 'spam' or not active"/>
+                    <field name="active" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="contact_name" string="Inquiry from"/>
+                        <h1><field name="contact_name"/></h1>
+                        <h3 class="text-muted"><field name="name"/></h3>
+                    </div>
+                    <group>
+                        <group string="Contact">
+                            <field name="email" widget="email"/>
+                            <field name="company"/>
+                            <field name="preferred_contact"/>
+                            <field name="phone" widget="phone" invisible="not phone"/>
+                        </group>
+                        <group string="Handling">
+                            <field name="user_id" widget="many2one_avatar_user"/>
+                            <field name="submitted_at"/>
+                            <field name="source_website"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                    <group>
+                        <field name="service_ids" widget="many2many_tags" options="{'color_field': 'color'}"/>
+                        <field name="budget"/>
+                    </group>
+                    <notebook>
+                        <page string="Project Description" name="description">
+                            <field name="description" nolabel="1"/>
+                        </page>
+                        <page string="Attribution" name="attribution">
+                            <group>
+                                <group>
+                                    <field name="utm_source"/>
+                                    <field name="utm_medium"/>
+                                    <field name="utm_campaign"/>
+                                    <field name="utm_term"/>
+                                    <field name="utm_content"/>
+                                </group>
+                                <group>
+                                    <field name="landing_path"/>
+                                    <field name="referrer_origin"/>
+                                    <field name="source_url" widget="url"/>
+                                </group>
+                            </group>
+                        </page>
+                        <page string="Technical" name="technical">
+                            <group>
+                                <group>
+                                    <field name="submission_id"/>
+                                    <field name="api_key_id" groups="mansas_form_submissions.group_form_submission_manager"/>
+                                    <field name="form_started_at"/>
+                                    <field name="fill_duration"/>
+                                    <field name="create_date" string="Received by Odoo"/>
+                                </group>
+                                <group>
+                                    <field name="user_agent"/>
+                                    <field name="client_ip_hash"/>
+                                </group>
+                            </group>
+                            <label for="raw_payload"/>
+                            <field name="raw_payload" class="font-monospace" nolabel="1"/>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_form_submission_search" model="ir.ui.view">
+        <field name="name">mansas.form.submission.search</field>
+        <field name="model">mansas.form.submission</field>
+        <field name="arch" type="xml">
+            <search string="Search Submissions">
+                <field name="contact_name" string="Contact"
+                       filter_domain="['|', '|', '|', ('name', 'ilike', self), ('contact_name', 'ilike', self), ('email', 'ilike', self), ('company', 'ilike', self)]"/>
+                <field name="email"/>
+                <field name="company"/>
+                <field name="service_ids"/>
+                <field name="description"/>
+                <field name="source_website"/>
+                <field name="utm_campaign"/>
+                <field name="user_id"/>
+                <filter string="My Submissions" name="my" domain="[('user_id', '=', uid)]"/>
+                <filter string="Unassigned" name="unassigned" domain="[('user_id', '=', False)]"/>
+                <separator/>
+                <filter string="New" name="new" domain="[('state', '=', 'new')]"/>
+                <filter string="In Progress" name="in_progress" domain="[('state', '=', 'in_progress')]"/>
+                <filter string="Open" name="open" domain="[('state', 'in', ('new', 'in_progress'))]"/>
+                <filter string="Spam" name="spam" domain="[('state', '=', 'spam')]"/>
+                <separator/>
+                <filter string="Submitted On" name="filter_submitted_at" date="submitted_at"/>
+                <separator/>
+                <filter string="Archived" name="inactive" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter string="Status" name="group_state" context="{'group_by': 'state'}"/>
+                    <filter string="Assigned To" name="group_user" context="{'group_by': 'user_id'}"/>
+                    <filter string="Budget" name="group_budget" context="{'group_by': 'budget'}"/>
+                    <filter string="Preferred Contact" name="group_contact" context="{'group_by': 'preferred_contact'}"/>
+                    <filter string="Source Website" name="group_source" context="{'group_by': 'source_website'}"/>
+                    <filter string="UTM Source" name="group_utm_source" context="{'group_by': 'utm_source'}"/>
+                    <filter string="Submitted On" name="group_submitted_at" context="{'group_by': 'submitted_at:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="action_form_submission" model="ir.actions.act_window">
+        <field name="name">Form Submissions</field>
+        <field name="res_model">mansas.form.submission</field>
+        <field name="view_mode">list,form</field>
+        <field name="search_view_id" ref="view_form_submission_search"/>
+        <field name="context">{'search_default_open': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">No website submissions yet</p>
+            <p>Inquiries sent from the website's contact form appear here.
+               Create an API key under Configuration and add it to the website's
+               environment variables to start receiving them.</p>
+        </field>
+    </record>
+</odoo>

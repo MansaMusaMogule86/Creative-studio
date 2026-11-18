@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_form_api_key_list" model="ir.ui.view">
+        <field name="name">mansas.form.api.key.list</field>
+        <field name="model">mansas.form.api.key</field>
+        <field name="arch" type="xml">
+            <list string="API Keys">
+                <field name="name"/>
+                <field name="website_url"/>
+                <field name="key_index"/>
+                <field name="rate_limit_per_minute"/>
+                <field name="last_used_at"/>
+                <field name="company_id" groups="base.group_multi_company"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="view_form_api_key_form" model="ir.ui.view">
+        <field name="name">mansas.form.api.key.form</field>
+        <field name="model">mansas.form.api.key</field>
+        <field name="arch" type="xml">
+            <form string="API Key">
+                <header>
+                    <button name="action_generate_key" type="object" string="Generate Key" class="btn-primary"
+                            invisible="has_key"/>
+                    <button name="action_generate_key" type="object" string="Rotate Key"
+                            invisible="not has_key"
+                            confirm="The current key stops working immediately. Update the website's ODOO_API_KEY right after. Continue?"/>
+                    <button name="action_revoke_key" type="object" string="Revoke Key"
+                            invisible="not has_key"
+                            confirm="The website will no longer be able to send submissions. Continue?"/>
+                </header>
+                <sheet>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_submissions" type="object" class="oe_stat_button" icon="fa-inbox">
+                            <field name="submission_count" widget="statinfo" string="Submissions"/>
+                        </button>
+                    </div>
+                    <widget name="web_ribbon" title="Archived" bg_color="text-bg-danger" invisible="active"/>
+                    <field name="active" invisible="1"/>
+                    <field name="has_key" invisible="1"/>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="e.g. mansasmoguls.com"/></h1>
+                    </div>
+                    <div class="alert alert-info" role="status" invisible="has_key">
+                        Save, then click <strong>Generate Key</strong>. The key is shown once; store it as
+                        <code>ODOO_API_KEY</code> in the website's server environment variables.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="website_url" widget="url" placeholder="https://mansasmoguls.com"/>
+                            <field name="key_index"/>
+                            <field name="last_used_at"/>
+                        </group>
+                        <group>
+                            <field name="rate_limit_per_minute"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="view_form_api_key_show" model="ir.ui.view">
+        <field name="name">mansas.form.api.key.show.form</field>
+        <field name="model">mansas.form.api.key.show</field>
+        <field name="arch" type="xml">
+            <form>
+                <sheet>
+                    <h3 class="fw-bold">Copy your key now</h3>
+                    <p>Set it as <code>ODOO_API_KEY</code> in the website's server environment
+                       (for example Vercel → Settings → Environment Variables). Never put it in
+                       browser code or commit it to a repository.</p>
+                    <p><code><field name="key" readonly="True"/></code></p>
+                    <p class="alert alert-warning" role="alert">
+                        <strong>Important:</strong> Odoo only keeps a hash of this key. It cannot be shown again.
+                        If it is lost, rotate it.
+                    </p>
+                    <footer>
+                        <button special="cancel" data-hotkey="x" string="Done"/>
+                    </footer>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="action_form_api_key" model="ir.actions.act_window">
+        <field name="name">API Keys</field>
+        <field name="res_model">mansas.form.api.key</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Create a key for the website</p>
+            <p>Each website that posts submissions needs its own key.</p>
+        </field>
+    </record>
+</odoo>

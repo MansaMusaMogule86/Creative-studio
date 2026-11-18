@@ -26,8 +26,9 @@ function mockFetch(routes: (c: Call) => Response | undefined) {
 const cfg = (over: Partial<LeadsConfig> = {}): LeadsConfig => ({
   siteUrl: 'https://mansasmoguls.com', rateLimitPerMinute: 5, ipSalt: 'test-salt',
   supabase: { url: 'https://proj.supabase.co', serviceRoleKey: 'service-key', table: 'leads' },
-  highlevel: null, ...over,
+  highlevel: null, odoo: null, ...over,
 });
+const ODOO = { baseUrl: 'https://crm.mansasmoguls.com', apiKey: 'mmfs_abc123def456_secret', database: null };
 const GHL = { token: 'pit-token', locationId: 'loc_1', apiVersion: '2021-07-28', baseUrl: 'https://services.leadconnectorhq.com', pipelineId: 'pipe_1', pipelineStageId: 'stage_1' };
 const req = (body: unknown, headers: Record<string, string> = {}, method = 'POST') =>
   new Request('https://mansasmoguls.com/api/leads', {
@@ -118,6 +119,13 @@ describe('config', () => {
     const c = readConfig({ SUPABASE_URL: 'https://p.supabase.co/', SUPABASE_SERVICE_ROLE_KEY: 'k', HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: 't', HIGHLEVEL_LOCATION_ID: 'l', LEADS_RATE_LIMIT_PER_MINUTE: '3' });
     expect(c.supabase?.url).toBe('https://p.supabase.co'); expect(c.highlevel?.apiVersion).toBe('2021-07-28'); expect(c.rateLimitPerMinute).toBe(3);
   });
+  it('enables Odoo only with a key, defaults to crm.mansasmoguls.com and requires HTTPS', () => {
+    expect(readConfig({}).odoo).toBeNull();
+    expect(readConfig({ ODOO_API_KEY: 'k' }).odoo).toEqual({ baseUrl: 'https://crm.mansasmoguls.com', apiKey: 'k', database: null });
+    expect(readConfig({ ODOO_API_KEY: 'k', ODOO_BASE_URL: 'https://erp.example.com/', ODOO_DATABASE: 'prod' }).odoo).toEqual({ baseUrl: 'https://erp.example.com', apiKey: 'k', database: 'prod' });
+    expect(readConfig({ ODOO_API_KEY: 'k', ODOO_BASE_URL: 'http://crm.mansasmoguls.com' }).odoo).toBeNull();
+    expect(readConfig({ ODOO_API_KEY: 'k', ODOO_BASE_URL: 'http://localhost:8069' }).odoo?.baseUrl).toBe('http://localhost:8069');
+  });
 });
 
 describe('POST /api/leads', () => {
@@ -201,5 +209,64 @@ describe('POST /api/leads', () => {
   it('asks the visitor to retry when nothing could be stored', async () => {
     const down = mockFetch(() => new Response('', { status: 500 }));
     expect((await run(req(good()), cfg(), down.fetcher)).status).toBe(503);
+  }, 20_000);
+});
+
+describe('POST /api/leads → Odoo', () => {
+  const odooOk = (status = 201, body: Record<string, unknown> = { ok: true, id: 7, reference: 'WEB/2026/00007' }) =>
+    (c: Call) => (c.url.startsWith(ODOO.baseUrl) ? new Response(JSON.stringify(body), { status }) : undefined);
+  const odooOnly = cfg({ supabase: null, odoo: ODOO });
+
+  it('posts the original payload and metadata to crm.mansasmoguls.com with the bearer key (contract)', async () => {
+    const { fetcher, calls } = mockFetch(odooOk());
+    const r = await run(req(good({ name: '  Amina Rahman ' })), odooOnly, fetcher);
+    expect(r.status).toBe(202); expect(await r.json()).toEqual({ ok: true });
+    expect(calls).toHaveLength(1);
+    const c = calls[0];
+    expect(c.url).toBe('https://crm.mansasmoguls.com/api/mansas/v1/form-submissions');
+    expect(c.method).toBe('POST');
+    expect(c.headers.authorization).toBe('Bearer mmfs_abc123def456_secret');
+    expect(c.headers['x-odoo-database']).toBeUndefined();
+    const body = c.body as { submission: Record<string, unknown>; meta: Record<string, unknown> };
+    expect(body.submission).toEqual(good({ name: '  Amina Rahman ' })); // exactly as the browser sent it
+    expect(body.meta).toMatchObject({ source_url: 'https://mansasmoguls.com', user_agent: 'vitest', received_at: new Date(NOW).toISOString() });
+    expect(body.meta.client_ip_hash).toMatch(/^[0-9a-f]{64}$/);
+    expect(JSON.stringify(body)).not.toContain('203.0.113.9');
+  });
+  it('sends X-Odoo-Database when configured', async () => {
+    const { fetcher, calls } = mockFetch(odooOk());
+    await run(req(good()), cfg({ supabase: null, odoo: { ...ODOO, database: 'mm_prod' } }), fetcher);
+    expect(calls[0].headers['x-odoo-database']).toBe('mm_prod');
+  });
+  it('never contacts Odoo for spam', async () => {
+    const { fetcher, calls } = mockFetch(odooOk());
+    expect((await run(req(good({ website: 'x' })), odooOnly, fetcher)).status).toBe(202);
+    expect(calls).toHaveLength(0);
+  });
+  it('accepts an Odoo duplicate (retried submission) as success', async () => {
+    const { fetcher } = mockFetch(odooOk(200, { ok: true, duplicate: true, reference: 'WEB/2026/00007' }));
+    expect((await run(req(good()), odooOnly, fetcher)).status).toBe(202);
+  });
+  it('asks the visitor to retry when Odoo is the only store and rejects or is down', async () => {
+    const auth = mockFetch(odooOk(401, { ok: false, code: 'unauthorized' }));
+    expect((await run(req(good()), odooOnly, auth.fetcher)).status).toBe(503);
+    expect(auth.calls).toHaveLength(1); // 4xx is not retried
+    const down = mockFetch(odooOk(502, {}));
+    expect((await run(req(good()), odooOnly, down.fetcher)).status).toBe(503);
+    expect(down.calls).toHaveLength(3); // 1 try + 2 retries (idempotent on submissionId)
+  }, 20_000);
+  it('passes an Odoo rate limit on to the visitor', async () => {
+    const { fetcher } = mockFetch(odooOk(429, { ok: false, code: 'rate_limited' }));
+    const r = await run(req(good()), odooOnly, fetcher);
+    expect(r.status).toBe(429); expect((await r.json()).code).toBe('rate_limited');
+  }, 20_000);
+  it('keeps the visitor’s success when Supabase stored it and Odoo failed', async () => {
+    const supaOk = (c: Call) => (c.url.includes('supabase.co') ? (c.method === 'HEAD' ? new Response(null, { status: 200, headers: { 'content-range': '*/0' } }) : new Response(null, { status: 201 })) : undefined);
+    const { fetcher } = mockFetch((c) => (c.url.startsWith(ODOO.baseUrl) ? new Response('{}', { status: 401 }) : supaOk(c)));
+    expect((await run(req(good()), cfg({ odoo: ODOO }), fetcher)).status).toBe(202);
+  });
+  it('counts Odoo as durable storage before HighLevel', async () => {
+    const { fetcher } = mockFetch((c) => (c.url.includes('leadconnectorhq') ? new Response('', { status: 500 }) : odooOk()(c)));
+    expect((await run(req(good()), cfg({ supabase: null, odoo: ODOO, highlevel: GHL }), fetcher)).status).toBe(202);
   }, 20_000);
 });

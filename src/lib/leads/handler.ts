@@ -1,13 +1,15 @@
 // POST /api/leads: origin check → size cap → validation → spam → rate limit →
-// Supabase (durable) → HighLevel (CRM). Platform-neutral: takes a Web Request,
+// Supabase (durable) → Odoo (durable, crm.mansasmoguls.com) → HighLevel (CRM).
+// Each destination is optional and switched on by its environment variables. Platform-neutral: takes a Web Request,
 // returns a Web Response, so it runs on Vercel Functions and in tests alike.
 // Logs carry outcome and timings only: never names, emails, phones or text.
 import { parseLead } from './schema';
 import { checkSpam, hashIp, MemoryRateLimiter } from './spam';
 import { countRecent, insertLead, markCrm, toRow } from './store';
 import { addNote, createOpportunity, upsertContact } from './highlevel';
+import { sendToOdoo } from './odoo';
 import type { LeadsConfig } from './config';
-import type { FetchLike } from './http';
+import { UpstreamError, type FetchLike } from './http';
 
 export const MAX_BODY_BYTES = 16 * 1024;
 
@@ -56,7 +58,7 @@ export async function handleLeadRequest(req: Request, deps: Deps): Promise<Respo
   const spam = checkSpam(lead, now());
   if (spam.spam) return done(202, { ok: true }, 'spam', { reason: spam.reason });
 
-  if (!config.supabase && !config.highlevel) return done(503, { ok: false, code: 'not_configured' }, 'not-configured');
+  if (!config.supabase && !config.highlevel && !config.odoo) return done(503, { ok: false, code: 'not_configured' }, 'not-configured');
 
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
   const ipHash = await hashIp(ip, config.ipSalt);
@@ -77,7 +79,30 @@ export async function handleLeadRequest(req: Request, deps: Deps): Promise<Respo
       if (r === 'duplicate') return done(202, { ok: true, duplicate: true }, 'duplicate', { id });
       stored = true;
     } catch (e) {
-      if (!config.highlevel) return done(503, { ok: false, code: 'unavailable' }, 'store-failed', { id, error: String((e as Error).message) });
+      if (!config.highlevel && !config.odoo) return done(503, { ok: false, code: 'unavailable' }, 'store-failed', { id, error: String((e as Error).message) });
+    }
+  }
+
+  let odoo: string | null = null;
+  if (config.odoo) {
+    try {
+      const r = await sendToOdoo(fetcher, config.odoo, lead, raw, {
+        sourceUrl: config.siteUrl ?? new URL(req.url).origin, ipHash,
+        userAgent: req.headers.get('user-agent') ?? '', receivedAt: new Date(now()),
+      });
+      odoo = r.outcome;
+      // 'spam' means Odoo's own fill-time check disagreed (e.g. clock skew): logged below, not stored there.
+      if (r.outcome !== 'spam') stored = true;
+    } catch (e) {
+      const error = String((e as Error).message).slice(0, 200);
+      const status = e instanceof UpstreamError ? e.status : 0;
+      if (!stored && !config.highlevel) {
+        return status === 429
+          ? done(429, { ok: false, code: 'rate_limited' }, 'odoo-rate-limited', { id })
+          : done(503, { ok: false, code: 'unavailable' }, 'odoo-failed', { id, error });
+      }
+      odoo = 'failed';
+      log({ outcome: 'odoo-failed', id, error });
     }
   }
 
@@ -97,5 +122,5 @@ export async function handleLeadRequest(req: Request, deps: Deps): Promise<Respo
   } else if (stored && config.supabase) {
     await markCrm(fetcher, config.supabase, id, { crm_status: 'skipped' }).catch(() => undefined);
   }
-  return done(202, { ok: true }, 'accepted', { id, stored, crm: !!config.highlevel });
+  return done(202, { ok: true }, 'accepted', { id, stored, odoo, crm: !!config.highlevel });
 }

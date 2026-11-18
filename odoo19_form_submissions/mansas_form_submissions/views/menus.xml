@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_form_submission_root"
+              name="Website Submissions"
+              web_icon="mansas_form_submissions,static/description/icon.png"
+              groups="group_form_submission_user"
+              sequence="45"/>
+
+    <menuitem id="menu_form_submission"
+              name="Submissions"
+              parent="menu_form_submission_root"
+              action="action_form_submission"
+              sequence="10"/>
+
+    <menuitem id="menu_form_submission_config"
+              name="Configuration"
+              parent="menu_form_submission_root"
+              groups="group_form_submission_manager"
+              sequence="90"/>
+
+    <menuitem id="menu_form_service"
+              name="Services"
+              parent="menu_form_submission_config"
+              action="action_form_service"
+              sequence="10"/>
+
+    <menuitem id="menu_form_api_key"
+              name="API Keys"
+              parent="menu_form_submission_config"
+              action="action_form_api_key"
+              sequence="20"/>
+</odoo>

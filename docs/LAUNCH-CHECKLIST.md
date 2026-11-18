@@ -67,16 +67,16 @@ Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is deci
 - [ ] WCAG 2.2 AA assessment — ⚠ Automated 2.1 AA passes; full manual 2.2 audit ⏳.
 
 ## F. Forms & Functional QA
-- [ ] All forms submit successfully — ⚠ Built: form → `/api/leads` → Supabase (+ HighLevel). Browser-tested against a mocked backend (qa); live once SUPABASE_* keys are set in Vercel (⏳ owner).
+- [ ] All forms submit successfully — ⚠ Built: form → `/api/leads` → Supabase (+ HighLevel). Browser-tested against a mocked backend (qa); live once SUPABASE_* keys are set in Vercel (⏳ owner). **2026-11-18:** Odoo destination added (`src/lib/leads/odoo.ts` → crm.mansasmoguls.com, module `odoo19_form_submissions/`); live once the module is installed and `ODOO_API_KEY` is set in Vercel (⏳ owner).
 - [x] Server-side validation — ✅ Shared schema (`src/lib/leads/schema.ts`): strict keys, normalisation, known service slugs, length caps; 32 unit tests.
 - [x] Required field and format checks — ✅ Client-side checks (InquiryForm.tsx:17-25).
 - [x] Spam and abuse prevention — ✅ Honeypot, ≥3 s fill time, stale-timestamp rejection, silent 202 for bots (tests). Turnstile optional (⏳ approval).
 - [x] Rate limiting — ✅ Per-IP (salted hash) limit: in-memory window + durable Supabase count; 429 with a clear message (tests + qa).
 - [x] Success and error feedback — ✅ Success/error/validation states (qa).
 - [x] Duplicate submission protection — ✅ Browser UUID `submissionId` + unique column → 202 duplicate; button disabled while sending (tests).
-- [ ] Email and CRM delivery verification — ⏳ Code ready (HighLevel upsert + opportunity + note, retries); needs PIT token and a sandbox check of field names (docs/ghl-integration/08).
+- [ ] Email and CRM delivery verification — ⏳ Code ready (HighLevel upsert + opportunity + note, retries); needs PIT token and a sandbox check of field names (docs/ghl-integration/08). Odoo: ✅ verified 2026-11-18 on a local Odoo 19 (module installs cleanly, 20/20 Odoo tests; website handler → Odoo stored all fields, retry de-duplicated, bad key → 401); ⏳ install on crm.mansasmoguls.com and send one live test inquiry.
 - [x] Broken link and button testing — ✅ qa: all internal links resolve.
-- [ ] End-to-end critical user journey tests — ⚠ qa covers form → mocked API (success, 422 inline, 429); a real submission needs the deployed site with keys.
+- [ ] End-to-end critical user journey tests — ⚠ qa covers form → mocked API (success, 422 inline, 429); a real submission needs the deployed site with keys. Server-side handler → real Odoo 19 ✅ (local, 2026-11-18). ⚠ `package.json`, `pnpm-lock.yaml` and `scripts/qa.mjs` contain unresolved merge-conflict markers (commit 13b6391), so `pnpm check/build/qa` cannot run until they are resolved.
 
 ## G. Google Search & Indexing
 - [ ] Google Search Console setup — ⏳ Needs domain + owner Google account.
