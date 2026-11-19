@@ -25,8 +25,8 @@ export async function hashIp(ip: string, salt: string): Promise<string> {
 
 /**
  * Sliding-window limiter held in memory. On serverless each instance has its
- * own window, so the durable check in the store (count of recent rows per IP
- * hash) backs it up when Supabase is configured.
+ * own window; the shared per-visitor limit across instances (recent submissions
+ * per IP hash) is enforced by Odoo.
  */
 export class MemoryRateLimiter {
   private hits = new Map<string, number[]>();

@@ -4,7 +4,7 @@ Saved on 2026-11-08 at the owner's request. **First full check: 2026-11-08** (li
 
 Legend: ✅ done and verified · ⚠ partial · ❌ missing, doable once unblocked · ⏳ needs owner, host, domain or legal input · n/a not applicable. Ticked boxes are ✅ or n/a.
 
-Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is decided (Vercel + Supabase, DNS at Hostinger) and the lead backend, tests, headers and linting are built. What remains needs the owner: Vercel environment variables and DNS, Supabase migration, HighLevel token, Search Console, legal copy, contact details, real case studies, analytics choice and real-device testing.
+Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is decided (Vercel, inquiries in Odoo at crm.mansasmoguls.com, DNS at Hostinger; Supabase dropped 2026-11-19) and the lead backend, tests, headers and linting are built. What remains needs the owner: Vercel environment variables (`ODOO_API_KEY`) and DNS, Odoo module install, HighLevel token, Search Console, legal copy, contact details, real case studies, analytics choice and real-device testing.
 
 ## A. Architecture & Planning
 - [ ] Business goals and measurable KPIs — ⏳ Owner to define KPIs (leads/month, qualified rate…).
@@ -12,7 +12,7 @@ Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is deci
 - [ ] Competitor and market research — ⏳ Not done; needs owner scope (paid SEO tools need approval).
 - [ ] Website sitemap and information architecture — ⚠ Home + 5 division pages; About/Services/Work/Contact pages proposed in docs/full-site-audit.md.
 - [x] Page hierarchy and URL structure — ✅ /, /universe/{division}, /legal/*, descriptive slugs.
-- [x] Technology stack and hosting architecture — ✅ Astro static site on Vercel, one Vercel Function (`api/leads.ts`) for inquiries, Supabase for lead storage, domain DNS at Hostinger (`vercel.json`, docs/OPERATIONS.md §1).
+- [x] Technology stack and hosting architecture — ✅ Astro static site on Vercel, one Vercel Function (`api/leads.ts`) for inquiries, Odoo (crm.mansasmoguls.com) for lead storage, domain DNS at Hostinger (`vercel.json`, docs/OPERATIONS.md §1).
 - [ ] Content management strategy — ⏳ Content lives in src/data + components; CMS decision needed.
 - [ ] Environment separation: local, staging, production — ⚠ SITE_ENV production/staging implemented; Vercel Preview should set SITE_ENV=staging (⏳ owner in Vercel).
 - [x] Scalability, maintenance and technical documentation — ✅ README, CLAUDE.md, docs/OPERATIONS.md, docs/ghl-integration, docs/creative-3d, CHANGELOG.md.
@@ -67,11 +67,11 @@ Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is deci
 - [ ] WCAG 2.2 AA assessment — ⚠ Automated 2.1 AA passes; full manual 2.2 audit ⏳.
 
 ## F. Forms & Functional QA
-- [ ] All forms submit successfully — ⚠ Built: form → `/api/leads` → Supabase (+ HighLevel). Browser-tested against a mocked backend (qa); live once SUPABASE_* keys are set in Vercel (⏳ owner). **2026-11-18:** Odoo destination added (`src/lib/leads/odoo.ts` → crm.mansasmoguls.com, module `odoo19_form_submissions/`); live once the module is installed and `ODOO_API_KEY` is set in Vercel (⏳ owner).
+- [ ] All forms submit successfully — ⚠ Built: form → `/api/leads` → Odoo (+ optional HighLevel). Browser-tested against a mocked backend (qa). **2026-11-18:** Odoo destination added (`src/lib/leads/odoo.ts` → crm.mansasmoguls.com, module `odoo19_form_submissions/`); live once the module is installed and `ODOO_API_KEY` is set in Vercel (⏳ owner).
 - [x] Server-side validation — ✅ Shared schema (`src/lib/leads/schema.ts`): strict keys, normalisation, known service slugs, length caps; 32 unit tests.
 - [x] Required field and format checks — ✅ Client-side checks (InquiryForm.tsx:17-25).
 - [x] Spam and abuse prevention — ✅ Honeypot, ≥3 s fill time, stale-timestamp rejection, silent 202 for bots (tests). Turnstile optional (⏳ approval).
-- [x] Rate limiting — ✅ Per-IP (salted hash) limit: in-memory window + durable Supabase count; 429 with a clear message (tests + qa).
+- [x] Rate limiting — ✅ Per-IP (salted hash) limit: in-memory window per instance + shared per-visitor limit in Odoo (salted with `ODOO_API_KEY`); 429 with a clear message (tests + qa).
 - [x] Success and error feedback — ✅ Success/error/validation states (qa).
 - [x] Duplicate submission protection — ✅ Browser UUID `submissionId` + unique column → 202 duplicate; button disabled while sending (tests).
 - [ ] Email and CRM delivery verification — ⏳ Code ready (HighLevel upsert + opportunity + note, retries); needs PIT token and a sandbox check of field names (docs/ghl-integration/08). Odoo: ✅ verified 2026-11-18 on a local Odoo 19 (module installs cleanly, 20/20 Odoo tests; website handler → Odoo stored all fields, retry de-duplicated, bad key → 401); ⏳ install on crm.mansasmoguls.com and send one live test inquiry.
@@ -200,7 +200,7 @@ Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is deci
 
 ## Q. Quality Assurance & Testing
 - [x] Unit tests for critical logic — ✅ `pnpm test` (vitest): 32 tests: schema, spam, rate limit, retries, config.
-- [x] Integration tests — ✅ Handler tests with mocked Supabase/HighLevel (accept, duplicate, rate limit, CRM down, store down) + browser form test with mocked API.
+- [x] Integration tests — ✅ Handler tests with mocked Odoo/HighLevel (accept, duplicate, rate limit, CRM down, Odoo down); 38 tests + browser form test with mocked API.
 - [x] End-to-end browser tests — ✅ pnpm qa (38 checks: division artworks visible without tapping at 320–1440, hero deck turns, artwork drifts in 3D, One Team hover, no generated canvases, reduced motion static, owner artwork on all division pages) + qa:mobile (51).
 - [ ] Responsive visual regression tests — ⚠ Screenshot review per phase; no pixel-diff baseline.
 - [ ] Accessibility automated and manual tests — ⚠ axe automated; manual ⏳.
@@ -284,14 +284,14 @@ Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is deci
 
 ## X. XML, APIs & Integrations
 - [x] XML sitemap and feed validation — ✅ Sitemap valid and canonical-only.
-- [x] API authentication and authorization — ✅ HighLevel PIT and Supabase service key server-side only; same-origin check on `/api/leads`; table RLS on with no public policies.
+- [x] API authentication and authorization — ✅ HighLevel PIT and Odoo API key server-side only; same-origin check on `/api/leads`; Odoo stores only a hash of its key.
 - [x] API input/output schema validation — ✅ Strict request schema; typed JSON responses (202/400/403/413/415/422/429/503).
 - [x] Rate limits and abuse controls — ✅ See Rate limiting; body capped at 16 KB.
 - [x] Webhook signature verification — n/a No webhooks at launch (documented).
 - [x] Idempotent webhook and payment handling — ✅ Lead idempotency via `submissionId`; no payments or webhooks yet.
 - [x] Timeouts, retries and backoff — ✅ 8 s timeout, 3 retries on 429/5xx with jitter, honours Retry-After (tests).
 - [x] Third-party API error handling — ✅ CRM down → lead kept and marked `failed` for replay; store down → 503 retry message; no upstream details leaked.
-- [x] Integration contract tests — ✅ Request shape/headers asserted for Supabase REST and HighLevel upsert/opportunity (tests).
+- [x] Integration contract tests — ✅ Request shape/headers asserted for the Odoo API and HighLevel upsert/opportunity (tests).
 - [ ] API versioning and deprecation monitoring — ⚠ Version header + webhook header deprecation tracked in api-requirements.json.
 
 ## Y. Year-Round Maintenance
@@ -312,7 +312,7 @@ Totals: ✅ 141 · ⚠ 41 · ❌ 0 · ⏳ 67 · n/a 11 (of 260). Hosting is deci
 - [x] No accidental production indexing blocks — ✅ qa: indexable pages/sitemap/robots verified; staging guard.
 - [x] No exposed secrets — ✅ Scan clean; only placeholder templates.
 - [ ] Verified backups and rollback path — ⚠ Rollback documented; backups ⏳ host.
-- [ ] Verified form, CRM and notification delivery — ⏳ Needs Supabase keys (and optional HighLevel token) on Vercel, then one real test submission.
+- [ ] Verified form, CRM and notification delivery — ⏳ Needs the Odoo module installed and `ODOO_API_KEY` (and optional HighLevel token) on Vercel, then one real test submission.
 - [x] Core Web Vitals and accessibility reviewed — ✅ Lighthouse + axe (lab).
 - [ ] Legal notices and consent reviewed — ⏳ Legal copy needed.
 - [ ] Monitoring and ownership assigned — ⏳ Assign in OPERATIONS §7.

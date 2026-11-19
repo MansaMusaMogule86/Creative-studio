@@ -1,11 +1,10 @@
 // POST /api/leads: origin check → size cap → validation → spam → rate limit →
-// Supabase (durable) → Odoo (durable, crm.mansasmoguls.com) → HighLevel (CRM).
-// Each destination is optional and switched on by its environment variables. Platform-neutral: takes a Web Request,
-// returns a Web Response, so it runs on Vercel Functions and in tests alike.
+// Odoo (the store of record, crm.mansasmoguls.com) → HighLevel (optional CRM).
+// Each destination is switched on by its environment variables. Platform-neutral:
+// takes a Web Request, returns a Web Response, so it runs on Vercel Functions and in tests alike.
 // Logs carry outcome and timings only: never names, emails, phones or text.
 import { parseLead } from './schema';
 import { checkSpam, hashIp, MemoryRateLimiter } from './spam';
-import { countRecent, insertLead, markCrm, toRow } from './store';
 import { addNote, createOpportunity, upsertContact } from './highlevel';
 import { sendToOdoo } from './odoo';
 import type { LeadsConfig } from './config';
@@ -58,31 +57,16 @@ export async function handleLeadRequest(req: Request, deps: Deps): Promise<Respo
   const spam = checkSpam(lead, now());
   if (spam.spam) return done(202, { ok: true }, 'spam', { reason: spam.reason });
 
-  if (!config.supabase && !config.highlevel && !config.odoo) return done(503, { ok: false, code: 'not_configured' }, 'not-configured');
+  if (!config.highlevel && !config.odoo) return done(503, { ok: false, code: 'not_configured' }, 'not-configured');
 
   const ip = (req.headers.get('x-forwarded-for') ?? '').split(',')[0].trim() || req.headers.get('x-real-ip') || 'unknown';
   const ipHash = await hashIp(ip, config.ipSalt);
+  // Per-instance limit here; Odoo enforces the shared per-visitor limit across instances.
   const limiter = deps.limiter ?? sharedLimiter(config.rateLimitPerMinute);
   if (!limiter.allow(ipHash, now())) return done(429, { ok: false, code: 'rate_limited' }, 'rate-limited');
-  if (config.supabase) {
-    try {
-      const recent = await countRecent(fetcher, config.supabase, ipHash, new Date(now() - 60_000));
-      if (recent >= config.rateLimitPerMinute) return done(429, { ok: false, code: 'rate_limited' }, 'rate-limited-durable');
-    } catch { /* fail open: the memory limiter still applies */ }
-  }
 
   const id = lead.submissionId;
   let stored = false;
-  if (config.supabase) {
-    try {
-      const r = await insertLead(fetcher, config.supabase, toRow(lead, { ipHash, userAgent: req.headers.get('user-agent') ?? '' }));
-      if (r === 'duplicate') return done(202, { ok: true, duplicate: true }, 'duplicate', { id });
-      stored = true;
-    } catch (e) {
-      if (!config.highlevel && !config.odoo) return done(503, { ok: false, code: 'unavailable' }, 'store-failed', { id, error: String((e as Error).message) });
-    }
-  }
-
   let odoo: string | null = null;
   if (config.odoo) {
     try {
@@ -91,12 +75,14 @@ export async function handleLeadRequest(req: Request, deps: Deps): Promise<Respo
         userAgent: req.headers.get('user-agent') ?? '', receivedAt: new Date(now()),
       });
       odoo = r.outcome;
+      // A retried submission Odoo already has: acknowledge it and don't create it in HighLevel again.
+      if (r.outcome === 'duplicate') return done(202, { ok: true, duplicate: true }, 'duplicate', { id });
       // 'spam' means Odoo's own fill-time check disagreed (e.g. clock skew): logged below, not stored there.
       if (r.outcome !== 'spam') stored = true;
     } catch (e) {
       const error = String((e as Error).message).slice(0, 200);
       const status = e instanceof UpstreamError ? e.status : 0;
-      if (!stored && !config.highlevel) {
+      if (!config.highlevel) {
         return status === 429
           ? done(429, { ok: false, code: 'rate_limited' }, 'odoo-rate-limited', { id })
           : done(503, { ok: false, code: 'unavailable' }, 'odoo-failed', { id, error });
@@ -111,16 +97,12 @@ export async function handleLeadRequest(req: Request, deps: Deps): Promise<Respo
       const contactId = await upsertContact(fetcher, config.highlevel, lead);
       await createOpportunity(fetcher, config.highlevel, lead, contactId);
       await addNote(fetcher, config.highlevel, contactId, lead).catch(() => undefined);
-      if (stored && config.supabase) await markCrm(fetcher, config.supabase, id, { crm_status: 'sent', crm_contact_id: contactId }).catch(() => undefined);
     } catch (e) {
       const error = String((e as Error).message).slice(0, 200);
-      // Stored safely: accept and leave it marked for replay. Not stored: the visitor must retry.
+      // Stored in Odoo: accept (the team still has it). Not stored anywhere: the visitor must retry.
       if (!stored) return done(503, { ok: false, code: 'unavailable' }, 'crm-failed', { id, error });
-      if (config.supabase) await markCrm(fetcher, config.supabase, id, { crm_status: 'failed', crm_error: error }).catch(() => undefined);
-      return done(202, { ok: true }, 'stored-crm-queued', { id, error });
+      return done(202, { ok: true }, 'stored-highlevel-failed', { id, error });
     }
-  } else if (stored && config.supabase) {
-    await markCrm(fetcher, config.supabase, id, { crm_status: 'skipped' }).catch(() => undefined);
   }
   return done(202, { ok: true }, 'accepted', { id, stored, odoo, crm: !!config.highlevel });
 }

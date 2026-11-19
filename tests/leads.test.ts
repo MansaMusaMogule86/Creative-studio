@@ -13,6 +13,7 @@ const good = (over: Partial<LeadPayload> = {}): LeadPayload => ({
   submissionId: ID, startedAt: NOW - 30_000, website: '', attribution: { utm_source: 'linkedin', landing_path: '/' }, ...over,
 });
 
+const ODOO = { baseUrl: 'https://crm.mansasmoguls.com', apiKey: 'mmfs_abc123def456_secret', database: null };
 type Call = { url: string; method: string; headers: Record<string, string>; body: unknown };
 function mockFetch(routes: (c: Call) => Response | undefined) {
   const calls: Call[] = [];
@@ -25,10 +26,8 @@ function mockFetch(routes: (c: Call) => Response | undefined) {
 }
 const cfg = (over: Partial<LeadsConfig> = {}): LeadsConfig => ({
   siteUrl: 'https://mansasmoguls.com', rateLimitPerMinute: 5, ipSalt: 'test-salt',
-  supabase: { url: 'https://proj.supabase.co', serviceRoleKey: 'service-key', table: 'leads' },
-  highlevel: null, odoo: null, ...over,
+  highlevel: null, odoo: ODOO, ...over,
 });
-const ODOO = { baseUrl: 'https://crm.mansasmoguls.com', apiKey: 'mmfs_abc123def456_secret', database: null };
 const GHL = { token: 'pit-token', locationId: 'loc_1', apiVersion: '2021-07-28', baseUrl: 'https://services.leadconnectorhq.com', pipelineId: 'pipe_1', pipelineStageId: 'stage_1' };
 const req = (body: unknown, headers: Record<string, string> = {}, method = 'POST') =>
   new Request('https://mansasmoguls.com/api/leads', {
@@ -113,23 +112,28 @@ describe('fetchWithRetry', () => {
 describe('config', () => {
   it('stays off until keys are set, and never needs PUBLIC_ variables', () => {
     const c = readConfig({});
-    expect(c.supabase).toBeNull(); expect(c.highlevel).toBeNull(); expect(c.rateLimitPerMinute).toBe(5);
+    expect(c.odoo).toBeNull(); expect(c.highlevel).toBeNull(); expect(c.rateLimitPerMinute).toBe(5);
   });
-  it('reads Supabase and HighLevel settings', () => {
-    const c = readConfig({ SUPABASE_URL: 'https://p.supabase.co/', SUPABASE_SERVICE_ROLE_KEY: 'k', HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: 't', HIGHLEVEL_LOCATION_ID: 'l', LEADS_RATE_LIMIT_PER_MINUTE: '3' });
-    expect(c.supabase?.url).toBe('https://p.supabase.co'); expect(c.highlevel?.apiVersion).toBe('2021-07-28'); expect(c.rateLimitPerMinute).toBe(3);
+  it('reads HighLevel settings and the rate limit', () => {
+    const c = readConfig({ HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN: 't', HIGHLEVEL_LOCATION_ID: 'l', LEADS_RATE_LIMIT_PER_MINUTE: '3' });
+    expect(c.highlevel?.apiVersion).toBe('2021-07-28'); expect(c.rateLimitPerMinute).toBe(3);
   });
   it('enables Odoo only with a key, defaults to crm.mansasmoguls.com and requires HTTPS', () => {
-    expect(readConfig({}).odoo).toBeNull();
     expect(readConfig({ ODOO_API_KEY: 'k' }).odoo).toEqual({ baseUrl: 'https://crm.mansasmoguls.com', apiKey: 'k', database: null });
     expect(readConfig({ ODOO_API_KEY: 'k', ODOO_BASE_URL: 'https://erp.example.com/', ODOO_DATABASE: 'prod' }).odoo).toEqual({ baseUrl: 'https://erp.example.com', apiKey: 'k', database: 'prod' });
     expect(readConfig({ ODOO_API_KEY: 'k', ODOO_BASE_URL: 'http://crm.mansasmoguls.com' }).odoo).toBeNull();
     expect(readConfig({ ODOO_API_KEY: 'k', ODOO_BASE_URL: 'http://localhost:8069' }).odoo?.baseUrl).toBe('http://localhost:8069');
   });
+  it('salts IP hashes with the Odoo key (no separate salt variable), else a random per-instance secret', () => {
+    expect(readConfig({ ODOO_API_KEY: 'k' }).ipSalt).toBe('k');
+    const s = readConfig({}).ipSalt;
+    expect(s).toMatch(/^[0-9a-f-]{36}$/); expect(readConfig({}).ipSalt).toBe(s);
+  });
 });
 
 describe('POST /api/leads', () => {
-  const supaOk = (c: Call) => (c.url.includes('supabase.co') ? (c.method === 'HEAD' ? new Response(null, { status: 200, headers: { 'content-range': '*/0' } }) : new Response(null, { status: 201 })) : undefined);
+  const odooOk = (status = 201, body: Record<string, unknown> = { ok: true, id: 7, reference: 'WEB/2026/00007' }) =>
+    (c: Call) => (c.url.startsWith(ODOO.baseUrl) ? new Response(JSON.stringify(body), { status }) : undefined);
 
   it('rejects other methods, foreign origins and non-JSON', async () => {
     const { fetcher } = mockFetch(() => undefined);
@@ -147,79 +151,25 @@ describe('POST /api/leads', () => {
     const r = await run(req(good({ email: 'nope' })), cfg(), fetcher);
     expect(r.status).toBe(422); expect((await r.json()).errors.email).toBeTruthy();
   });
-  it('quietly accepts spam without storing anything', async () => {
-    const { fetcher, calls } = mockFetch(() => undefined);
+  it('quietly accepts spam without sending anything', async () => {
+    const { fetcher, calls } = mockFetch(odooOk());
     const r = await run(req(good({ website: 'http://spam.example' })), cfg(), fetcher);
     expect(r.status).toBe(202); expect(calls).toHaveLength(0);
   });
   it('says not_configured when no delivery is set up', async () => {
     const { fetcher } = mockFetch(() => undefined);
-    const r = await run(req(good()), cfg({ supabase: null, highlevel: null }), fetcher);
+    const r = await run(req(good()), cfg({ odoo: null, highlevel: null }), fetcher);
     expect(r.status).toBe(503); expect((await r.json()).code).toBe('not_configured');
   });
-  it('stores the lead in Supabase (contract) without the raw IP', async () => {
-    const { fetcher, calls } = mockFetch(supaOk);
-    const r = await run(req(good()), cfg(), fetcher);
-    expect(r.status).toBe(202);
-    const insert = calls.find((c) => c.method === 'POST')!;
-    expect(insert.url).toBe('https://proj.supabase.co/rest/v1/leads');
-    expect(insert.headers.apikey).toBe('service-key'); expect(insert.headers.authorization).toBe('Bearer service-key');
-    const row = insert.body as Record<string, unknown>;
-    expect(row).toMatchObject({ submission_id: ID, email: 'amina@example.com', services: ['premium-websites', 'ai-agents'], contact_channel: 'email', crm_status: 'pending' });
-    expect(JSON.stringify(row)).not.toContain('203.0.113.9');
-    expect(row.ip_hash).toMatch(/^[0-9a-f]{64}$/);
-    expect(calls.some((c) => c.method === 'PATCH' && (c.body as { crm_status: string }).crm_status === 'skipped')).toBe(true);
-  });
-  it('treats a repeated submissionId as a duplicate (idempotent)', async () => {
-    const { fetcher, calls } = mockFetch((c) => (c.method === 'POST' && c.url.includes('supabase') ? new Response('', { status: 409 }) : supaOk(c)));
-    const r = await run(req(good()), cfg({ highlevel: GHL }), fetcher);
-    expect(r.status).toBe(202); expect((await r.json()).duplicate).toBe(true);
-    expect(calls.some((c) => c.url.includes('leadconnectorhq'))).toBe(false);
-  });
-  it('rate-limits per IP in memory and durably via Supabase counts', async () => {
-    const { fetcher } = mockFetch(supaOk);
+  it('rate-limits per IP hash in memory', async () => {
+    const { fetcher } = mockFetch(odooOk());
     const limiter = new MemoryRateLimiter(1);
     expect((await run(req(good()), cfg(), fetcher, limiter)).status).toBe(202);
     expect((await run(req(good({ submissionId: '4f2b8a4e-1c2d-4e5f-9a8b-7c6d5e4f3a2b' })), cfg(), fetcher, limiter)).status).toBe(429);
-    const busy = mockFetch((c) => (c.method === 'HEAD' ? new Response(null, { status: 200, headers: { 'content-range': '*/5' } }) : supaOk(c)));
-    expect((await run(req(good()), cfg(), busy.fetcher)).status).toBe(429);
   });
-  it('sends the contact and opportunity to HighLevel (contract)', async () => {
-    const { fetcher, calls } = mockFetch((c) => {
-      if (c.url.endsWith('/contacts/upsert')) return new Response(JSON.stringify({ contact: { id: 'ct_9' } }), { status: 200 });
-      if (c.url.endsWith('/opportunities/')) return new Response('{}', { status: 201 });
-      if (c.url.endsWith('/contacts/ct_9/notes')) return new Response('{}', { status: 201 });
-      return supaOk(c);
-    });
-    const r = await run(req(good()), cfg({ highlevel: GHL }), fetcher);
-    expect(r.status).toBe(202);
-    const up = calls.find((c) => c.url.endsWith('/contacts/upsert'))!;
-    expect(up.headers.authorization).toBe('Bearer pit-token'); expect(up.headers.version).toBe('2021-07-28');
-    expect(up.body).toMatchObject({ locationId: 'loc_1', firstName: 'Amina', lastName: 'Rahman', email: 'amina@example.com', tags: ['mm:web-inquiry', 'mm:division:digital', 'mm:division:ai'] });
-    const opp = calls.find((c) => c.url.endsWith('/opportunities/'))!;
-    expect(opp.body).toMatchObject({ pipelineId: 'pipe_1', pipelineStageId: 'stage_1', contactId: 'ct_9', status: 'open', name: 'Example Co' });
-    expect(calls.some((c) => c.method === 'PATCH' && (c.body as { crm_status: string }).crm_status === 'sent')).toBe(true);
-  });
-  it('keeps the lead when HighLevel is down (stored, marked failed for replay)', async () => {
-    const { fetcher, calls } = mockFetch((c) => (c.url.includes('leadconnectorhq') ? new Response('', { status: 500 }) : supaOk(c)));
-    const r = await handleLeadRequest(req(good()), { config: cfg({ highlevel: { ...GHL } }), fetcher, limiter: new MemoryRateLimiter(5), now: () => NOW, log: () => {} });
-    expect(r.status).toBe(202);
-    expect(calls.some((c) => c.method === 'PATCH' && (c.body as { crm_status: string }).crm_status === 'failed')).toBe(true);
-  }, 20_000);
-  it('asks the visitor to retry when nothing could be stored', async () => {
-    const down = mockFetch(() => new Response('', { status: 500 }));
-    expect((await run(req(good()), cfg(), down.fetcher)).status).toBe(503);
-  }, 20_000);
-});
-
-describe('POST /api/leads → Odoo', () => {
-  const odooOk = (status = 201, body: Record<string, unknown> = { ok: true, id: 7, reference: 'WEB/2026/00007' }) =>
-    (c: Call) => (c.url.startsWith(ODOO.baseUrl) ? new Response(JSON.stringify(body), { status }) : undefined);
-  const odooOnly = cfg({ supabase: null, odoo: ODOO });
-
   it('posts the original payload and metadata to crm.mansasmoguls.com with the bearer key (contract)', async () => {
     const { fetcher, calls } = mockFetch(odooOk());
-    const r = await run(req(good({ name: '  Amina Rahman ' })), odooOnly, fetcher);
+    const r = await run(req(good({ name: '  Amina Rahman ' })), cfg(), fetcher);
     expect(r.status).toBe(202); expect(await r.json()).toEqual({ ok: true });
     expect(calls).toHaveLength(1);
     const c = calls[0];
@@ -235,38 +185,57 @@ describe('POST /api/leads → Odoo', () => {
   });
   it('sends X-Odoo-Database when configured', async () => {
     const { fetcher, calls } = mockFetch(odooOk());
-    await run(req(good()), cfg({ supabase: null, odoo: { ...ODOO, database: 'mm_prod' } }), fetcher);
+    await run(req(good()), cfg({ odoo: { ...ODOO, database: 'mm_prod' } }), fetcher);
     expect(calls[0].headers['x-odoo-database']).toBe('mm_prod');
   });
-  it('never contacts Odoo for spam', async () => {
-    const { fetcher, calls } = mockFetch(odooOk());
-    expect((await run(req(good({ website: 'x' })), odooOnly, fetcher)).status).toBe(202);
-    expect(calls).toHaveLength(0);
+  it('treats a repeated submissionId as a duplicate and skips HighLevel', async () => {
+    const { fetcher, calls } = mockFetch(odooOk(200, { ok: true, duplicate: true, reference: 'WEB/2026/00007' }));
+    const r = await run(req(good()), cfg({ highlevel: GHL }), fetcher);
+    expect(r.status).toBe(202); expect((await r.json()).duplicate).toBe(true);
+    expect(calls.some((c) => c.url.includes('leadconnectorhq'))).toBe(false);
   });
-  it('accepts an Odoo duplicate (retried submission) as success', async () => {
-    const { fetcher } = mockFetch(odooOk(200, { ok: true, duplicate: true, reference: 'WEB/2026/00007' }));
-    expect((await run(req(good()), odooOnly, fetcher)).status).toBe(202);
-  });
-  it('asks the visitor to retry when Odoo is the only store and rejects or is down', async () => {
+  it('asks the visitor to retry when Odoo rejects or is down', async () => {
     const auth = mockFetch(odooOk(401, { ok: false, code: 'unauthorized' }));
-    expect((await run(req(good()), odooOnly, auth.fetcher)).status).toBe(503);
+    expect((await run(req(good()), cfg(), auth.fetcher)).status).toBe(503);
     expect(auth.calls).toHaveLength(1); // 4xx is not retried
     const down = mockFetch(odooOk(502, {}));
-    expect((await run(req(good()), odooOnly, down.fetcher)).status).toBe(503);
+    expect((await run(req(good()), cfg(), down.fetcher)).status).toBe(503);
     expect(down.calls).toHaveLength(3); // 1 try + 2 retries (idempotent on submissionId)
   }, 20_000);
   it('passes an Odoo rate limit on to the visitor', async () => {
     const { fetcher } = mockFetch(odooOk(429, { ok: false, code: 'rate_limited' }));
-    const r = await run(req(good()), odooOnly, fetcher);
+    const r = await run(req(good()), cfg(), fetcher);
     expect(r.status).toBe(429); expect((await r.json()).code).toBe('rate_limited');
   }, 20_000);
-  it('keeps the visitor’s success when Supabase stored it and Odoo failed', async () => {
-    const supaOk = (c: Call) => (c.url.includes('supabase.co') ? (c.method === 'HEAD' ? new Response(null, { status: 200, headers: { 'content-range': '*/0' } }) : new Response(null, { status: 201 })) : undefined);
-    const { fetcher } = mockFetch((c) => (c.url.startsWith(ODOO.baseUrl) ? new Response('{}', { status: 401 }) : supaOk(c)));
-    expect((await run(req(good()), cfg({ odoo: ODOO }), fetcher)).status).toBe(202);
+  it('sends the contact and opportunity to HighLevel (contract)', async () => {
+    const { fetcher, calls } = mockFetch((c) => {
+      if (c.url.endsWith('/contacts/upsert')) return new Response(JSON.stringify({ contact: { id: 'ct_9' } }), { status: 200 });
+      if (c.url.endsWith('/opportunities/')) return new Response('{}', { status: 201 });
+      if (c.url.endsWith('/contacts/ct_9/notes')) return new Response('{}', { status: 201 });
+      return odooOk()(c);
+    });
+    const r = await run(req(good()), cfg({ highlevel: GHL }), fetcher);
+    expect(r.status).toBe(202);
+    const up = calls.find((c) => c.url.endsWith('/contacts/upsert'))!;
+    expect(up.headers.authorization).toBe('Bearer pit-token'); expect(up.headers.version).toBe('2021-07-28');
+    expect(up.body).toMatchObject({ locationId: 'loc_1', firstName: 'Amina', lastName: 'Rahman', email: 'amina@example.com', tags: ['mm:web-inquiry', 'mm:division:digital', 'mm:division:ai'] });
+    const opp = calls.find((c) => c.url.endsWith('/opportunities/'))!;
+    expect(opp.body).toMatchObject({ pipelineId: 'pipe_1', pipelineStageId: 'stage_1', contactId: 'ct_9', status: 'open', name: 'Example Co' });
   });
-  it('counts Odoo as durable storage before HighLevel', async () => {
+  it('keeps the visitor’s success when Odoo stored it and HighLevel is down', async () => {
     const { fetcher } = mockFetch((c) => (c.url.includes('leadconnectorhq') ? new Response('', { status: 500 }) : odooOk()(c)));
-    expect((await run(req(good()), cfg({ supabase: null, odoo: ODOO, highlevel: GHL }), fetcher)).status).toBe(202);
+    expect((await run(req(good()), cfg({ highlevel: GHL }), fetcher)).status).toBe(202);
+  }, 20_000);
+  it('falls back to HighLevel alone when Odoo fails', async () => {
+    const { fetcher } = mockFetch((c) => {
+      if (c.url.endsWith('/contacts/upsert')) return new Response(JSON.stringify({ contact: { id: 'ct_9' } }), { status: 200 });
+      if (c.url.includes('leadconnectorhq')) return new Response('{}', { status: 201 });
+      return new Response('{}', { status: 401 });
+    });
+    expect((await run(req(good()), cfg({ highlevel: GHL }), fetcher)).status).toBe(202);
+  });
+  it('asks the visitor to retry when nothing could be stored', async () => {
+    const down = mockFetch(() => new Response('', { status: 500 }));
+    expect((await run(req(good()), cfg({ highlevel: GHL }), down.fetcher)).status).toBe(503);
   }, 20_000);
 });

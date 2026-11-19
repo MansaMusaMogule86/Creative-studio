@@ -30,7 +30,7 @@ It then sends the inquiry straight to Odoo, server to server:
 ```
 Browser form ──POST /api/leads──▶ Vercel Function ──POST + Bearer key──▶ crm.mansasmoguls.com
                (no secrets)      validate · spam · rate limit           /api/mansas/v1/form-submissions
-                                 (Supabase / HighLevel if configured)   validate again · store
+                                 (HighLevel too, if configured)        validate again · store
 ```
 
 Why the key is not sent from the browser: anything in browser code is public.
@@ -121,15 +121,15 @@ server-only, so never prefix them with `PUBLIC_`. `.env.example` lists them.
 
 | Variable | Required | Value |
 |---|---|---|
-| `ODOO_API_KEY` | yes (turns the integration on) | The key from step 3. Treat it as a secret. |
+| `ODOO_API_KEY` | yes (turns the integration on) | The key from step 3. Treat it as a secret. Also salts the visitor-IP hash. |
 | `ODOO_BASE_URL` | no | Default `https://crm.mansasmoguls.com`. Must be HTTPS (plain `http://localhost` is allowed for testing). |
 | `ODOO_DATABASE` | no | Only for multi-database servers without a dbfilter |
 | `SITE_URL` | recommended | `https://mansasmoguls.com`, sent as the source website |
-| `LEADS_IP_SALT` | recommended | A random secret used to hash visitor IPs |
 
-Odoo can run alone or alongside Supabase and HighLevel. The website returns
-success to the visitor once at least one durable store (Supabase or Odoo) has
-the inquiry. If Odoo is the only store and it is down or rejects the key, the
+Odoo is the website's store of record (HighLevel is optional). `ODOO_API_KEY`
+also salts the visitor-IP hash used for rate limiting, so no separate salt
+variable is needed. The website returns success once Odoo has the inquiry
+(or HighLevel, if Odoo fails and HighLevel is configured). If Odoo is the only store and it is down or rejects the key, the
 visitor sees the existing "Something went wrong" message and can try again.
 Nothing is lost silently. Redeploy after changing variables.
 

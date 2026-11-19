@@ -1,9 +1,9 @@
 # Operations runbook
 
-Hosting: **Vercel** (static Astro site + one Vercel Function, `api/leads.ts`), lead storage in **Supabase**, domain DNS at **Hostinger**. Everything that can be done in the repository is done; steps that need the owner's accounts are marked **⏳ owner**.
+Hosting: **Vercel** (static Astro site + one Vercel Function, `api/leads.ts`), inquiries stored in **Odoo** (crm.mansasmoguls.com, module `odoo19_form_submissions/`), domain DNS at **Hostinger**. Everything that can be done in the repository is done; steps that need the owner's accounts are marked **⏳ owner**.
 
 ## 0. Go-live on Vercel (⏳ owner, about 15 minutes)
-1. **Supabase:** open the project → SQL editor → run `supabase/migrations/20261109120000_leads.sql` (creates `public.leads`, RLS on, no public access). Copy the project URL and the **service_role** key (Settings → API).
+1. **Odoo:** install the module from `odoo19_form_submissions/` on crm.mansasmoguls.com, then Website Submissions → Configuration → API Keys → create a key for `mansasmoguls.com` and copy it (shown once). Details: `odoo19_form_submissions/README.md`.
 2. **Vercel project:** Add New → Project → import `MansaMusaMogule86/Creative-studio`. Settings → Git → production branch `claude/affectionate-sagan-nrj1c8`. Build settings come from `vercel.json` (pnpm, `dist`).
 3. **Environment variables** (Settings → Environment Variables):
 
@@ -11,15 +11,14 @@ Hosting: **Vercel** (static Astro site + one Vercel Function, `api/leads.ts`), l
    |---|---|---|
    | `SITE_URL` | `https://mansasmoguls.com` | the preview host |
    | `SITE_ENV` | `production` | `staging` (noindex) |
-   | `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | from step 1 | same, or a separate project |
-   | `LEADS_IP_SALT` | a long random string | a different one |
+   | `ODOO_API_KEY` | from step 1 (Sensitive) | leave empty, or a separate key so previews don't write to live Odoo |
    | `HIGHLEVEL_PRIVATE_INTEGRATION_TOKEN`, `HIGHLEVEL_LOCATION_ID`, `HIGHLEVEL_PIPELINE_ID`, `HIGHLEVEL_PIPELINE_STAGE_ID` | optional: CRM forwarding (confirm field names in a HighLevel sandbox first) | leave empty |
 
    None of these may start with `PUBLIC_`. Redeploy after setting them.
 4. **Domain:** Settings → Domains → add `mansasmoguls.com` and `www.mansasmoguls.com`. In **Hostinger → Domains → DNS**, create exactly the records Vercel shows (normally an `A` record for `@` and a `CNAME` for `www` → `cname.vercel-dns.com`) and delete old A/CNAME records pointing at Hostinger hosting. `vercel.json` redirects www → apex.
-5. **Verify:** `GET https://mansasmoguls.com/api/leads` answers 405; send one real inquiry from the site and check the row in Supabase (`crm_status` shows `sent`, `skipped` or `failed`); run Lighthouse on the live URL; submit the sitemap in Search Console.
+5. **Verify:** `GET https://mansasmoguls.com/api/leads` answers 405; send one real inquiry from the site and check it appears in Odoo under Website Submissions (Vercel logs show `"odoo":"created"`); run Lighthouse on the live URL; submit the sitemap in Search Console.
 
-Leads with `crm_status = 'failed'` were stored safely but not forwarded to HighLevel; fix the cause, then replay them (re-post, or set the status back after manual entry).
+If HighLevel forwarding fails, the inquiry is still stored in Odoo and the function logs `stored-highlevel-failed` with the submission ID; enter it in HighLevel manually if needed.
 
 ## 1. Environments
 | Environment | How | Indexing |
