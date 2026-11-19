@@ -9,7 +9,7 @@ ARG SITE_ENV=production
 ENV SITE_URL=$SITE_URL
 ENV SITE_ENV=$SITE_ENV
 RUN pnpm build
-RUN ./node_modules/.bin/esbuild api/leads.ts \
+RUN npm install -g esbuild && esbuild api/leads.ts \
   --bundle --platform=node --format=esm --target=node22 \
   --banner:js="import { createRequire } from 'module'; const require = createRequire(import.meta.url);" \
   --outfile=dist-api/leads.mjs
