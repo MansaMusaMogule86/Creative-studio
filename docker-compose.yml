@@ -1,0 +1,20 @@
+services:
+  web:
+    build:
+      context: .
+      args:
+        SITE_URL: https://mansasmoguls.com
+        SITE_ENV: production
+    container_name: mansasmoguls-web
+    restart: unless-stopped
+    env_file:
+      - .env
+    ports:
+      - "127.0.0.1:4321:3000"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.mansasmoguls-web.rule=Host(`mansasmoguls.com`) || Host(`www.mansasmoguls.com`)"
+      - "traefik.http.routers.mansasmoguls-web.entrypoints=websecure"
+      - "traefik.http.routers.mansasmoguls-web.tls=true"
+      - "traefik.http.routers.mansasmoguls-web.tls.certresolver=letsencrypt"
+      - "traefik.http.services.mansasmoguls-web.loadbalancer.server.port=3000"
