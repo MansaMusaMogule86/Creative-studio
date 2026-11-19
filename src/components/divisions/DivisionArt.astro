@@ -1,0 +1,49 @@
+---
+// A division's artwork: the owner-supplied image, shown whole and unaltered
+// (no crop or overlay). <Living> adds tilt, float and glass glare around it. Masters: brand-source/division-art/*.png;
+// the served WebP copies are the same framing at 480–1536 px wide.
+import type { Division } from '../../data/divisions';
+import Living from '../ui/Living.astro';
+interface Props { division: Division; variant?: 'panel' | 'hero'; eager?: boolean }
+const { division: d, variant = 'panel', eager = false } = Astro.props;
+const src = (w: number) => `/art/division-${d.slug}-${w}.webp`;
+const ALT: Record<Division['slug'], string> = {
+  digital: 'Moguls Digital artwork: a glass laptop and dotted globe ringed by orbits, with code and chart cards.',
+  ai: 'Moguls AI artwork: a translucent glass head with glowing neural pathways and an AI processor chip.',
+  growth: 'Moguls Growth artwork: rising glass columns beneath a glowing ascending arrow.',
+  creative: 'Moguls Creative artwork: an iridescent glass M with a camera, clapperboard, tablet and colour swatches.',
+  strategy: 'Moguls Strategy artwork: a crystal chess king with a gold crown, a knight and a tactics card.',
+};
+const sizes = variant === 'hero' ? '(max-width: 1023px) calc(100vw - 32px), 640px' : '(max-width: 1023px) calc(100vw - 64px), 440px';
+const WIDTHS = [480, 768, 1024, 1536];
+const srcset = WIDTHS.map((w) => `${src(w)} ${w}w`).join(', ');
+---
+<Living class={`dart-live dart-live--${variant}`} tilt={variant === 'hero' ? 1 : 0.8}>
+<div class={`dart dart--${variant}`} data-division-art={d.slug}>
+  {eager ? (
+    <img src={src(1536)} srcset={srcset} {sizes} width="1536" height="1024" alt={ALT[d.slug]} loading="eager" decoding="async" fetchpriority="high" />
+  ) : (
+    <>
+      {/* Fetched by script only when it nears the screen (keeps first load light). */}
+      <img data-src={src(1024)} data-srcset={srcset} {sizes} width="1536" height="1024" alt={ALT[d.slug]} loading="lazy" decoding="async" />
+      <noscript><img src={src(1024)} srcset={srcset} {sizes} width="1536" height="1024" alt={ALT[d.slug]} loading="lazy" decoding="async" /></noscript>
+    </>
+  )}
+</div>
+</Living>
+
+<script>
+  // Swap in the real source shortly before each artwork scrolls into view.
+  const imgs = [...document.querySelectorAll<HTMLImageElement>('.dart img[data-src]')];
+  const load = (img: HTMLImageElement) => { img.srcset = img.dataset.srcset!; img.src = img.dataset.src!; img.removeAttribute('data-src'); };
+  if ('IntersectionObserver' in window) {
+    const io = new IntersectionObserver((entries) => entries.forEach((e) => { if (e.isIntersecting) { io.unobserve(e.target); load(e.target as HTMLImageElement); } }), { rootMargin: '500px 0px' });
+    imgs.forEach((i) => io.observe(i));
+  } else imgs.forEach(load);
+</script>
+
+<style>
+  .dart-live { border-radius: inherit; }
+  .dart { position: relative; width: 100%; aspect-ratio: 3 / 2; overflow: hidden; border-radius: inherit; background: #f3f0fb; }
+  .dart img { display: block; width: 100%; height: 100%; object-fit: contain; }
+</style>

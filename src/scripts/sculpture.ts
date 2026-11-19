@@ -261,14 +261,10 @@ export function mountSculpture(canvas: HTMLCanvasElement, opts: Options) {
     if (!hasMouse) { target.x = Math.sin(time * 0.33) * 0.75; target.y = Math.cos(time * 0.27) * 0.35; }
     cur.x += (target.x - cur.x) * 0.04;
     cur.y += (target.y - cur.y) * 0.04;
-<<<<<<< HEAD
-    group.rotation.y = -0.22 + now_.ry + Math.sin(time * 0.25) * 0.35 + cur.x * 0.35 + (1 - e) * 1.2;
+    // Continuous, clearly visible motion: a slow sway plus pointer response,
+    // offset by the current pose (setPalette eases between poses).
+    group.rotation.y = -0.22 + now_.ry + Math.sin(time * 0.31) * 0.55 + cur.x * 0.4 + (1 - e) * 1.2;
     group.rotation.x = 0.12 + now_.rx + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
-=======
-    // Continuous, clearly visible motion: a slow sway plus pointer response.
-    group.rotation.y = -0.22 + Math.sin(time * 0.31) * 0.55 + cur.x * 0.4 + (1 - e) * 1.2;
-    group.rotation.x = 0.12 + Math.sin(time * 0.2) * 0.08 + cur.y * 0.18;
->>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
     group.rotation.z = -0.05 + Math.sin(time * 0.17) * 0.05;
     ribbon.position.y = Math.sin(time * 0.7) * 0.14 - (1 - e) * 0.6;
     ribbon.scale.setScalar(0.86 + 0.14 * e);

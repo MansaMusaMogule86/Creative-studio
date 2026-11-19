@@ -139,22 +139,6 @@ function AskMoguls() {
 
   // Native close paths (Escape on the modal → 'cancel' → 'close').
   useEffect(() => {
-<<<<<<< HEAD
-    const on = () => setShown(scrollY > innerHeight * 0.6);
-    on(); addEventListener('scroll', on, { passive: true });
-    return () => removeEventListener('scroll', on);
-  }, []);
-  // Step aside while a [data-ask-avoid] block passes under the launcher (the viewport's bottom band).
-  const [avoid, setAvoid] = useState(false);
-  useEffect(() => {
-    const el = document.querySelector('[data-ask-avoid]');
-    if (!el) return;
-    const io = new IntersectionObserver(([e]) => setAvoid(e.isIntersecting), { rootMargin: '-85% 0px 0px 0px' });
-    io.observe(el);
-    return () => io.disconnect();
-  }, []);
-  useEffect(() => { logRef.current?.scrollTo({ top: logRef.current.scrollHeight }); }, [msgs]);
-=======
     const d = dialogRef.current;
     if (!d) return;
     // 'close' is dispatched asynchronously; ignore it if the dialog was
@@ -165,7 +149,6 @@ function AskMoguls() {
   }, [teardown]);
 
   // Escape for the non-modal desktop panel (no native 'cancel' there).
->>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape' && activeRef.current === 'panel') closeChat(); };
     addEventListener('keydown', onKey);
@@ -212,6 +195,17 @@ function AskMoguls() {
     return () => { removeEventListener('scroll', on); removeEventListener('resize', on); io?.disconnect(); cancelAnimationFrame(raf); };
   }, []);
 
+  // Step aside while a [data-ask-avoid] block (the division showcase card)
+  // passes under the launcher, i.e. through the viewport's bottom band.
+  const [avoid, setAvoid] = useState(false);
+  useEffect(() => {
+    const el = document.querySelector('[data-ask-avoid]');
+    if (!el) return;
+    const io = new IntersectionObserver(([e]) => setAvoid(e.isIntersecting), { rootMargin: '-85% 0px 0px 0px' });
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+
   // Auto-scroll only the conversation, and only if the visitor is at the
   // bottom (or just sent a message) — never pull them away from older messages.
   useEffect(() => {
@@ -253,18 +247,13 @@ function AskMoguls() {
   };
 
   return (
-<<<<<<< HEAD
-    <div className="ask" data-open={open} data-shown={shown || open} data-avoid={avoid}>
-      <button ref={launcherRef} type="button" className="ask__launch" aria-expanded={open} aria-controls={panelId} onClick={() => setOpen((o) => !o)}>
-=======
-    <div className="ask" data-open={open} data-shown={(shown && !nearForm && !overControl) || open} data-fullscreen={fullscreen}>
+    <div className="ask" data-open={open} data-shown={(shown && !nearForm && !overControl) || open} data-avoid={avoid} data-fullscreen={fullscreen}>
       <button
         ref={launcherRef} type="button" className="ask__launch"
         aria-haspopup="dialog" aria-expanded={open} aria-controls={panelId}
         onClick={(e) => (activeRef.current ? closeChat() : openChat(e.currentTarget))}
         onBlur={() => { keepLauncherRef.current = false; }}
       >
->>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
         <span className="ask__dot" aria-hidden="true" />
         <span className="ask__label">{open ? 'Close Ask Moguls' : 'Ask Moguls'}</span>
       </button>

@@ -33,12 +33,9 @@
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@types/three": "^0.187.0",
-<<<<<<< HEAD
-    "playwright": "1.65.0",
-=======
     "eslint": "^10.14.0",
     "eslint-plugin-astro": "^3.2.1",
->>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
+    "playwright": "1.65.0",
     "sharp": "0.35.5",
     "typescript": "^6",
     "typescript-eslint": "^8.72.2",

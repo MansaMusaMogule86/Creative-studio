@@ -26,16 +26,6 @@ export const PALETTES: Record<Division['slug'], Palette> = {
 };
 
 
-<<<<<<< HEAD
-const divisionStills: Still[] = (Object.keys(DIV_ANGLES) as Division['slug'][]).flatMap((slug) => [
-  { id: `division-${slug}`, width: 1040, height: 1040, fit: 1.05, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1040, 520] },
-  { id: `division-${slug}-wide`, width: 1200, height: 760, fit: 1.0, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1200, 600] },
-  // Transparent cutout for the homepage division showcase (no baked backdrop or frame).
-  { id: `division-${slug}-cut`, width: 1100, height: 900, fit: 1.0, ...DIV_ANGLES[slug], palette: PALETTES[slug], widths: [1100, 550], transparent: true },
-]);
-=======
->>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
-
 export const stills: Still[] = [
   // Open Graph sharing image (PNG, see render script).
   { id: 'og', width: 1200, height: 630, t: 0.8, rx: 0.12, ry: -0.45, fit: 0.86, x: 0.24, og: true },

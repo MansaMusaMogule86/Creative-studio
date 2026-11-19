@@ -85,6 +85,7 @@ for (const w of WIDTHS) {
   await p.hover('#uni-tab-creative');
   if ((await selected()) !== 'uni-tab-digital') fail('hovering a division tab changed the selection');
   await p.click('#uni-tab-growth');
+  await p.waitForTimeout(400); // the outgoing panel hides after its 0.3s fade
   if ((await selected()) !== 'uni-tab-growth' || !(await p.isVisible('#uni-growth .sc__cta')) || (await p.isVisible('#uni-digital .sc__cta'))) fail('clicking a division tab did not switch panels');
   await p.focus('#uni-tab-growth');
   await p.keyboard.press('ArrowRight');
@@ -98,13 +99,8 @@ for (const w of WIDTHS) {
   await p.waitForTimeout(650);
   await p.focus('#uni-growth .sc__cta');
   await p.keyboard.press('Enter');
-<<<<<<< HEAD
-  await p.waitForURL('**/universe/growth');
-  ok('division tabs: click/Enter select, hover/arrows do not, card size is stable, CTA opens its world');
-=======
   await p.waitForURL(/\/universe\/growth\/?(#.*)?$/);
-  ok('division panel opens on hover and links to its world');
->>>>>>> 5e49c3be3a66488a30263b9746e3b68808291436
+  ok('division tabs: click/Enter select, hover/arrows do not, card size is stable, CTA opens its world');
   await p.goto(BASE + '/', { waitUntil: 'networkidle' });
 
   // Services tabs.
@@ -117,8 +113,14 @@ for (const w of WIDTHS) {
   await p.$eval('.sc__card', (c) => scrollTo(0, c.getBoundingClientRect().top + scrollY - innerHeight * 0.8));
   await p.waitForTimeout(700);
   if (await p.isVisible('.ask__launch')) fail('Ask Moguls launcher overlaps the division card');
-  await p.$eval('#services', (e) => e.scrollIntoView());
-  await p.waitForTimeout(700);
+  // It also fades while it would sit on a tappable control, so scroll on until it is clear.
+  let launcherShown = false;
+  for (let y = 0; y < 8 && !launcherShown; y++) {
+    await p.evaluate((k) => scrollTo(0, document.getElementById('services').offsetTop + k * innerHeight * 0.35), y);
+    await p.waitForTimeout(600);
+    launcherShown = await p.isVisible('.ask__launch');
+  }
+  if (!launcherShown) fail('Ask Moguls launcher never reappeared after the division card');
   await p.click('.ask__launch');
   await p.click('.ask__examples button >> nth=0');
   const firstService = await p.textContent('.msg__services li strong');
@@ -197,9 +199,10 @@ for (const w of WIDTHS) {
   const mob = await m.evaluate(() => ({
     sel: document.querySelector('[data-showcase] [aria-selected=true]').id,
     artAbove: document.querySelector('.sc__stage').getBoundingClientRect().bottom <= document.querySelector('#uni-ai .sc__title').getBoundingClientRect().top,
-    live: !!document.querySelector('.sc__stage.is-live'),
+    art: !!document.querySelector('.sc__art.is-on[data-slug=ai] .dart img'),
+    canvas: !!document.querySelector('.sc__stage canvas'),
   }));
-  if (mob.sel !== 'uni-tab-ai' || !mob.artAbove || mob.live) fail(`mobile division tabs: ${JSON.stringify(mob)}`); else ok('mobile division tabs: tap selects, artwork above copy, no WebGL');
+  if (mob.sel !== 'uni-tab-ai' || !mob.artAbove || !mob.art || mob.canvas) fail(`mobile division tabs: ${JSON.stringify(mob)}`); else ok('mobile division tabs: tap selects, owner artwork above copy, no WebGL');
   await m.close();
   await p.close();
 }
@@ -213,8 +216,9 @@ for (const w of WIDTHS) {
   if (hidden) fail(`reduced motion: ${hidden} reveal element(s) still hidden`); else ok('reduced motion: all content visible without animation');
   await p.$eval('#universe', (e) => e.scrollIntoView());
   await p.waitForTimeout(800);
-  if (await p.$('.sc__stage.is-live')) fail('reduced motion: division showcase started a live WebGL scene');
-  else ok('reduced motion: division showcase stays on the still cutout');
+  const artShown = await p.$eval('.sc__art.is-on', (a) => getComputedStyle(a).opacity === '1' && a.getBoundingClientRect().width > 100).catch(() => false);
+  if (!artShown) fail('reduced motion: division showcase artwork not visible');
+  else ok('reduced motion: division showcase shows the owner artwork without animation');
   await ctx.close();
 }
 
@@ -312,12 +316,20 @@ const divisionSlugs = ['digital', 'ai', 'growth', 'creative', 'strategy'];
         const vis = (el) => { const r = el.getBoundingClientRect(); if (r.width < 40 || r.height < 30) return false; for (let e = el; e; e = e.parentElement) { const cs = getComputedStyle(e); if (cs.display === 'none' || cs.visibility === 'hidden' || parseFloat(cs.opacity) === 0) return false; } return true; };
         return ['digital', 'ai', 'growth', 'creative', 'strategy'].filter((s) => [...document.querySelectorAll(`img[src*="division-${s}-"], img[srcset*="division-${s}-"]`)].some((i) => vis(i) && i.complete && i.naturalWidth > 0));
       });
-      const need = path === '/' ? 5 : 1;
-      if (shown.length < need) fail(`${path} @${w}: only ${shown.length}/${need} division artworks visible without tapping (${shown.join(', ')})`);
+      if (shown.length < 1) fail(`${path} @${w}: no division artwork visible without tapping`);
+      if (path === '/') {
+        // Homepage tabs: the selected division's owner artwork is always visible and loaded.
+        for (const s of divisionSlugs) {
+          await p.click(`#uni-tab-${s}`);
+          await p.waitForTimeout(700);
+          const ok_ = await p.$eval(`.sc__art[data-slug=${s}] img`, (i) => { const r = i.getBoundingClientRect(); return i.complete && i.naturalWidth > 0 && r.width > 100 && getComputedStyle(i.closest('.sc__art')).visibility === 'visible'; });
+          if (!ok_) fail(`/ @${w}: ${s} artwork not visible when its tab is selected`);
+        }
+      }
     }
     await ctx.close();
   }
-  ok('division artworks visible without tapping on the homepage and every division page (320–1440)');
+  ok('division artworks visible on every division page and per selected homepage tab (320–1440)');
 }
 
 // 8. Brand consistency: official emblem everywhere, icons and metadata resolve.

@@ -185,11 +185,17 @@ for (const [w, h] of SIZES) {
   if (!(await p.isVisible('.f-summary'))) fail(`${tag}: contact form validation not shown`);
   else ok(`${tag}: contact form validates${w < 768 ? '; launcher hidden over the form' : ''}`);
 
-  // 11. Division control (tap accordion below 1024px).
+  // 11. Division control (tabs): tapping selects the division and shows its owner artwork.
   await p.evaluate(() => document.getElementById('universe').scrollIntoView({ behavior: 'instant' }));
-  await p.tap('[data-panel]:nth-child(3) .panel__btn');
-  const div = await p.$eval('[data-panel]:nth-child(3) .panel__btn', (b) => b.getAttribute('aria-expanded'));
-  if (div !== 'true') fail(`${tag}: division tap control failed`); else ok(`${tag}: division tap control works`);
+  await p.tap('#uni-tab-growth');
+  await p.waitForTimeout(650);
+  const div = await p.evaluate(() => {
+    const art = document.querySelector('.sc__art[data-slug=growth]');
+    const r = art?.getBoundingClientRect();
+    return { sel: document.getElementById('uni-tab-growth').getAttribute('aria-selected'), on: !!art?.classList.contains('is-on'),
+      visible: !!r && r.width > 100 && getComputedStyle(art).visibility === 'visible' };
+  });
+  if (div.sel !== 'true' || !div.on || !div.visible) fail(`${tag}: division tap control failed: ${JSON.stringify(div)}`); else ok(`${tag}: division tab tap selects and shows its artwork`);
 
   if (errs.length) fail(`${tag}: page errors: ${errs.join(' | ')}`);
   await ctx.close();
